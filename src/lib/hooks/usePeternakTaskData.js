@@ -605,7 +605,7 @@ export function useApplyKambingTaskTemplate() {
   const { tenant } = useAuth()
 
   return useMutation({
-    mutationFn: async ({ templateType, batchStartDate, kandangName }) => {
+    mutationFn: async ({ templateType: _templateType, batchStartDate, kandangName }) => {
       const templates = TEMPLATE_KAMBING_PENGGEMUKAN_90
       const baseDate = new Date(batchStartDate)
 

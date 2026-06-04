@@ -19,6 +19,7 @@ import { useAIQuota } from '@/lib/hooks/useAIQuota'
 import { UPGRADE_MESSAGES } from '@/lib/constants/planGating'
 import { formatIDR } from '@/lib/format'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 
 // ── Vertical config ────────────────────────────────────────────
 const VERTICAL_CONFIG = {
@@ -317,7 +318,19 @@ export default function PrediksiHasilPage() {
         .select('id')
         .single()
       if (convErr) {
-        logSupabaseError(convErr, { table: 'ai_conversations', operation: 'insert', component: 'PrediksiHasilPage', actionName: 'ai.prediction.save', metadata: { batch_id: selectedBatchId } })
+        logSupabaseError(convErr, {
+          table: 'ai_conversations',
+          operation: 'insert',
+          component: 'PrediksiHasilPage',
+          actionName: 'ai.prediction.save',
+          metadata: {
+            batch_id: selectedBatchId,
+            target_weight: targetWeight ? parseFloat(targetWeight) : null,
+            market_price: marketPrice ? parseFloat(marketPrice) : null,
+            daily_feed_cost: dailyFeedCost ? parseFloat(dailyFeedCost) : null,
+            confidence: prediction?.confidence ? parseFloat(prediction.confidence) : null,
+          }
+        })
         throw convErr
       }
 
@@ -336,7 +349,20 @@ export default function PrediksiHasilPage() {
           status: 'committed',
         })
       if (entryErr) {
-        logSupabaseError(entryErr, { table: 'ai_pending_entries', operation: 'insert', component: 'PrediksiHasilPage', actionName: 'ai.prediction.save', metadata: { conversation_id: conv.id, batch_id: selectedBatchId } })
+        logSupabaseError(entryErr, {
+          table: 'ai_pending_entries',
+          operation: 'insert',
+          component: 'PrediksiHasilPage',
+          actionName: 'ai.prediction.save',
+          metadata: {
+            conversation_id: conv.id,
+            batch_id: selectedBatchId,
+            target_weight: targetWeight ? parseFloat(targetWeight) : null,
+            market_price: marketPrice ? parseFloat(marketPrice) : null,
+            daily_feed_cost: dailyFeedCost ? parseFloat(dailyFeedCost) : null,
+            confidence: prediction?.confidence ? parseFloat(prediction.confidence) : null,
+          }
+        })
         throw entryErr
       }
     },
@@ -346,6 +372,23 @@ export default function PrediksiHasilPage() {
       queryClient.invalidateQueries({ queryKey: ['prediksi-history', tenant?.id] })
     },
     onError: (err) => {
+      // Log outer/runtime error if not already classified by logSupabaseError
+      if (!err.code) {
+        logError({
+          level: 'error',
+          source: 'frontend',
+          component: 'PrediksiHasilPage',
+          actionName: 'ai.prediction.save',
+          error: err,
+          metadata: {
+            batch_id: selectedBatchId,
+            target_weight: targetWeight ? parseFloat(targetWeight) : null,
+            market_price: marketPrice ? parseFloat(marketPrice) : null,
+            daily_feed_cost: dailyFeedCost ? parseFloat(dailyFeedCost) : null,
+            confidence: prediction?.confidence ? parseFloat(prediction.confidence) : null,
+          }
+        })
+      }
       toast.error('Gagal menyimpan: ' + err.message)
     },
   })

@@ -20,6 +20,8 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { PhoneInput } from '@/components/ui/PhoneInput'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -238,7 +240,35 @@ function ListingCard({ listing }) {
     supabase.from('market_listings')
       .update({ view_count: (listing.view_count || 0) + 1 })
       .eq('id', listing.id)
-      .then(() => {})
+      .then(({ error }) => {
+        if (error) {
+          logSupabaseError(error, {
+            table: 'market_listings',
+            operation: 'update',
+            component: 'Market',
+            actionName: 'market.listing.increment_view',
+            metadata: {
+              listing_id: listing.id,
+              operation: 'increment_view',
+              source_component: 'Market',
+            }
+          })
+        }
+      })
+      .catch((err) => {
+        logError({
+          level: 'error',
+          source: 'frontend',
+          component: 'Market',
+          actionName: 'market.listing.increment_view',
+          error: err,
+          metadata: {
+            listing_id: listing.id,
+            operation: 'increment_view',
+            source_component: 'Market',
+          }
+        })
+      })
 
     const wa = normalizeWA(listing.contact_wa || '')
     if (!wa || wa.length < 10) {

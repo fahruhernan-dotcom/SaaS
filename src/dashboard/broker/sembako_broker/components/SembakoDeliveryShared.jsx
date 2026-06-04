@@ -205,7 +205,6 @@ function buildWA(delivery) {
 // ── EditTimestampSheet ────────────────────────────────────────────────────────
 function EditTimestampSheet({ delivery, open, onClose }) {
   const updateTs = useUpdateSembakoDeliveryTimestamps()
-  const today = new Date().toISOString().slice(0, 16) // 'YYYY-MM-DDTHH:mm'
 
   const toLocalDT = (isoStr) => {
     if (!isoStr) return ''
@@ -217,15 +216,16 @@ function EditTimestampSheet({ delivery, open, onClose }) {
     } catch { return '' }
   }
 
-  const [departedAt, setDepartedAt] = useState(toLocalDT(delivery?.departed_at) || today)
-  const [arrivedAt,  setArrivedAt]  = useState(toLocalDT(delivery?.arrived_at)  || today)
-  const [completedAt, setCompletedAt] = useState(toLocalDT(delivery?.completed_at) || today)
+  const [departedAt, setDepartedAt] = useState(() => toLocalDT(delivery?.departed_at) || new Date().toISOString().slice(0, 16))
+  const [arrivedAt,  setArrivedAt]  = useState(() => toLocalDT(delivery?.arrived_at)  || new Date().toISOString().slice(0, 16))
+  const [completedAt, setCompletedAt] = useState(() => toLocalDT(delivery?.completed_at) || new Date().toISOString().slice(0, 16))
 
   useEffect(() => {
     if (open) {
-      setDepartedAt(toLocalDT(delivery?.departed_at) || today)
-      setArrivedAt(toLocalDT(delivery?.arrived_at)   || today)
-      setCompletedAt(toLocalDT(delivery?.completed_at) || today)
+      const todayDT = new Date().toISOString().slice(0, 16)
+      setDepartedAt(toLocalDT(delivery?.departed_at) || todayDT)
+      setArrivedAt(toLocalDT(delivery?.arrived_at)   || todayDT)
+      setCompletedAt(toLocalDT(delivery?.completed_at) || todayDT)
     }
   }, [open, delivery])
 

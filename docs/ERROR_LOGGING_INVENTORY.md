@@ -27,6 +27,7 @@
 | Phase 1 Missing Error Logging | Critical Auth, Invite, and Setup Farm | ✅ DONE |
 | Phase 2 Missing Error Logging | Transaction Wizard and Worker Management | ✅ DONE |
 | Phase 3 Missing Error Logging | Operational Data Integrity (useCashFlow, TaskSheets, TaskCards, PrediksiHasilPage) | ✅ DONE |
+| Phase 4 Missing Error Logging | Market and Manual Price Updates (Market.jsx, HargaPasar.jsx) | ✅ DONE |
 | Broad lint cleanup | Project-wide unused-vars / hook-deps | ⏸️ PAUSED — separate task |
 
 ---
@@ -94,6 +95,8 @@ src/
     │   └── pages/
     │       ├── OnboardingFlow.jsx            ← redirect_failed for unmapped vertical (Phase 6.0)
     │       ├── AkunPreview.jsx               ← logout + EditProfileSheet save (Phase 5)
+    │       ├── Market.jsx                    ← handleContact silent view increment (Phase 4 Missing Error Logging)
+    │       ├── HargaPasar.jsx                ← ManualPriceForm manual upsert (Phase 4 Missing Error Logging)
     │       └── tim/Tim.jsx                   ← import-path fix only (Phase 6.F); team mutation instrumentation deferred
     ├── peternak/
     │   ├── _shared/components/
@@ -741,6 +744,30 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 - `account.bisnis.update` (Phase 6.F)
 
 **Notes:** `handleLogout` / `handleSave` predate dotted convention — deferred cosmetic rename. `DeleteBusinessDialog` uses dual-log (`logSupabaseError` + `logError`) to surface RPC error as both classified supabase error and rich metadata log. `EditBisnisSheet` supports owner-only province selection from 38 Indonesian provinces.
+
+---
+
+### `src/dashboard/_shared/pages/Market.jsx`
+**Phase:** Phase 4 Missing Error Logging
+**Coverage:**
+- `handleContact` — increments view count `market_listings` update failure (silent)
+
+**Action names:**
+- `market.listing.increment_view`
+
+**Notes:** Safe metadata: `{ listing_id, operation: 'increment_view', source_component: 'Market' }`. No buyer/seller contact numbers or WhatsApp URL strings are logged. Redirection flow to WhatsApp is non-blocking even if the update fails.
+
+---
+
+### `src/dashboard/_shared/pages/HargaPasar.jsx`
+**Phase:** Phase 4 Missing Error Logging
+**Coverage:**
+- `ManualPriceForm.handleSave` — `market_prices` manual upsert failure
+
+**Action names:**
+- `market.price.upsert`
+
+**Notes:** Standard logSupabaseError coverage for returned PostgREST errors, and logError fallback in the catch block for unexpected exceptions. Toast UI feedback is fully preserved. Safe metadata: `{ region, price_date, chicken_type: 'broiler', source: 'manual', operation: 'upsert' }`. Redacts full form payloads.
 
 ---
 
@@ -1404,6 +1431,7 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `admin.user.delete_tenant` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.delete for lonely tenant (partial commit flag) |
 | `account.bisnis.update` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 6.F | tenants.update business_name/province/location (EditBisnisSheet) |
 | `account.business.delete` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 6.F | delete_my_business RPC failure (dual-log with logSupabaseError + logError) |
+| `ai.prediction.save` | `src/dashboard/peternak/ai/PrediksiHasilPage.jsx` | Phase 3 Missing Error Logging | ai_conversations/ai_pending_entries insert failure during prediction save |
 | `auth.callback_error` | `src/pages/AuthCallback.jsx` | 6.0 | Hash error params (otp_expired, access_denied) — code only, no token |
 | `auth.callback_fetch_profiles` | `src/pages/AuthCallback.jsx` | 6.0 | Profile fetch after callback session resolved |
 | `auth.callback_no_session` | `src/pages/AuthCallback.jsx` | 6.0 | getSession() returned no user |
@@ -1428,6 +1456,9 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `breeding.sale.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_sales.insert` |
 | `breeding.sale.add.animal_sync` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `animals.update status='terjual'` after sale (partial commit) |
 | `breeding.weight.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_weight_records.insert` |
+| `broker.cashflow.fetch` | `src/lib/hooks/useCashFlow.js` | Phase 3 Missing Error Logging | Supabase SELECT errors in core cash flow hook |
+| `broker.cashflow.fetch_by_farm` | `src/lib/hooks/useCashFlow.js` | Phase 3 Missing Error Logging | Supabase SELECT error in useCashFlowByFarm hook |
+| `broker.cashflow.fetch_by_rpa` | `src/lib/hooks/useCashFlow.js` | Phase 3 Missing Error Logging | Supabase SELECT error in useCashFlowByRPA hook |
 | `broker.delivery.fetch` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | Initial deliveries select for the update flow |
 | `broker.delivery.update` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | deliveries.update (status, arrived count/weight, mortality) |
 | `broker.delivery.create.wizard` | `src/dashboard/_shared/components/TransaksiWizard.jsx` | Phase 2 Missing Error Logging | deliveries.insert (in Transaksi Wizard) |
@@ -1524,6 +1555,8 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `market.listing.close` | `src/lib/hooks/useMarket.js` | 6.F | market_listings.update status='closed' |
 | `market.listing.create` | `src/lib/hooks/useMarket.js` | 6.F | market_listings.insert |
 | `market.listing.delete` | `src/lib/hooks/useMarket.js` | 6.F | market_listings.update is_deleted=true |
+| `market.listing.increment_view` | `src/dashboard/_shared/pages/Market.jsx` | Phase 4 Missing Error Logging | market_listings.update view_count increment failure |
+| `market.price.upsert` | `src/dashboard/_shared/pages/HargaPasar.jsx` | Phase 4 Missing Error Logging | market_prices.upsert manual price update failure |
 | `notification.delete` | `src/lib/hooks/useNotifications.jsx` | 6.F | `notifications.update is_deleted=true` |
 | `notification.generate.payday` | `src/lib/hooks/useNotifications.jsx` | 6.F | Payday reminder insert for worker (non-throwing) |
 | `notification.generate.piutang_broker` | `src/lib/hooks/useNotifications.jsx` | 6.F | Overdue broker sales notification insert (non-throwing) |
@@ -1572,6 +1605,7 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.health_log.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | health.insert |
 | `peternak.health_log.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.status='dead' sync after kematian record (partial, fire-and-forget) |
 | `peternak.health_log.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | health.update is_deleted=true |
+| `peternak.health_log.delete_inline` | `src/dashboard/peternak/_shared/components/TaskSheets.jsx` + `TaskCards.jsx` | Phase 3 Missing Error Logging | Inline health record soft-delete update error |
 | `peternak.holding_pen.ensure.check` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | Pre-check SELECT on kandangs.is_holding=true |
 | `peternak.holding_pen.ensure.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | Kandangs.insert Holding pen when none exists |
 | `peternak.kandang.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | kandangs.insert (Denah Kandang) |
@@ -1592,6 +1626,7 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.weight_record.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.insert |
 | `peternak.weight_record.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.latest_weight_kg sync after weigh-in (partial commit) |
 | `peternak.weight_record.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.update is_deleted=true |
+| `peternak.weight_record.delete_inline` | `src/dashboard/peternak/_shared/components/TaskSheets.jsx` + `TaskCards.jsx` | Phase 3 Missing Error Logging | Inline weight record soft-delete update error |
 | `sapi.animal.move_kandang` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_animals.update kandang_id/slot (drag-drop Denah Kandang) |
 | `sapi.kandang.create` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_kandangs.insert (Denah Kandang) |
 | `sapi.kandang.ensure_holding_check` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | Pre-check SELECT on sapi kandangs.is_holding=true |

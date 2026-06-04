@@ -150,6 +150,10 @@ function initials(name) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
+function getTodayStr() {
+  return new Date().toISOString().split('T')[0]
+}
+
 const PAYMENT_TYPES = [
   { value: 'gaji',  label: '💰 Gaji',       color: '#10B981' },
   { value: 'bonus', label: '🎁 Bonus',       color: '#A78BFA' },
@@ -373,35 +377,38 @@ function WorkerCard({ worker, onEdit, onPayment }) {
 function WorkerSheet({ open, onClose, worker, farms, onSaved }) {
   const { tenant } = useAuth()
   const isEdit = !!worker
-  const today = new Date().toISOString().split('T')[0]
 
-  const [form, setForm] = useState({
-    peternak_farm_id: '',
-    full_name: '',
-    phone: '',
-    join_date: today,
-    base_salary: 0,
-    bonus_per_kg: 0,
-    fcr_target: '',
-    notes: '',
-    status: 'aktif',
+  const [form, setForm] = useState(() => {
+    const todayStr = getTodayStr()
+    return {
+      peternak_farm_id: '',
+      full_name: '',
+      phone: '',
+      join_date: todayStr,
+      base_salary: 0,
+      bonus_per_kg: 0,
+      fcr_target: '',
+      notes: '',
+      status: 'aktif',
+    }
   })
   const [loading, setLoading] = useState(false)
 
   React.useEffect(() => {
     if (open) {
+      const todayStr = getTodayStr()
       setForm(worker ? {
         peternak_farm_id: worker.peternak_farm_id ?? '',
         full_name: worker.full_name ?? '',
         phone: worker.phone ?? '',
-        join_date: worker.join_date ?? today,
+        join_date: worker.join_date ?? todayStr,
         base_salary: worker.base_salary ?? 0,
         bonus_per_kg: worker.bonus_per_kg ?? 0,
         fcr_target: worker.fcr_target ?? '',
         notes: worker.notes ?? '',
         status: worker.status ?? 'aktif',
       } : {
-        peternak_farm_id: '', full_name: '', phone: '', join_date: today,
+        peternak_farm_id: '', full_name: '', phone: '', join_date: todayStr,
         base_salary: 0, bonus_per_kg: 0, fcr_target: '', notes: '', status: 'aktif',
       })
     }
@@ -660,15 +667,14 @@ function WorkerSheet({ open, onClose, worker, farms, onSaved }) {
 function PaymentSheet({ open, onClose, worker }) {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
-  const today = new Date().toISOString().split('T')[0]
 
   const [addMode, setAddMode] = useState(false)
-  const [form, setForm] = useState({
-    payment_date: today,
+  const [form, setForm] = useState(() => ({
+    payment_date: getTodayStr(),
     payment_type: 'gaji',
     amount: 0,
     notes: '',
-  })
+  }))
   const [loading, setLoading] = useState(false)
 
   const { data: payments = [], isLoading } = useQuery({
@@ -722,7 +728,7 @@ function PaymentSheet({ open, onClose, worker }) {
       }
       toast.success('Pembayaran tercatat!')
       queryClient.invalidateQueries({ queryKey: ['worker-payments', worker.id] })
-      setForm({ payment_date: today, payment_type: 'gaji', amount: 0, notes: '' })
+      setForm({ payment_date: getTodayStr(), payment_type: 'gaji', amount: 0, notes: '' })
       setAddMode(false)
     } catch (err) {
       console.error('PaymentSheet error:', err)

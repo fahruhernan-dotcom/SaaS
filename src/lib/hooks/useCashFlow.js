@@ -137,31 +137,80 @@ export const useCashFlow = (period = 'week') => {
       ])
 
       if (paymentsRes.error) {
-        logSupabaseError(paymentsRes.error, { table: 'payments', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(paymentsRes.error, {
+          table: 'payments',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw paymentsRes.error
       }
       if (purchasesRes.error) {
-        logSupabaseError(purchasesRes.error, { table: 'purchases', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(purchasesRes.error, {
+          table: 'purchases',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw purchasesRes.error
       }
       if (deliveriesRes.error) {
-        logSupabaseError(deliveriesRes.error, { table: 'deliveries', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(deliveriesRes.error, {
+          table: 'deliveries',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw deliveriesRes.error
       }
       if (extrasRes.error) {
-        logSupabaseError(extrasRes.error, { table: 'extra_expenses', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(extrasRes.error, {
+          table: 'extra_expenses',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw extrasRes.error
       }
       if (salesRes.error) {
-        logSupabaseError(salesRes.error, { table: 'sales', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(salesRes.error, {
+          table: 'sales',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw salesRes.error
       }
       if (lossRes.error) {
-        logSupabaseError(lossRes.error, { table: 'loss_reports', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(lossRes.error, {
+          table: 'loss_reports',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw lossRes.error
       }
       if (vehicleExpensesRes.error) {
-        logSupabaseError(vehicleExpensesRes.error, { table: 'vehicle_expenses', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(vehicleExpensesRes.error, {
+          table: 'vehicle_expenses',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general' }
+        })
         throw vehicleExpensesRes.error
       }
 
@@ -200,7 +249,14 @@ export const useCashFlow = (period = 'week') => {
         .gte('transaction_date', from)
         .lte('transaction_date', to)
       if (salesAllErr) {
-        logSupabaseError(salesAllErr, { table: 'sales', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        logSupabaseError(salesAllErr, {
+          table: 'sales',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch',
+          tenantId: tenant.id,
+          metadata: { period, scope: 'general_all_sales' }
+        })
         throw salesAllErr
       }
 
@@ -303,7 +359,20 @@ export const useCashFlowByRPA = (period = 'month') => {
         .gte('transaction_date', from)
         .lte('transaction_date', to)
 
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'sales',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch_by_rpa',
+          tenantId: tenant.id,
+          metadata: {
+            period,
+            scope: 'rpa'
+          }
+        })
+        throw error
+      }
 
       // Group by RPA
       const rpaMap = {}
@@ -365,7 +434,20 @@ export const useCashFlowByFarm = (period = 'month') => {
         .gte('transaction_date', from)
         .lte('transaction_date', to)
 
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'purchases',
+          operation: 'select',
+          component: 'useCashFlow',
+          actionName: 'broker.cashflow.fetch_by_farm',
+          tenantId: tenant.id,
+          metadata: {
+            period,
+            scope: 'farm'
+          }
+        })
+        throw error
+      }
 
       // Group by Farm
       const farmMap = {}

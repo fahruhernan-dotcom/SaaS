@@ -213,7 +213,7 @@ export function useAIAssistant({ userType, contextPage }) {
     } catch (err) { console.error('[AI] Snapshot error:', err) }
     snapshotCacheRef.current = { data: snapshot, timestamp: Date.now() }
     return snapshot
-  }, [tenant?.id, userType])
+  }, [tenant?.id, userType, SNAPSHOT_TTL_MS])
 
   // ═════════════════════════════════════════════════════════
   // PARSE AI RESPONSE
@@ -954,7 +954,7 @@ export function useAIAssistant({ userType, contextPage }) {
         }, prev, entry._context),
       }
     }))
-  }, [pendingEntries])
+  }, [])
 
   // ═════════════════════════════════════════════════════════
   // RESOLVE ENTITY

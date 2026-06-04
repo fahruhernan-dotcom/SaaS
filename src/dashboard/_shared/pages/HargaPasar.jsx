@@ -39,6 +39,8 @@ import {
   CommandInput, CommandItem, CommandSeparator, CommandList
 } from '@/components/ui/command'
 import { Check, ChevronsUpDown } from 'lucide-react'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 
 export default function HargaPasar() {
   const { profile, tenant } = useAuth()
@@ -544,6 +546,7 @@ function ManualPriceForm({ tenant, onSuccess }) {
         if (!region) return toast.error('Harap pilih wilayah/provinsi')
         
         setLoading(true)
+        let logged = false
         try {
             const todayString = new Date().toISOString().split('T')[0]
             const { error } = await supabase
@@ -560,10 +563,42 @@ function ManualPriceForm({ tenant, onSuccess }) {
                     is_deleted: false
                 }, { onConflict: 'price_date, chicken_type, region' })
             
-            if (error) throw error
+            if (error) {
+                logSupabaseError(error, {
+                    table: 'market_prices',
+                    operation: 'upsert',
+                    component: 'HargaPasar',
+                    actionName: 'market.price.upsert',
+                    metadata: {
+                        region,
+                        price_date: todayString,
+                        chicken_type: 'broiler',
+                        source: 'manual',
+                        operation: 'upsert',
+                    }
+                })
+                logged = true
+                throw error
+            }
             toast.success('Harga pasar diperbarui!')
             onSuccess()
         } catch (err) {
+            if (!logged) {
+                logError({
+                    level: 'error',
+                    source: 'frontend',
+                    component: 'HargaPasar',
+                    actionName: 'market.price.upsert',
+                    error: err,
+                    metadata: {
+                        region,
+                        price_date: new Date().toISOString().split('T')[0],
+                        chicken_type: 'broiler',
+                        source: 'manual',
+                        operation: 'upsert',
+                    }
+                })
+            }
             toast.error(err.message)
         } finally {
             setLoading(false)

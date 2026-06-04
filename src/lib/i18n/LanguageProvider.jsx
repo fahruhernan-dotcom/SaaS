@@ -19,7 +19,7 @@ export function LanguageProvider({ children }) {
     try {
       const stored = localStorage.getItem(LANG_KEY)
       if (stored === 'id' || stored === 'en') return stored
-    } catch (e) {}
+    } catch (_e) { /* ignored */ }
     return DEFAULT_LANG
   })
 
@@ -30,7 +30,7 @@ export function LanguageProvider({ children }) {
         if (updated === 'id' || updated === 'en') {
           setLangState(updated)
         }
-      } catch (e) {}
+      } catch (_e) { /* ignored */ }
     }
     window.addEventListener('ternakos-language-changed', handler)
     window.addEventListener('storage', (e) => {
@@ -47,7 +47,7 @@ export function LanguageProvider({ children }) {
     if (code !== 'id' && code !== 'en') return
     try {
       localStorage.setItem(LANG_KEY, code)
-    } catch (e) {}
+    } catch (_e) { /* ignored */ }
     setLangState(code)
     window.dispatchEvent(new CustomEvent('ternakos-language-changed'))
   }, [])

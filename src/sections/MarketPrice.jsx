@@ -65,19 +65,6 @@ const MarketPrice = ({ activeRole }) => {
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  // Latest day with valid data
-  const latestData = useMemo(() => {
-    if (!trendData || trendData.length === 0) return null;
-    for (let i = trendData.length - 1; i >= 0; i--) {
-      if (trendData[i].buyPrice && trendData[i].sellPrice) {
-        return trendData[i];
-      }
-    }
-    return trendData[trendData.length - 1];
-  }, [trendData]);
-
-
-
   const formatRupiah = (val) => {
     if (val === null || val === undefined) return '-';
     return 'Rp ' + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -93,15 +80,17 @@ const MarketPrice = ({ activeRole }) => {
       return x - Math.floor(x);
     };
     const days = 7;
-    let buy = 19200 + Math.round(pseudo(0) * 1200);
-    let sell = buy + 3000 + Math.round(pseudo(1) * 800);
-    return Array.from({ length: days }, (_, i) => {
+    let currentBuy = 19200 + Math.round(pseudo(0) * 1200);
+    let currentSell = currentBuy + 3000 + Math.round(pseudo(1) * 800);
+    const result = [];
+    for (let i = 0; i < days; i++) {
       const dBuy  = Math.round((pseudo(i * 2 + 2) - 0.45) * 600);
       const dSell = Math.round((pseudo(i * 2 + 3) - 0.45) * 500);
-      buy  = Math.max(17500, Math.min(22000, buy  + dBuy));
-      sell = Math.max(buy + 2500, Math.min(26000, sell + dSell));
-      return { buyPrice: buy, sellPrice: sell };
-    });
+      currentBuy  = Math.max(17500, Math.min(22000, currentBuy  + dBuy));
+      currentSell = Math.max(currentBuy + 2500, Math.min(26000, currentSell + dSell));
+      result.push({ buyPrice: currentBuy, sellPrice: currentSell });
+    }
+    return result;
   }, []);
 
   // Use real trendData if available, otherwise simulated

@@ -13,17 +13,21 @@ import { Loader2 } from 'lucide-react'
 const labelCls = 'block text-[10px] font-extrabold text-[#4B6478] uppercase tracking-wider mb-1.5'
 const inputCls = 'w-full px-3.5 py-3 bg-[#111C24] border border-white/[0.08] rounded-xl text-slate-100 text-[15px] outline-none focus:border-violet-500/50 transition-colors'
 
+const getTodayStr = () => new Date().toISOString().split('T')[0]
+
 export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending }) {
   const isMobile = useIsMobile()
   const isEdit = !!worker
-  const today = new Date().toISOString().split('T')[0]
   const { data: teamMembers = [] } = useAssignableMembers()
 
-  const [form, setForm] = useState({
-    full_name: '', phone: '', join_date: today,
-    base_salary: 0, bonus_per_kg: 0, bonus_threshold_fcr: '',
-    notes: '', status: 'aktif', profile_id: '',
-    salary_type: 'bulanan', pay_day: 1,
+  const [form, setForm] = useState(() => {
+    const today = getTodayStr()
+    return {
+      full_name: '', phone: '', join_date: today,
+      base_salary: 0, bonus_per_kg: 0, bonus_threshold_fcr: '',
+      notes: '', status: 'aktif', profile_id: '',
+      salary_type: 'bulanan', pay_day: 1,
+    }
   })
 
   const teamOptions = [
@@ -35,6 +39,7 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
 
   useEffect(() => {
     if (open) {
+      const today = getTodayStr()
       setForm(worker ? {
         full_name: worker.full_name ?? '',
         phone: worker.phone ?? '',

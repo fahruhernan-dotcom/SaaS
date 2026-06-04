@@ -117,7 +117,7 @@ JIKA PESAN TIDAK JELAS SAMA SEKALI:
 // =============================================================
 // BROKER SECTION
 // =============================================================
-function buildBrokerSection(snapshot) {
+function buildBrokerSection(_snapshot) {
   return `
 ROLE: BROKER AYAM
 Kamu membantu mencatat transaksi jual beli ayam hidup.
@@ -188,7 +188,7 @@ INTENT YANG DIKENALI:
 // =============================================================
 // PETERNAK SECTION
 // =============================================================
-function buildPeternakSection(snapshot) {
+function buildPeternakSection(_snapshot) {
   return `
 ROLE: PETERNAK
 Kamu membantu mencatat data harian kandang, pakan, panen, dan pengeluaran siklus.
@@ -265,7 +265,7 @@ INTENT YANG DIKENALI:
 // =============================================================
 // RPA SECTION
 // =============================================================
-function buildRPASection(snapshot) {
+function buildRPASection(_snapshot) {
   return `
 ROLE: RUMAH POTONG AYAM (RPA)
 Kamu membantu mencatat order pembelian ayam, invoice ke customer, dan produk.

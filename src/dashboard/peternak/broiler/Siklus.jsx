@@ -485,22 +485,21 @@ function CycleCard({ cycle, onInputHarian, onDetail, onClose, onLaporan, onInvoi
 function CloseCycleSheet({ cycle, open, onClose }) {
   const updateStatus = useUpdateCycleStatus()
 
-  const today = new Date().toISOString().split('T')[0]
-  const [form, setForm] = useState({
-    actual_harvest_date: today,
+  const [form, setForm] = useState(() => ({
+    actual_harvest_date: TODAY,
     final_avg_weight_kg: '',
     sell_price_per_kg:   '',
     total_revenue:       0,
     total_cost:          0,
     status:              'harvested',
     notes:               '',
-  })
+  }))
 
   // Reset form when cycle changes
   useEffect(() => {
     if (cycle) {
       setForm({
-        actual_harvest_date: today,
+        actual_harvest_date: TODAY,
         final_avg_weight_kg: '',
         sell_price_per_kg:   '',
         total_revenue:       0,
@@ -509,7 +508,7 @@ function CloseCycleSheet({ cycle, open, onClose }) {
         notes:               '',
       })
     }
-  }, [cycle?.id])
+  }, [cycle])
 
   const setField = (k, v) => setForm(f => ({ ...f, [k]: v }))
 

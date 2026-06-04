@@ -340,7 +340,7 @@ export default function CashFlow() {
         }, 0)
 
         return { chartData: cData, breakdownData: bData, totalTransport: totalTransportCost, totalSusutValue: totalSusutValueValue }
-    }, [data, previousData, selectedPeriod, dateRange, sales, purchases, extras, summary, prevPeriodKey, isLoading])
+    }, [data, previousData, selectedPeriod, dateRange, sales, purchases, extras, summary, prevPeriodKey])
 
     // --- TRANSACTION LIST MERGING ---
     const allTransactions = useMemo(() => {

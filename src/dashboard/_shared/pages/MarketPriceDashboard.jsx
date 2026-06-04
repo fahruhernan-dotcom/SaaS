@@ -258,9 +258,6 @@ export default function MarketPriceDashboard() {
 
   const dedupedPrices = useMemo(() => [...unifiedData].reverse(), [unifiedData])
   const latestRow = dedupedPrices[0] ?? null
-  const prevRow = dedupedPrices[1] ?? null
-  const buyDiff = latestRow && prevRow ? latestRow.avg_buy_price - prevRow.avg_buy_price : 0
-  const sellDiff = latestRow && prevRow ? latestRow.avg_sell_price - prevRow.avg_sell_price : 0
 
   const _avgMargin7d = useMemo(() => {
     const recent = dedupedPrices.slice(0, 7).filter(r => r.broker_margin > 0)
@@ -269,12 +266,6 @@ export default function MarketPriceDashboard() {
   }, [dedupedPrices])
 
   const _latestDelta = trendData?.[trendData.length - 1]?.delta ?? 0
-
-  // Spread: broker's latest avg buy price vs Chickin.id reference
-  const latestTrend = trendData?.[trendData.length - 1]
-  const spreadVsMarket = (latestTrend?.avg_buy_price && latestTrend?.chickin)
-    ? latestTrend.avg_buy_price - latestTrend.chickin
-    : null
 
   return (
     <div className="bg-bg-base text-tx-1 min-h-screen pb-28 relative overflow-hidden">

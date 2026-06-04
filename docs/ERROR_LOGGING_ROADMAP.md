@@ -56,6 +56,7 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Forgot/Reset Password funnels (ForgotPassword.jsx, ResetPassword.jsx) | ✅ | Phase 1 Missing Error Logging |
 | Transaction Wizard & Worker Management (TransaksiWizard.jsx, AnakKandang.jsx) | ✅ | Phase 2 Missing Error Logging |
 | Operational Data Integrity (useCashFlow, TaskSheets, TaskCards, PrediksiHasilPage) | ✅ | Phase 3 Missing Error Logging |
+| Market and Manual Price Updates (Market.jsx, HargaPasar.jsx) | ✅ | Phase 4 Missing Error Logging |
 
 
 ### Peternak verticals
@@ -674,13 +675,39 @@ Close the phase:
 - `ai_pending_entries.insert` → `ai.prediction.save` with `{ conversation_id, batch_id }` metadata
 - **No AI prompts, prediction output, or recommendation text logged**
 
-**New action_names (3):**
+**New action_names (6):**
 - `broker.cashflow.fetch`
+- `broker.cashflow.fetch_by_farm`
+- `broker.cashflow.fetch_by_rpa`
 - `peternak.weight_record.delete_inline`
 - `peternak.health_log.delete_inline`
 - `ai.prediction.save`
 
 **Status:** ✅ DONE (ESLint clean — 0 errors, 0 warnings across all 4 touched files)
+
+---
+
+### Phase 4 Missing Error Logging — Market and Manual Price Updates ✅ DONE
+
+**Scope:** Low-risk market flow files where silent Supabase failures occurred.
+
+**Files instrumented (2):**
+
+`src/dashboard/_shared/pages/Market.jsx` — 1 view increment update site:
+- view_count increment `.update()` -> `market.listing.increment_view`
+- Asynchronous non-blocking write to avoid interrupting seller contact flow.
+- No seller/buyer phone numbers or WhatsApp URL strings logged.
+
+`src/dashboard/_shared/pages/HargaPasar.jsx` — 1 manual price upsert site:
+- upsert price updates -> `market.price.upsert`
+- Standard `logSupabaseError` classification on PostgREST error, and fallback `logError` in outer `catch` block.
+- Toast feedback UI and validation rules fully preserved.
+
+**New action_names (2):**
+- `market.listing.increment_view`
+- `market.price.upsert`
+
+**Status:** ✅ DONE (ESLint clean — 0 errors, 0 warnings across both touched files)
 
 ---
 
