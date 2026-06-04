@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft, Share2,
   Receipt, Wallet, TrendingUp, Package, Zap, Heart, Users, MoreHorizontal,
-  ShoppingCart, Filter, ChevronDown, Scale, Wand2, CheckCircle2,
+  ShoppingCart, Filter, ChevronDown, ChevronUp, Scale, Wand2, CheckCircle2, Check,
 } from 'lucide-react'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { InputNumber } from '@/components/ui/InputNumber'
@@ -386,12 +386,156 @@ function BiayaTab({
   )
 }
 
-// ─── ContainerHelper (self-contained, no Radix) ────────────────────────────────
+// ─── ContainerPresetDropdown ────────────────────────────────────────────────────
+// Premium custom dropdown replacing native <select> for container presets
+
+const CONTAINER_ICONS = {
+  'Ember Kecil (5L)':    { emoji: '🪣', color: 'text-sky-400',    bg: 'bg-sky-500/10',    border: 'border-sky-500/20' },
+  'Ember Sedang (15L)':  { emoji: '🪣', color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20' },
+  'Ember Besar (25L)':   { emoji: '🪣', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+  'Tong Kecil (50L)':    { emoji: '🛢',  color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
+  'Tong Besar (200L)':   { emoji: '🛢',  color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+  'Gerobak Sorong':      { emoji: '🛒', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+  'Karung (25KG)':       { emoji: '🎒', color: 'text-emerald-400',bg: 'bg-emerald-500/10',border: 'border-emerald-500/20' },
+  'Karung (50KG)':       { emoji: '🎒', color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/20' },
+}
+
+function ContainerPresetDropdown({ feedType, preset, onSelect }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [open])
+
+  const selected = CONTAINER_PRESETS.find(p => p.label === preset)
+  const icon = preset ? (CONTAINER_ICONS[preset] || { emoji: '📦', color: 'text-slate-400', bg: 'bg-white/5', border: 'border-white/10' }) : null
+
+  return (
+    <div ref={ref} className="relative flex-1">
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={cn(
+          'w-full flex items-center gap-2.5 px-3.5 py-3 rounded-2xl border transition-all duration-200',
+          open
+            ? 'bg-white/[0.06] border-emerald-500/30 shadow-[0_0_0_3px_rgb(16_185_129/0.08)]'
+            : selected
+              ? 'bg-white/[0.04] border-white/[0.10] hover:border-white/20'
+              : 'bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04]',
+        )}
+      >
+        {/* Icon / placeholder */}
+        {selected ? (
+          <span className={cn('w-7 h-7 rounded-lg flex items-center justify-center text-base shrink-0', icon.bg)}>
+            {icon.emoji}
+          </span>
+        ) : (
+          <span className="w-7 h-7 rounded-lg bg-white/[0.03] border border-dashed border-white/10 flex items-center justify-center text-[#4B6478] shrink-0">
+            <Package size={12} />
+          </span>
+        )}
+
+        {/* Label */}
+        <div className="flex-1 text-left min-w-0">
+          {selected ? (
+            <>
+              <p className="text-[12px] font-bold text-white leading-tight truncate">{selected.label}</p>
+              <p className="text-[10px] text-[#4B6478] leading-none mt-0.5">
+                ±{feedType === 'hijauan' ? selected.hijauan : selected.konsentrat} kg/unit
+              </p>
+            </>
+          ) : (
+            <p className="text-[12px] text-[#4B6478]">Hitung dari wadah <span className="text-[10px]">(opsional)</span></p>
+          )}
+        </div>
+
+        {/* Chevron */}
+        <span className={cn('shrink-0 transition-transform duration-200', open ? 'rotate-180 text-emerald-400' : 'text-[#4B6478]')}>
+          <ChevronDown size={15} />
+        </span>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#0C1319] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)] overflow-hidden">
+          {/* Clear option */}
+          <button
+            type="button"
+            onClick={() => { onSelect(''); setOpen(false) }}
+            className={cn(
+              'w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.04]',
+              !preset ? 'bg-white/[0.04]' : '',
+            )}
+          >
+            <span className="w-6 h-6 rounded-lg bg-white/[0.03] border border-dashed border-white/10 flex items-center justify-center shrink-0">
+              <X size={10} className="text-[#4B6478]" />
+            </span>
+            <span className="text-[11px] text-[#4B6478] italic">Tanpa kalkulasi wadah</span>
+          </button>
+
+          <div className="h-px bg-white/[0.05] mx-3" />
+
+          {/* Preset options */}
+          <div className="py-1 max-h-[280px] overflow-y-auto no-scrollbar">
+            {CONTAINER_PRESETS.map(p => {
+              const ic = CONTAINER_ICONS[p.label] || { emoji: '📦', color: 'text-slate-400', bg: 'bg-white/5', border: 'border-white/10' }
+              const kgHint = feedType === 'hijauan' ? p.hijauan : p.konsentrat
+              const isActive = preset === p.label
+              return (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => { onSelect(p.label); setOpen(false) }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150',
+                    isActive
+                      ? 'bg-emerald-500/[0.08] text-white'
+                      : 'hover:bg-white/[0.04] text-white/80',
+                  )}
+                >
+                  {/* Emoji icon */}
+                  <span className={cn('w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0 border', ic.bg, ic.border)}>
+                    {ic.emoji}
+                  </span>
+
+                  {/* Name + hint */}
+                  <div className="flex-1 min-w-0">
+                    <p className={cn('text-[12px] font-bold leading-tight', isActive ? 'text-white' : '')}>{p.label}</p>
+                    <p className="text-[10px] text-[#4B6478] leading-none mt-0.5">±{kgHint} kg per unit</p>
+                  </div>
+
+                  {/* kg badge */}
+                  <span className={cn(
+                    'shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full border',
+                    isActive ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' : 'bg-white/[0.04] border-white/[0.08] text-[#4B6478]',
+                  )}>
+                    {kgHint} kg
+                  </span>
+
+                  {/* Check */}
+                  {isActive && <Check size={14} className="text-emerald-400 shrink-0" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── ContainerHelper ────────────────────────────────────────────────────────────
 
 function ContainerHelper({ feedType, value: _value, onChange }) {
-  // feedType: 'hijauan' | 'konsentrat'
   const [preset, setPreset] = useState('')
-  const [qty, setQty] = useState('1')
+  const [qty, setQty] = useState(1)
 
   function applyPreset(label, qtyVal) {
     const p = CONTAINER_PRESETS.find(x => x.label === label)
@@ -400,57 +544,131 @@ function ContainerHelper({ feedType, value: _value, onChange }) {
     onChange(kg)
   }
 
-  function handlePreset(e) {
-    const label = e.target.value
+  function handleSelect(label) {
     setPreset(label)
-    applyPreset(label, qty)
+    if (label) applyPreset(label, qty)
+    else onChange('')
   }
 
-  function handleQty(e) {
-    const q = e.target.value
-    setQty(q)
-    applyPreset(preset, q)
+  function changeQty(delta) {
+    const next = Math.max(1, qty + delta)
+    setQty(next)
+    applyPreset(preset, next)
   }
 
   const selected = CONTAINER_PRESETS.find(p => p.label === preset)
   const kgPerUnit = selected ? selected[feedType] : null
-  const displayKg = selected ? (kgPerUnit * (parseFloat(qty) || 1)).toFixed(1) : null
+  const displayKg = selected ? (kgPerUnit * qty).toFixed(1) : null
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
-        <select
-          value={preset}
-          onChange={handlePreset}
-          className="flex-1 appearance-none bg-black/40 border border-white/[0.06] rounded-xl px-3 py-2.5 text-[12px] text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
-        >
-          <option value="" className="bg-[#0C1319]">Pilih wadah... (opsional)</option>
-          {CONTAINER_PRESETS.map(p => (
-            <option key={p.label} value={p.label} className="bg-[#0C1319]">
-              {p.label} · ±{feedType === 'hijauan' ? p.hijauan : p.konsentrat} kg/unit
-            </option>
-          ))}
-        </select>
+      <div className="flex gap-2 items-start">
+        <ContainerPresetDropdown feedType={feedType} preset={preset} onSelect={handleSelect} />
+
+        {/* Qty stepper — only when a preset is chosen */}
         {preset && (
-          <input
-            type="number"
-            min="1"
-            value={qty}
-            onChange={handleQty}
-            className="w-16 bg-black/40 border border-white/[0.06] rounded-xl text-center text-sm font-black text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
-            placeholder="1"
-          />
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-widest">Jml</span>
+            <div className="flex items-center gap-0 bg-white/[0.04] border border-white/[0.08] rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => changeQty(-1)}
+                className="w-8 h-10 flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/[0.06] transition-colors text-base font-black"
+              >
+                −
+              </button>
+              <span className="w-8 h-10 flex items-center justify-center text-[13px] font-black text-white border-x border-white/[0.06]">
+                {qty}
+              </span>
+              <button
+                type="button"
+                onClick={() => changeQty(1)}
+                className="w-8 h-10 flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/[0.06] transition-colors text-base font-black"
+              >
+                +
+              </button>
+            </div>
+          </div>
         )}
       </div>
+
+      {/* Estimate card */}
       {displayKg && (
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 animate-in fade-in slide-in-from-top-1 duration-300">
-          <div className="flex flex-col">
-            <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0.5">Estimasi</span>
+        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/15">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Estimasi Input</span>
             <span className="text-[10px] text-white/40">{qty} × {kgPerUnit} kg</span>
           </div>
-          <div className="flex items-center gap-1.5 text-emerald-400">
-            <Wand2 size={13} className="opacity-60" />
-            <span className="text-lg font-black">{displayKg} kg</span>
+          <div className="flex items-center gap-2 text-emerald-400">
+            <Wand2 size={14} className="opacity-70" />
+            <span className="text-xl font-['Sora'] font-black tracking-tight">{displayKg}</span>
+            <span className="text-[11px] font-normal text-emerald-400/60">kg</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── BatchPillSelect ───────────────────────────────────────────────────────────
+// Compact custom dropdown for batch selection in the context card
+
+function BatchPillSelect({ batches, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [open])
+
+  const selected = batches.find(b => b.id === value) || batches[0]
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={cn(
+          'flex items-center gap-1.5 border-l border-white/[0.06] pl-3 pr-1 py-0.5 transition-all',
+          open ? 'text-emerald-300' : 'text-emerald-400 hover:text-emerald-300',
+        )}
+      >
+        <span className="text-[11px] font-black truncate max-w-[80px]">{selected?.batch_code || '—'}</span>
+        <span className={cn('transition-transform duration-200', open ? 'rotate-180' : '')}>
+          <ChevronDown size={11} className="text-[#4B6478]" />
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 z-50 min-w-[160px] bg-[#0C1319] border border-white/[0.08] rounded-2xl shadow-[0_16px_48px_-8px_rgba(0,0,0,0.8)] overflow-hidden">
+          <div className="py-1">
+            {batches.map(b => {
+              const isActive = b.id === value
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => { onChange(b.id); setOpen(false) }}
+                  className={cn(
+                    'w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors',
+                    isActive ? 'bg-emerald-500/[0.08]' : 'hover:bg-white/[0.04]',
+                  )}
+                >
+                  <div>
+                    <p className={cn('text-[12px] font-bold', isActive ? 'text-emerald-300' : 'text-white')}>{b.batch_code}</p>
+                    {b.total_animals != null && (
+                      <p className="text-[10px] text-[#4B6478] mt-0.5">{b.total_animals} ekor</p>
+                    )}
+                  </div>
+                  {isActive && <Check size={13} className="text-emerald-400 shrink-0" />}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
@@ -552,16 +770,11 @@ function FeedLogSheet({
                   />
                 </div>
                 {isAllBatches && (
-                  <select
-                    required
+                  <BatchPillSelect
+                    batches={batches}
                     value={formBatchId || batches[0]?.id}
-                    onChange={e => setFormBatchId(e.target.value)}
-                    className="appearance-none bg-transparent border-l border-white/[0.06] pl-3 text-[11px] font-black text-emerald-300 focus:outline-none"
-                  >
-                    {batches.map(b => (
-                      <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code}</option>
-                    ))}
-                  </select>
+                    onChange={setFormBatchId}
+                  />
                 )}
               </div>
             </div>
