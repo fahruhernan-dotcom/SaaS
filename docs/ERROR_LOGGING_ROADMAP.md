@@ -52,6 +52,11 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | 404 route | ✅ | 5 |
 | Global capture (ErrorBoundary + window.onerror) | ✅ | 3 |
 | Pre-auth RPC fallback | ✅ | 6.0B |
+| Invite Accept Flow (AcceptInvite.jsx, Invite.jsx) | ✅ | Phase 1 Missing Error Logging |
+| Forgot/Reset Password funnels (ForgotPassword.jsx, ResetPassword.jsx) | ✅ | Phase 1 Missing Error Logging |
+| Transaction Wizard & Worker Management (TransaksiWizard.jsx, AnakKandang.jsx) | ✅ | Phase 2 Missing Error Logging |
+| Operational Data Integrity (useCashFlow, TaskSheets, TaskCards, PrediksiHasilPage) | ✅ | Phase 3 Missing Error Logging |
+
 
 ### Peternak verticals
 
@@ -67,7 +72,7 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Reproduksi | · | · | · | · | · | ✅ | ✅ | ✅ |
 | Pakan / Stok Pakan | ✅ | ⏳ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Listrik & Air | · | · | ✅ | ✅ | ✅ | · | · | ⏳ |
-| Tim / Anak Kandang | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| Tim / Anak Kandang | ✅ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | Laporan | — | — | — | — | — | — | — | — |
 | Akun | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
@@ -90,6 +95,7 @@ Breeding health logs map to "Vaksinasi / Kesehatan" for breeding verticals (no v
 | Kandang / Farms | ✅ | · | · |
 | Pengiriman | ✅ | · | ✅ |
 | Cash Flow | ✅ | · | · |
+| AI Prediksi Hasil | ✅ | · | · |
 | Armada (vehicle + driver) | ✅ | · | · |
 | Simulator | — | · | · |
 | RPA & Piutang | ✅ | · | · |
@@ -419,6 +425,56 @@ Auth / onboarding:
 
 ---
 
+### Phase 1 Missing Error Logging — Critical Auth, Invite, and Setup Farm (2026-06-03)
+
+**Scope:** Adding missing error logging in critical auth, invite, and onboarding files.
+
+**Target areas:**
+- `src/pages/AcceptInvite.jsx` — verifications, current account acceptance, signup/login submissions, and tenant switching.
+- `src/pages/Invite.jsx` — pre-auth token verification checks.
+- `src/pages/ForgotPassword.jsx` — password reset request email dispatch failures.
+- `src/pages/ResetPassword.jsx` — password recovery callback updates.
+- `src/dashboard/peternak/broiler/SetupFarm.jsx` — farm creation and initial cycle setup.
+
+**Expected mutations/validations:** `profiles` query/upsert, `tenant_memberships` upsert, `team_invitations` update, `breeding_cycles` insert.
+
+**Action name patterns:**
+- `auth.invite.verify_code`
+- `auth.invite.accept_current`
+- `auth.invite.register_submit`
+- `auth.invite.login_submit`
+- `auth.invite.switch_tenant`
+- `auth.invite.verify_token`
+- `auth.password.reset_request`
+- `auth.password.reset_submit`
+- `peternak.farm.setup`
+- `peternak.farm.setup_cycle`
+
+**Status:** ✅ DONE (all in-scope files fully instrumented; verified cleanly with 0 eslint errors; strict data privacy constraints enforced).
+
+---
+
+### Phase 2 Missing Error Logging — Transaction Wizard and Worker Management (2026-06-03)
+
+**Scope:** Adding missing error logging in Transaksi Wizard and Anak Kandang worker/payment CRUD files.
+
+**Target areas:**
+- `src/dashboard/_shared/components/TransaksiWizard.jsx` — multi-step transaction writes, auto-registration and central catch logging.
+- `src/dashboard/peternak/broiler/AnakKandang.jsx` — worker creation/update and payment history insert errors.
+
+**Action name patterns:**
+- `broker.transaction.create`
+- `broker.purchase.create.wizard`
+- `broker.sale.create.wizard`
+- `broker.delivery.create.wizard`
+- `peternak.worker.create`
+- `peternak.worker.update`
+- `peternak.worker_payment.create`
+
+**Status:** ✅ DONE (all targets fully instrumented; verified cleanly with 0 eslint errors; strict data privacy constraints enforced).
+
+---
+
 ## Definition of Done (per phase)
 
 A phase is DONE when ALL of:
@@ -589,6 +645,42 @@ Close the phase:
      - Lint Debt Log: append any deferred pre-existing errors found
   10. Commit both files in the same change as the code instrumentation
 ```
+
+---
+
+### Phase 3 Missing Error Logging — Operational Data Integrity ✅ DONE
+
+**Scope:** Four files where silent Supabase failures could cause corrupted dashboard metrics or undetected data-integrity failures.
+
+**Files instrumented (4):**
+
+`src/lib/hooks/useCashFlow.js` — 8 query sites:
+- 7 queries inside `Promise.all` (payments, purchases, deliveries, extra_expenses, sales-unpaid, loss_reports, vehicle_expenses)
+- 1 secondary `sales.select` for the period transaction list
+- All use: `actionName: 'broker.cashflow.fetch'`, `{ table, operation, component: 'useCashFlow' }` metadata
+- Previously silent `|| []` defaults — now throw on failure so React Query surfaces error state
+
+`src/dashboard/peternak/_shared/components/TaskSheets.jsx` — 2 inline soft-delete sites:
+- Weighing entry delete → `peternak.weight_record.delete_inline`
+- Health log delete → `peternak.health_log.delete_inline`
+- Safe metadata: `{ record_id }` only; no eartag, notes, or animal data
+
+`src/dashboard/peternak/_shared/components/TaskCards.jsx` — 2 inline soft-delete sites (card variant):
+- Same actionNames as TaskSheets (`peternak.weight_record.delete_inline`, `peternak.health_log.delete_inline`)
+- Safe metadata: `{ record_id }` only
+
+`src/dashboard/peternak/ai/PrediksiHasilPage.jsx` — 2 AI save sites:
+- `ai_conversations.insert` → `ai.prediction.save` with `{ batch_id }` metadata
+- `ai_pending_entries.insert` → `ai.prediction.save` with `{ conversation_id, batch_id }` metadata
+- **No AI prompts, prediction output, or recommendation text logged**
+
+**New action_names (3):**
+- `broker.cashflow.fetch`
+- `peternak.weight_record.delete_inline`
+- `peternak.health_log.delete_inline`
+- `ai.prediction.save`
+
+**Status:** ✅ DONE (ESLint clean — 0 errors, 0 warnings across all 4 touched files)
 
 ---
 

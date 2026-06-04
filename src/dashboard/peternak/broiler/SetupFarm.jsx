@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { resolveBusinessVertical } from '@/lib/businessModel'
 import { useQueryClient } from '@tanstack/react-query'
@@ -159,7 +160,7 @@ export default function SetupFarm({ onSuccess, onCancel }) {
 
       // 2. Optionally save first cycle
       if (!skipCycle && cycleForm.doc_count) {
-        await supabase.from('breeding_cycles').insert([{
+        const { error: cycleErr } = await supabase.from('breeding_cycles').insert([{
           tenant_id:          tenant.id,
           peternak_farm_id:   farmData.id,
           doc_count:          parseInt(cycleForm.doc_count),
@@ -169,6 +170,17 @@ export default function SetupFarm({ onSuccess, onCancel }) {
           status:             'active',
           cycle_number:       1,
         }])
+
+        if (cycleErr) {
+          logSupabaseError(cycleErr, {
+            table: 'breeding_cycles',
+            operation: 'insert',
+            component: 'SetupFarm',
+            actionName: 'peternak.farm.setup_cycle',
+            tenantId: tenant.id,
+          })
+          throw cycleErr
+        }
       }
 
       toast.success('Kandang berhasil didaftarkan!')
@@ -177,6 +189,18 @@ export default function SetupFarm({ onSuccess, onCancel }) {
       queryClient.invalidateQueries({ queryKey: ['active-cycles'] })
       onSuccess?.()
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'supabase',
+        component: 'SetupFarm',
+        actionName: 'peternak.farm.setup',
+        error: err,
+        metadata: {
+          tenant_id: tenant?.id,
+          livestock_type: livestock,
+          skipCycle,
+        }
+      })
       console.error('SetupFarm error:', err)
       toast.error('Gagal menyimpan data kandang.')
     } finally {

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Mail, ArrowLeft, Loader2, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react'
 import Particles from '@/components/reactbits/Particles'
 import { useAntiSpam } from '@/lib/hooks/useAntiSpam'
+import { logError } from '@/lib/logger/errorLogger'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -47,6 +48,16 @@ export default function ForgotPassword() {
       setSent(true)
       onSubmitted() // start cooldown + record attempt
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'ForgotPassword',
+        actionName: 'auth.password.reset_request',
+        error: err,
+        metadata: {
+          email_length: email?.trim().length,
+        }
+      });
       if (err.message?.includes('rate limit')) {
         setError('Terlalu banyak percobaan. Coba lagi dalam beberapa menit.')
       } else {

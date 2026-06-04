@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { calcNetProfit } from '../format'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 /**
  * Helper to get SQL-ready date range from period string
@@ -135,6 +136,35 @@ export const useCashFlow = (period = 'week') => {
           .lte('expense_date', to)
       ])
 
+      if (paymentsRes.error) {
+        logSupabaseError(paymentsRes.error, { table: 'payments', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw paymentsRes.error
+      }
+      if (purchasesRes.error) {
+        logSupabaseError(purchasesRes.error, { table: 'purchases', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw purchasesRes.error
+      }
+      if (deliveriesRes.error) {
+        logSupabaseError(deliveriesRes.error, { table: 'deliveries', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw deliveriesRes.error
+      }
+      if (extrasRes.error) {
+        logSupabaseError(extrasRes.error, { table: 'extra_expenses', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw extrasRes.error
+      }
+      if (salesRes.error) {
+        logSupabaseError(salesRes.error, { table: 'sales', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw salesRes.error
+      }
+      if (lossRes.error) {
+        logSupabaseError(lossRes.error, { table: 'loss_reports', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw lossRes.error
+      }
+      if (vehicleExpensesRes.error) {
+        logSupabaseError(vehicleExpensesRes.error, { table: 'vehicle_expenses', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw vehicleExpensesRes.error
+      }
+
       const payments = paymentsRes.data || []
       const purchases = purchasesRes.data || []
       const deliveries = deliveriesRes.data || []
@@ -157,7 +187,7 @@ export const useCashFlow = (period = 'week') => {
       ]
 
       // 8. ALL SALES in period (for transaction list & total margin calc)
-      const { data: sales } = await supabase
+      const { data: sales, error: salesAllErr } = await supabase
         .from('sales')
         .select(`
           id, total_revenue, transaction_date, rpa_id, rpa_clients(rpa_name),
@@ -169,6 +199,10 @@ export const useCashFlow = (period = 'week') => {
         .eq('is_deleted', false)
         .gte('transaction_date', from)
         .lte('transaction_date', to)
+      if (salesAllErr) {
+        logSupabaseError(salesAllErr, { table: 'sales', operation: 'select', component: 'useCashFlow', actionName: 'broker.cashflow.fetch' })
+        throw salesAllErr
+      }
 
       // KALKULASI
       const totalCashIn = payments.reduce((s, p) => 

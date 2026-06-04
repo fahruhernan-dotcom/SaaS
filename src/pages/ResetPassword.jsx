@@ -8,6 +8,7 @@ import { Lock, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, ArrowLeft } from
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import Particles from '@/components/reactbits/Particles'
+import { logError } from '@/lib/logger/errorLogger'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -77,6 +78,14 @@ export default function ResetPassword() {
         navigate('/login', { replace: true })
       }, 3000)
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'ResetPassword',
+        actionName: 'auth.password.reset_submit',
+        error: err,
+        metadata: {}
+      });
       if (err.message?.includes('same password')) {
         setError('Password baru tidak boleh sama dengan password lama.')
       } else {

@@ -1,0 +1,597 @@
+﻿[
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 49,
+    "content": "description=\"TernakOS adalah platform manajemen agribisnis Indonesia ΓÇö mendukung peternak broiler, domba, kambing & sapi, broker ayam, broker telur, distributor sembako, dan RPA. Dibangun oleh peternak, untuk seluruh rantai pasok.\""
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 57,
+    "content": "SECTION HERO ΓÇö LOCKED: DO NOT MODIFY"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 322,
+    "content": "pain: 'Pantau FCR, deplesi, dan siklus ΓÇö catat panen per kg dari HP.',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 337,
+    "content": "pain: 'Kelola batch fattening atau program breeding ΓÇö ADG dan laba per ekor tersaji otomatis.',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 352,
+    "content": "pain: 'Beli dari kandang, jual ke RPA ΓÇö margin dan piutang terpantau real-time.',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 367,
+    "content": "pain: 'Distribusi ke puluhan toko ΓÇö stok, invoice, piutang, dan gaji pegawai dalam satu layar.',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 382,
+    "content": "pain: 'Beli dari broker, potong, distribusi ΓÇö hutang dan margin terpantau dari kedua sisi.',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 489,
+    "content": "SECTION FOUNDER ΓÇö LOCKED: DO NOT MODIFY"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 574,
+    "content": "Surakarta, Jawa Tengah ΓÇö Jantung industri peternakan Indonesia"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 604,
+    "content": "Menjadi ekosistem digital peternakan terpercaya di Indonesia ΓÇö tempat setiap peternak, broker, dan mitra bisnis terhubung, bertumbuh, dan bersaing secara adil berdasarkan data yang nyata."
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 650,
+    "content": "{ num: '01', Icon: Eye, title: 'Transparansi', body: 'Kami bangun fitur yang membuat semua angka terlihat jelas ΓÇö HPP, BEP, margin, dan biaya operasional terbuka di depan mata, bukan tersembunyi di balik rumus Excel.' },"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 651,
+    "content": "{ num: '02', Icon: Wrench, title: 'Pragmatisme', body: 'Setiap fitur lahir dari kebutuhan nyata di lapangan. Kami tidak membangun sesuatu karena terdengar keren ΓÇö tapi karena ada peternak atau broker yang butuh itu hari ini.' },"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 652,
+    "content": "{ num: '03', Icon: Heart, title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen ΓÇö mereka yang selama ini tidak punya akses ke tools yang layak, tapi menanggung risiko bisnis yang sama besarnya.' },"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 695,
+    "content": "'Produk berkembang dari feedback nyata di lapangan ΓÇö setiap fitur diuji peternak dan broker aktif sebelum rilis',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 696,
+    "content": "'Dibangun solo oleh founder yang juga peternak ΓÇö bukan tim besar dengan asumsi teoritis',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 697,
+    "content": "'Bootstrap & independent ΓÇö tidak ada investor yang mendikte arah produk kami',"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 755,
+    "content": "desc: 'Marketplace antar pelaku usaha ΓÇö peternak, broker, dan buyer terhubung langsung dalam satu ekosistem. Plus aplikasi Android native untuk akses lebih cepat langsung dari kandang.',"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 35,
+    "content": "Answer ΓÇö SELALU ADA di DOM (tidak pakai open && ...)."
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 169,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'TernakOS mendukung enam kategori bisnis peternakan: (1) Peternak Unggas ΓÇö broiler mandiri dan mitra sistem kemitraan INTI-Plasma. (2) Peternak Sapi ΓÇö fattening (penggemukan) dan breeding (pembibitan). (3) Peternak Domba ΓÇö fattening dan breeding. (4) Peternak Kambing ΓÇö fattening, breeding, dan perah (susu). (5) Broker & Trader ΓÇö broker ayam, broker telur, dan agen sembako/distributor. (6) Industri Hilir ΓÇö rumah potong ayam (RPA). Modul sapi perah sedang dalam pengembangan aktif.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 174,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Ya, TernakOS sepenuhnya mendukung peternak sapi. Tersedia dua modul sapi: (1) Sapi Fattening (Penggemukan) ΓÇö kelola batch sapi masuk, catat pertumbuhan harian, hitung ADG, FCR, R/C ratio, BEP, denah kandang per pen, kartu ternak digital per ekor, dan laporan laba-rugi per batch. (2) Sapi Breeding (Pembibitan) ΓÇö manajemen database herd, IB atau kawin alam, tracking kehamilan, pencatatan kelahiran pedet, dan laporan conception rate serta calving interval.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 184,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Di TernakOS, tiga peran ini memiliki fungsi berbeda: (1) Peternak ΓÇö mengelola kandang/farm, mencatat produksi, pakan, kesehatan ternak, dan performa per siklus/batch. (2) Broker ΓÇö mengelola rantai distribusi: beli dari peternak, jual ke RPA atau pasar, catat hutang/piutang, dan kelola pengiriman. (3) RPA (Rumah Potong Ayam) ΓÇö mengelola order masuk dari broker/pelanggan, stok bahan baku, hutang ke supplier, dan distribusi produk jadi. Satu akun bisa memiliki kombinasi beberapa tipe bisnis sekaligus.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 194,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS bukan hanya untuk kandang ΓÇö platform ini juga mencakup rantai pasok terkait peternakan: (1) Broker Telur ΓÇö POS berbasis grade (Grade A/B/C), manajemen stok per grade, dan pencatatan piutang pelanggan. (2) Agen/Distributor Sembako ΓÇö manajemen stok FIFO multi-item (beras, minyak, gula, dll), laporan penjualan, dan analisis margin. Kedua modul ini berdiri sendiri, sehingga bisa digunakan tanpa harus punya kandang.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 209,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL ΓÇö standar keamanan bank ΓÇö yang memastikan data bisnis kamu tidak bisa diakses oleh pengguna lain meskipun berada di platform yang sama. Setiap bisnis terisolasi penuh.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 214,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus ΓÇö misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard utama tanpa perlu login ulang.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 278,
+    "content": "title=\"FAQ TernakOS ΓÇö Sapi, Domba, Kambing, Broiler, Broker & RPA | Semua yang Perlu Anda Tahu\""
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 317,
+    "content": "{totalVisible} pertanyaan tersedia ΓÇö temukan jawaban seputar fitur, keamanan, harga, dan cara kerja TernakOS."
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 7,
+    "content": "desc: 'Wizard 3 langkah ΓÇö dari beli kandang sampai audit transaksi & kirim nota ke WhatsApp.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 86,
+    "content": "sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli ΓÇö semua dalam 3 langkah. Hemat 2 jam/hari pencatatan.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 100,
+    "content": "a: 'Aplikasi broker ayam adalah sistem digital untuk mencatat pembelian dari kandang, penjualan ke RPA/pasar, pengiriman, dan piutang dalam satu platform. Berbeda dengan buku atau Excel, data otomatis terhitung ΓÇö margin, susut timbangan, dan saldo piutang selalu akurat tanpa hitung manual.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 112,
+    "content": "a: 'Setelah transaksi selesai, klik tombol \"Kirim Nota\" ΓÇö sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi. Pembeli langsung terima detail transaksi tanpa kamu perlu ketik ulang.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 7,
+    "content": "desc: 'Buat invoice penjualan multi-item dalam hitungan detik ΓÇö support satuan ganda, dual harga, dan sistem tempo.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 60,
+    "content": "'Analitik Pareto ΓÇö produk & customer paling menguntungkan',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 70,
+    "content": "sub: 'Kelola ribuan item sembako ΓÇö beras, minyak, telur ΓÇö dalam satu invoice tanpa salah hitung.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 76,
+    "content": "{ before: 'Stok dicatat manual, sering selisih saat opname', after: 'Batch tracking otomatis ΓÇö setiap masuk & keluar tercatat' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 84,
+    "content": "a: 'FIFO (First In First Out) artinya barang yang masuk lebih dulu harus keluar lebih dulu. Ini mencegah barang mengendap dan expired. TernakOS mengelola FIFO per batch otomatis ΓÇö kamu tidak perlu urutkan manual.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 7,
+    "content": "desc: 'Catat penjualan langsung dari grid produk ΓÇö cart, customer, payment status, invoice selesai dalam hitungan detik.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 9,
+    "content": "'Grid produk dengan stok realtime ΓÇö klik untuk tambah ke cart',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 73,
+    "content": "{ before: 'Input penjualan satu-satu di buku, sering salah hitung', after: 'POS grid produk ΓÇö klik, pilih customer, checkout selesai' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 82,
+    "content": "a: 'Setelah transaksi selesai, klik tombol \"Kirim Nota\" ΓÇö sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 26,
+    "content": "desc: 'Tanya langsung: \"Batch mana ADG-nya tertinggal?\" atau \"Ringkas performa bulan ini\" ΓÇö AI merangkum data bisnis kamu dalam hitungan detik.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 31,
+    "content": "desc: 'Beranda interaktif per farm: ringkasan batch aktif, performa keuangan, dan metrik kunci ΓÇö diperbarui otomatis tanpa reload.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 41,
+    "content": "desc: 'Row Level Security (RLS) PostgreSQL ΓÇö data bisnis kamu tidak bisa diakses pengguna lain. Backup otomatis real-time di cloud.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 52,
+    "content": "a: 'Rata-rata kurang dari 15 menit. Daftar, pilih tipe bisnis, undang anggota tim ΓÇö langsung bisa pakai. Tidak perlu instalasi software apapun.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 68,
+    "content": "a: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus ΓÇö misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 72,
+    "content": "a: 'Ada. Mulai dari plan Pro, Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir ΓÇö dengan batasan akses yang sesuai jabatannya. Pada plan Starter, akses dibatasi untuk Owner saja (mandiri).',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 76,
+    "content": "a: 'Bisa. TernakOS berjalan di semua browser modern ΓÇö Chrome, Firefox, Safari, Edge ΓÇö di HP maupun laptop tanpa instalasi apapun.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 80,
+    "content": "a: 'Data tersimpan otomatis di cloud (Supabase PostgreSQL) dengan replikasi real-time. Tidak perlu backup manual ΓÇö data kamu aman meski HP hilang atau rusak.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 7,
+    "content": "desc: 'Setup farm sekali, kelola semua kandang dari satu dashboard ΓÇö dukung model mandiri maupun kemitraan.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 89,
+    "content": "sub: 'Catat FCR, mortalitas, dan vaksinasi harian ΓÇö semua terhitung otomatis. Bandingkan performa antar siklus kandang.\\n\\n*Ayam Layer (Petelur) sedang dikembangkan ΓÇö tersedia segera.*',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 96,
+    "content": "{ before: 'Jadwal vaksinasi lupa atau terlewat', after: 'Jadwal vaksinasi standar Cobb ΓÇö alert otomatis ke HP pengelola' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 132,
+    "content": "a: 'Fitur peternak ayam layer (petelur) sedang dalam pengembangan ΓÇö termasuk recording produksi telur harian, HDP (Hen Day Production), dan laporan produksi. Subscriber Pro akan mendapat akses otomatis saat fitur live.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 19,
+    "content": "desc: 'Catat masuk, pantau performa, tutup batch saat panen ΓÇö tanpa kertas.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 24,
+    "content": "'BEP otomatis ΓÇö tahu kapan balik modal',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 32,
+    "content": "desc: 'Lihat posisi ternak di kandang ΓÇö performa batch terbaca sekilas.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 72,
+    "content": "desc: 'Laba-rugi penggemukan & breeding otomatis ΓÇö stok pakan terpantau sebelum habis.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 86,
+    "content": "sub: 'Dari koloni penggemukan massal hingga tracking reproduksi breeding dan pencatatan susu harian ΓÇö kambing, domba, dan kambing perah didukung dalam satu platform digital tanpa kertas.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 101,
+    "content": "a: 'Penggemukan (Fattening) menggunakan sistem batch koloni ΓÇö kamu input populasi massal per kandang, tracking ADG, FCR, BEP, dan tutup batch saat panen. Breeding menggunakan tracking individu ΓÇö setiap ternak punya kartu dengan silsilah, siklus reproduksi, dan rekam medik sendiri.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 113,
+    "content": "a: 'TernakOS merangkum semua biaya per batch: harga beli ternak masuk, biaya pakan, biaya operasional (listrik, air), biaya kesehatan ΓÇö lalu dikurangi pendapatan penjualan. HPP per ekor, R/C ratio, BEP, dan laba bersih per batch langsung tersedia.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 121,
+    "content": "a: 'Ya. Modul Breeding mendukung tracking IB maupun kawin alam ΓÇö termasuk inseminator, tanggal, status kehamilan, dan pencatatan kelahiran cempe. Conception rate dan calving interval dihitung otomatis dari data yang diinput.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 7,
+    "content": "desc: 'Kelola beberapa batch sekaligus ΓÇö tutup batch lama, buka batch baru tanpa gangguan.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 13,
+    "content": "'BEP otomatis per batch ΓÇö tahu kapan balik modal',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 20,
+    "content": "desc: 'Setiap sapi punya kartu digital ΓÇö dari beli masuk sampai jual keluar.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 32,
+    "content": "desc: 'Visualisasi posisi setiap sapi ΓÇö lihat performa sekilas tanpa buka kartu satu-satu.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 70,
+    "content": "desc: 'Laba-rugi per batch terhitung otomatis ΓÇö tidak perlu Excel lagi.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 85,
+    "content": "sub: 'Sistem lengkap untuk sapi penggemukan & breeding ΓÇö tracking bobot per ekor, penugasan tim anak kandang, reproduksi, hingga laporan keuangan batch otomatis.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 90,
+    "content": "{ before: 'Catat bobot sapi di buku, susah cari histori per ekor', after: 'Kartu ternak digital dengan ADG otomatis ΓÇö prediksi panen realtime' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 100,
+    "content": "a: 'ADG (Average Daily Gain) adalah rata-rata pertambahan bobot harian sapi ΓÇö kunci efisiensi di usaha fattening. TernakOS menghitung ADG otomatis: (Bobot Terkini ΓêÆ Bobot Masuk) ├╖ Jumlah Hari di Farm. Setiap kali kamu input penimbangan baru, ADG dan prediksi tanggal panen langsung diperbarui.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 120,
+    "content": "a: 'R/C Ratio (Revenue to Cost) mengukur efisiensi: R/C > 1 artinya usaha menguntungkan. BEP (Break Even Point) adalah titik balik modal ΓÇö kapan pendapatan penjualan sapi menutupi semua biaya. TernakOS menghitung keduanya otomatis per batch berdasarkan data biaya dan harga jual aktual.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\rpa.js",
+    "line": 56,
+    "content": "sub: 'Timbang, potong, kirim ΓÇö semua tercatat digital dengan laporan harian otomatis.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\rpa.js",
+    "line": 74,
+    "content": "a: 'Data transaksi di TernakOS tercatat transparan untuk semua pihak. Harga, bobot, tanggal, dan status pembayaran tersimpan digital ΓÇö tidak ada ruang untuk dispute karena datanya sama-sama bisa dilihat.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\index.jsx",
+    "line": 238,
+    "content": "Ini bukan janji ΓÇö ini yang kamu rasakan di hari pertama pakai."
+  },
+  {
+    "file": "src\\pages\\harga\\components\\PricingCards.jsx",
+    "line": 153,
+    "content": "≡ƒÆí Punya lebih dari 1 jenis ternak aktif? Tambahkan +Rp&nbsp;99.000/bln per jenis. Maks 2 add-on ΓÇö lebih dari itu otomatis lebih hemat upgrade ke Business."
+  },
+  {
+    "file": "src\\pages\\harga\\data\\pricingData.js",
+    "line": 75,
+    "content": "a: 'TernakBot AI tersedia eksklusif di plan Business ΓÇö unlimited sesi, Analisis Performa, Prediksi Hasil, dan AI Audit Log. Starter dan Pro belum mendapatkan akses TernakBot.',"
+  },
+  {
+    "file": "src\\pages\\harga\\data\\pricingData.js",
+    "line": 246,
+    "content": "'Input harian: mortalitas, pakan, bobot ΓÇö FCR realtime',"
+  },
+  {
+    "file": "src\\pages\\harga\\data\\pricingData.js",
+    "line": 248,
+    "content": "'Jadwal vaksinasi: ND+IB, Gumboro, booster ΓÇö log per dosis',"
+  },
+  {
+    "file": "src\\pages\\harga\\index.jsx",
+    "line": 216,
+    "content": "Upgrade ke Pro untuk unlock fitur lengkap ΓÇö trial {data?.trialDays || 14} hari gratis, tanpa kartu kredit."
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 224,
+    "content": "? `Harga Ayam Broiler Hidup Hari Ini di ${currentProvince} ΓÇö Update ${todayFmt} | TernakOS`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 225,
+    "content": ": `Harga Ayam Broiler Hidup Hari Ini ΓÇö Update Harian Real Data | TernakOS`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 227,
+    "content": "? `Harga ayam broiler hidup hari ini di ${currentProvince} ΓÇö ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 228,
+    "content": ": `Harga ayam broiler hidup hari ini ΓÇö ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 493,
+    "content": "'name': `Harga Ayam Broiler Hidup Harian ΓÇö ${provinceLabel}`,"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 628,
+    "content": ": `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional ΓÇö rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 789,
+    "content": "Dibanding platform lain, kami punya data transaksi nyata broker ΓÇö bukan sekadar scraping."
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 1008,
+    "content": "body: 'Harga beli dan jual pada chart berasal dari transaksi nyata broker yang menggunakan platform ini ΓÇö bukan estimasi atau perhitungan manual. Setiap transaksi masuk ke rata-rata provinsi secara real-time.',"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 1148,
+    "content": "Semakin banyak broker aktif, semakin akurat harga pasar yang ditampilkan ΓÇö untuk kepentingan semua pelaku bisnis ayam broiler."
+  },
+  {
+    "file": "src\\pages\\LandingPage.jsx",
+    "line": 45,
+    "content": "\"description\": cfg.company_description ?? \"Platform SaaS manajemen peternakan #1 di Indonesia ΓÇö mendukung peternak sapi potong, domba, kambing, broiler, broker ayam, broker telur, agen sembako, dan RPA. Fitur: batch fattening, ADG, FCR, piutang, laporan laba-rugi, dan monitoring harga pasar real-time.\","
+  },
+  {
+    "file": "src\\pages\\Login.jsx",
+    "line": 616,
+    "content": "{t('auth_register_now', 'Daftar Sekarang ΓÇö Gratis')}"
+  },
+  {
+    "file": "src\\pages\\Login.jsx",
+    "line": 866,
+    "content": "Daftar Sekarang ΓÇö Gratis"
+  },
+  {
+    "file": "src\\pages\\NotFound.jsx",
+    "line": 23,
+    "content": "message: `404 ΓÇö ${window.location.pathname}`,"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 41,
+    "content": "body: 'Setiap baris data terlindungi oleh RLS Supabase. Tenant A tidak pernah bisa membaca data Tenant B ΓÇö bahkan di level query database.',"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 65,
+    "content": "body: 'Data Anda tidak dijual, tidak dibagi, tidak digunakan untuk iklan. TernakOS berdiri sendiri ΓÇö tidak ada investor yang mendikte kebijakan data kami.',"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 222,
+    "content": "'Anda bisa meminta penghapusan data kapan saja ΓÇö respons dalam 72 jam',"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 225,
+    "content": "'Backup data tersedia ΓÇö ekspor ke Excel/CSV bisa dilakukan kapan saja dari dashboard',"
+  },
+  {
+    "file": "src\\pages\\TermsPage.jsx",
+    "line": 78,
+    "content": "Dengan mendaftar, masuk, atau menggunakan platform TernakOS ΓÇö baik melalui email/password maupun melalui Akun Google (Google Sign-In) ΓÇö Anda secara tegas menyetujui Syarat & Ketentuan ini serta Kebijakan Privasi kami yang berlaku secara bersamaan."
+  },
+  {
+    "file": "src\\pages\\TermsPage.jsx",
+    "line": 267,
+    "content": "<p className=\"mt-4\"><strong className=\"text-white\">Hak TernakOS:</strong> Seluruh elemen platform TernakOS ΓÇö termasuk namun tidak terbatas pada kode sumber, desain antarmuka, algoritma, merek, dan logo ΓÇö adalah milik eksklusif TernakOS Indonesia dan dilindungi oleh hukum hak cipta dan hak kekayaan intelektual Republik Indonesia. Anda tidak diperkenankan menyalin, memodifikasi, mendistribusikan, atau menggunakan elemen tersebut tanpa izin tertulis.</p>"
+  },
+  {
+    "file": "src\\pages\\TermsPage.jsx",
+    "line": 300,
+    "content": "TernakOS berhak mengubah Syarat & Ketentuan ini sewaktu-waktu. Untuk perubahan yang bersifat material ΓÇö seperti perubahan harga, pembatasan fitur, atau kebijakan data ΓÇö kami akan memberikan pemberitahuan melalui:"
+  },
+  {
+    "file": "src\\sections\\Comparison.jsx",
+    "line": 266,
+    "content": "<span className=\"text-[10px] font-mono text-gray-500\">Google Sheets ΓÇö Manual</span>"
+  },
+  {
+    "file": "src\\sections\\Hero.jsx",
+    "line": 164,
+    "content": "Platform pencatatan mandiri & kemitraan untuk peternak ayam, sapi, domba, dan broker. FCR, HPP, mortalitas, hingga penagihan piutang ΓÇö semua dalam satu dasbor."
+  },
+  {
+    "file": "src\\sections\\Hero.jsx",
+    "line": 380,
+    "content": "{mockupTab === 'overview' && \"Dasbor Ternak Domba ΓÇö CV Indo Domba Jaya\"}"
+  },
+  {
+    "file": "src\\sections\\MarketPrice.jsx",
+    "line": 15,
+    "content": "desc: \"Setiap kali broker mencatat transaksi, harga secara otomatis masuk to sistem. Kamu tahu rata-rata harga pasar hari ini ΓÇö bahkan sebelum mulai negosiasi.\","
+  },
+  {
+    "file": "src\\sections\\MarketPrice.jsx",
+    "line": 17,
+    "content": "'Data dari transaksi nyata ΓÇö bukan rumor WA',"
+  },
+  {
+    "file": "src\\sections\\MarketPrice.jsx",
+    "line": 306,
+    "content": "<p className=\"text-[11px] md:text-xs font-bold text-text-primary uppercase tracking-wider\">Data Harga Pasar ΓÇö Regional & Nasional</p>"
+  },
+  {
+    "file": "src\\components\\invoice\\InvoicePreviewModal.jsx",
+    "line": 353,
+    "content": "Download ΓÇö Pro Only"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\DeliveryReceipt.jsx",
+    "line": 225,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\DeliveryReceipt.jsx",
+    "line": 377,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PaymentReceipt.jsx",
+    "line": 202,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PaymentReceipt.jsx",
+    "line": 275,
+    "content": "{'Γ£ô  HUTANG TELAH LUNAS ΓÇö TERIMA KASIH'}"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PaymentReceipt.jsx",
+    "line": 301,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PeternakInvoice.jsx",
+    "line": 241,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PeternakInvoice.jsx",
+    "line": 377,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PurchaseInvoice.jsx",
+    "line": 190,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PurchaseInvoice.jsx",
+    "line": 307,
+    "content": "<Text style={s.paidText}>Γ£ô  PEMBELIAN TELAH DILAKUKAN ΓÇö LUNAS</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PurchaseInvoice.jsx",
+    "line": 331,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\RPATokoInvoice.jsx",
+    "line": 272,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\RPATokoInvoice.jsx",
+    "line": 488,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SaleInvoice.jsx",
+    "line": 223,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SaleInvoice.jsx",
+    "line": 372,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SembakoInvoice.jsx",
+    "line": 272,
+    "content": "<Text style={s.companyDetail}>TernakOS ΓÇö Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SembakoInvoice.jsx",
+    "line": 493,
+    "content": "<Text style={s.footerText}>Powered by TernakOS ΓÇö ternakos.com</Text>"
+  }
+]

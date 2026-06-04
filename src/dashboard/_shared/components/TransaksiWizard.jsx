@@ -8,6 +8,8 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { toast } from 'sonner'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import { logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import WizardStepBeli from './wizard/WizardStepBeli'
 import WizardStepJual from './wizard/WizardStepJual'
 import WizardStepOrder from './wizard/WizardStepOrder'
@@ -201,8 +203,12 @@ export default function TransaksiWizard({ isOpen, onClose }) {
   // ── Submit All ──────────────────────────────────────────────────────────────
   const handleSubmitAll = async () => {
     setSubmitting(true)
+    let purchaseId = null
+    let saleId = null
+    let deliveryId = null
+    let failedStep = null
+
     try {
-      let purchaseId, saleId
       const finalDeliveryCost = step3Data?.enabled ? (Number(step3Data.delivery_cost) || 0) : 0
 
       if (mode === 'buy_first') {
@@ -235,10 +241,18 @@ export default function TransaksiWizard({ isOpen, onClose }) {
              console.warn('[ResilientMode] Skipping purchase ID link.')
              purchaseId = null
            } else {
+             failedStep = 'purchase_create'
+             logSupabaseError(purchaseError, {
+               table: 'purchases',
+               operation: 'insert',
+               component: 'TransaksiWizard',
+               actionName: 'broker.purchase.create.wizard',
+               tenantId: tenant?.id
+             })
              throw purchaseError
            }
         } else {
-          purchaseId = purchase.id
+          purchaseId = purchase?.id || null
         }
 
         // 2. Insert sale (Include delivery_cost from Step 3)
@@ -263,8 +277,18 @@ export default function TransaksiWizard({ isOpen, onClose }) {
           .select()
           .maybeSingle()
 
-        if (saleError) throw saleError
-        saleId = sale.id
+        if (saleError) {
+          failedStep = 'sale_create'
+          logSupabaseError(saleError, {
+            table: 'sales',
+            operation: 'insert',
+            component: 'TransaksiWizard',
+            actionName: 'broker.sale.create.wizard',
+            tenantId: tenant?.id
+          })
+          throw saleError
+        }
+        saleId = sale?.id || null
       } else {
         // order_first: buy first (step2), then link to sale (step1)
         const { data: purchase, error: purchaseError } = await supabase
@@ -294,10 +318,18 @@ export default function TransaksiWizard({ isOpen, onClose }) {
             console.warn('[ResilientMode] Purchases table missing mapping. Skipping link.')
             purchaseId = null
           } else {
+            failedStep = 'purchase_create'
+            logSupabaseError(purchaseError, {
+              table: 'purchases',
+              operation: 'insert',
+              component: 'TransaksiWizard',
+              actionName: 'broker.purchase.create.wizard',
+              tenantId: tenant?.id
+            })
             throw purchaseError
           }
         } else {
-          purchaseId = purchase.id
+          purchaseId = purchase?.id || null
         }
 
         const { data: sale, error: saleError } = await supabase
@@ -321,8 +353,18 @@ export default function TransaksiWizard({ isOpen, onClose }) {
           .select()
           .maybeSingle()
 
-        if (saleError) throw saleError
-        saleId = sale.id
+        if (saleError) {
+          failedStep = 'sale_create'
+          logSupabaseError(saleError, {
+            table: 'sales',
+            operation: 'insert',
+            component: 'TransaksiWizard',
+            actionName: 'broker.sale.create.wizard',
+            tenantId: tenant?.id
+          })
+          throw saleError
+        }
+        saleId = sale?.id || null
       }
 
       // 3. Insert delivery if enabled
@@ -330,26 +372,48 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         // Auto-register manual vehicle if needed
         let finalVehicleId = step3Data.vehicle_id || null
         if (!finalVehicleId && step3Data.vehicle_plate) {
-          const { data: newV } = await supabase.from('vehicles').insert({
+          const { data: newV, error: newVError } = await supabase.from('vehicles').insert({
             tenant_id: tenant.id,
             brand: 'Auto-Registered',
             vehicle_plate: step3Data.vehicle_plate.toUpperCase(),
             vehicle_type: step3Data.vehicle_type || 'Armada',
             ownership: 'lainnya',
             status: 'aktif'
-          }).select('id').single()
+          }).select('id').maybeSingle()
+          if (newVError) {
+            failedStep = 'vehicle_auto_register'
+            logSupabaseError(newVError, {
+              table: 'vehicles',
+              operation: 'insert',
+              component: 'TransaksiWizard',
+              actionName: 'broker.transaction.create',
+              tenantId: tenant?.id
+            })
+            throw newVError
+          }
           if (newV) finalVehicleId = newV.id
         }
 
         // Auto-register manual driver if needed
         let finalDriverId = step3Data.driver_id || null
         if (!finalDriverId && step3Data.driver_name) {
-          const { data: newD } = await supabase.from('drivers').insert({
+          const { data: newD, error: newDError } = await supabase.from('drivers').insert({
             tenant_id: tenant.id,
             full_name: step3Data.driver_name,
             phone: step3Data.driver_phone || null,
             status: 'aktif'
-          }).select('id').single()
+          }).select('id').maybeSingle()
+          if (newDError) {
+            failedStep = 'driver_auto_register'
+            logSupabaseError(newDError, {
+              table: 'drivers',
+              operation: 'insert',
+              component: 'TransaksiWizard',
+              actionName: 'broker.transaction.create',
+              tenantId: tenant?.id
+            })
+            throw newDError
+          }
           if (newD) finalDriverId = newD.id
         }
 
@@ -381,10 +445,26 @@ export default function TransaksiWizard({ isOpen, onClose }) {
 
         console.log('Inserting Delivery Payload:', deliveryPayload)
 
-        const { error: deliveryError } = await supabase.from('deliveries').insert(deliveryPayload)
+        const { data: deliveryData, error: deliveryError } = await supabase
+          .from('deliveries')
+          .insert(deliveryPayload)
+          .select()
+          .maybeSingle()
+
         if (deliveryError) {
           console.error('Delivery Insert Error:', deliveryError)
+          failedStep = 'delivery_create'
+          logSupabaseError(deliveryError, {
+            table: 'deliveries',
+            operation: 'insert',
+            component: 'TransaksiWizard',
+            actionName: 'broker.delivery.create.wizard',
+            tenantId: tenant?.id
+          })
           throw deliveryError
+        }
+        if (deliveryData) {
+          deliveryId = deliveryData.id
         }
       }
 
@@ -412,6 +492,30 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         tenant: tenant,
       })
     } catch (err) {
+      const buyData = mode === 'buy_first' ? step1Data : step2Data
+      const sellData = mode === 'buy_first' ? step2Data : step1Data
+
+      logError({
+        level: 'error',
+        source: 'supabase',
+        component: 'TransaksiWizard',
+        actionName: 'broker.transaction.create',
+        error: err,
+        metadata: {
+          tenant_id: tenant?.id || null,
+          farm_id: buyData?.farm_id || null,
+          rpa_id: sellData?.rpa_id || null,
+          quantity: buyData?.quantity || null,
+          total_weight_kg: buyData?.total_weight_kg || null,
+          transaction_date: buyData?.transaction_date || null,
+          payment_status: sellData?.payment_status || null,
+          purchase_id: purchaseId,
+          sale_id: saleId,
+          delivery_id: deliveryId,
+          partial: Boolean(purchaseId || saleId || deliveryId),
+          failed_step: failedStep
+        }
+      })
       toast.error('Gagal: ' + err.message)
     } finally {
       setSubmitting(false)

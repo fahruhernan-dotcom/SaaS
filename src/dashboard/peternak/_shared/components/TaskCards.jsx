@@ -19,6 +19,7 @@ import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { calculateDistance, getCurrentPosition } from '@/dashboard/peternak/_shared/utils/geofenceUtils'
 import { BCS_OPTIONS, FAMACHA_OPTIONS, FAMACHA_COLOR, BCS_LABEL, WEIGH_METHOD_LABEL } from './ternak/constants'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -779,7 +780,11 @@ export function InteractiveCheckCard({
                                                   ev.stopPropagation()
                                                   try {
                                                      if (entry.record_id) {
-                                                        await supabase.from(hooks.weightTable).update({ is_deleted: true }).eq('id', entry.record_id)
+                                                        const { error: delErr } = await supabase.from(hooks.weightTable).update({ is_deleted: true }).eq('id', entry.record_id)
+                                                        if (delErr) {
+                                                           logSupabaseError(delErr, { table: hooks.weightTable, operation: 'update', component: 'InteractiveCheckCard', actionName: 'peternak.weight_record.delete_inline', metadata: { record_id: entry.record_id } })
+                                                           throw delErr
+                                                        }
                                                      }
                                                      const updatedEntries = weighingEntries.filter(e => e.animal_id !== entry.animal_id)
                                                      const newNotes = JSON.stringify({ 
@@ -825,7 +830,11 @@ export function InteractiveCheckCard({
                                                try {
                                                   if (entry.record_id) {
                                                      const healthTable = hooks.healthTable || hooks.weightTable.replace('_weight_records', '_health_logs')
-                                                     await supabase.from(healthTable).update({ is_deleted: true }).eq('id', entry.record_id)
+                                                     const { error: delErr } = await supabase.from(healthTable).update({ is_deleted: true }).eq('id', entry.record_id)
+                                                     if (delErr) {
+                                                        logSupabaseError(delErr, { table: healthTable, operation: 'update', component: 'InteractiveCheckCard', actionName: 'peternak.health_log.delete_inline', metadata: { record_id: entry.record_id } })
+                                                        throw delErr
+                                                     }
                                                   }
                                                   const updatedEntries = healthEntries.filter(e => e.animal_id !== entry.animal_id)
                                                   const newNotes = JSON.stringify({ 

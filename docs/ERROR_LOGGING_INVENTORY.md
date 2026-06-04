@@ -24,6 +24,9 @@
 | Phase 6.D | RPA (Hutang / Distribusi) | ✅ DONE |
 | Phase 6.E | Admin (Users / Subscriptions / Pricing) | ✅ DONE |
 | Phase 6.F | Cross-vertical (Breeding hooks / Dairy / KD Penggemukan / Broker Ayam components / Market / Invoice / Invite / Peternak components) | ✅ DONE — 55 new action_names across 17 files; Tim mutations + DailyTask + worker CRUD deferred to next sweep |
+| Phase 1 Missing Error Logging | Critical Auth, Invite, and Setup Farm | ✅ DONE |
+| Phase 2 Missing Error Logging | Transaction Wizard and Worker Management | ✅ DONE |
+| Phase 3 Missing Error Logging | Operational Data Integrity (useCashFlow, TaskSheets, TaskCards, PrediksiHasilPage) | ✅ DONE |
 | Broad lint cleanup | Project-wide unused-vars / hook-deps | ⏸️ PAUSED — separate task |
 
 ---
@@ -63,12 +66,16 @@ src/
 │       ├── useSapiBreedingData.js            ← 11 sapi breeding mutations (Phase 6.F)
 │       ├── useMarket.js                      ← 3 market listing mutations (Phase 6.F)
 │       └── (useKandangWorkerData.js, etc.)   ← next sweep backlog — worker CRUD hooks not yet instrumented
+│       ├── useCashFlow.js                    ← 7 Promise.all queries + 1 secondary sales query (Phase 3 Missing Error Logging)
 ├── pages/
+│   ├── AcceptInvite.jsx                      ← verify code, accept current, register/login submit, switch tenant (Phase 1 Missing Error Logging)
+│   ├── ForgotPassword.jsx                    ← reset email request failure (Phase 1 Missing Error Logging)
 │   ├── Login.jsx                             ← OAuth, signIn, profile fetch, unexpected (Phase 6.0)
 │   ├── Register.jsx                          ← OAuth, signUp, invite flow, profile timeout (Phase 6.0)
+│   ├── ResetPassword.jsx                     ← update password failure (Phase 1 Missing Error Logging)
 │   ├── AuthCallback.jsx                      ← hash error, no_session, profile fetch, .catch unexpected (Phase 6.0)
 │   ├── NotFound.jsx                          ← 404 route logging (Phase 5)
-│   └── Invite.jsx                            ← invite accept: profile_update + mark_accepted (Phase 6.F)
+│   └── Invite.jsx                            ← invite accept: profile_update + mark_accepted (Phase 6.F + Phase 1 Missing Error Logging)
 └── dashboard/
     ├── admin/
     │   ├── AdminInfo.jsx                     ← /admin/info dashboard reader (Phase 4)
@@ -78,6 +85,7 @@ src/
     │   ├── components/
     │   │   ├── BusinessModelOverlay.jsx      ← RPC + profile/tenant update + batch + fatal + missing_tenant (Phase 6.0)
     │   │   ├── TutorialOverlay.jsx           ← profiles.tutorials_completed direct UPDATE (Phase 6.0 + post-fix bypass RPC)
+    │   │   ├── TransaksiWizard.jsx           ← purchases + sales + deliveries (Phase 2 Missing Error Logging)
     │   │   ├── FormBeliModal.jsx             ← purchases.insert + farms population partial sync (Phase 6.3)
     │   │   └── forms/
     │   │       └── FormBayarModal.jsx        ← broker payment sequential (Phase 6.1)
@@ -90,9 +98,15 @@ src/
     ├── peternak/
     │   ├── _shared/components/
     │   │   ├── SiklusSheet.jsx               ← breeding_cycles + cycle_expenses partial (Phase 6.1)
-    │   │   └── InputHarianSheet.jsx          ← daily_records.insert (Phase 6.1)
+    │   │   ├── InputHarianSheet.jsx          ← daily_records.insert (Phase 6.1)
+    │   │   ├── TaskSheets.jsx                ← weight_record.delete_inline + health_log.delete_inline (Phase 3 Missing Error Logging)
+    │   │   └── TaskCards.jsx                 ← weight_record.delete_inline + health_log.delete_inline (Phase 3 Missing Error Logging)
     │   └── broiler/
-    │       └── Vaksinasi.jsx                 ← vaccination_records.insert (Phase 6.3)
+    │       ├── Vaksinasi.jsx                 ← vaccination_records.insert (Phase 6.3)
+    │       ├── SetupFarm.jsx                 ← peternak.farm.setup + peternak.farm.setup_cycle (Phase 1 Missing Error Logging)
+    │       └── AnakKandang.jsx               ← farm_workers + worker_payments CRUD (Phase 2 Missing Error Logging)
+    ├── ai/
+    │   └── PrediksiHasilPage.jsx             ← ai_conversations.insert + ai_pending_entries.insert (Phase 3 Missing Error Logging)
     ├── broker/
     │   ├── poultry_broker/
     │   │   ├── Kandang.jsx                   ← farms.create/update/delete (Phase 6.3)
@@ -534,6 +548,53 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 
 ---
 
+### `src/pages/AcceptInvite.jsx`
+**Phase:** Phase 1 Missing Error Logging
+**Coverage:** Invitation code verification, acceptance, registration and login handlers inside the invite flow.
+- edge function `verify-invite-code` call catches and failures -> `auth.invite.verify_code`
+- existing profile query and upsert/membership creation with current account -> `auth.invite.accept_current`
+- `auth.signUp` and invitations update -> `auth.invite.register_submit`
+- `auth.signInWithPassword`, profiles, and invitations update -> `auth.invite.login_submit`
+- tenant switcher profile/membership update -> `auth.invite.switch_tenant`
+
+**Action names:**
+- `auth.invite.verify_code`
+- `auth.invite.accept_current`
+- `auth.invite.register_submit`
+- `auth.invite.login_submit`
+- `auth.invite.switch_tenant`
+
+**Source:** `auth` / `supabase`
+**Notes:** Never logs passwords, recovery/invite tokens, email addresses, or full sessions. Metadata holds safe flags (`token_length`, `tenant_id`, `invitation_role`).
+
+---
+
+### `src/pages/ForgotPassword.jsx`
+**Phase:** Phase 1 Missing Error Logging
+**Coverage:** Password reset request email dispatch failures.
+- `supabase.auth.resetPasswordForEmail` failure -> `auth.password.reset_request`
+
+**Action names:**
+- `auth.password.reset_request`
+
+**Source:** `auth` (uses pre-auth fallback)
+**Notes:** Never logs email addresses or recovery tokens. Logs `email_length` only.
+
+---
+
+### `src/pages/ResetPassword.jsx`
+**Phase:** Phase 1 Missing Error Logging
+**Coverage:** Password recovery callback submission.
+- `supabase.auth.updateUser` password update failure -> `auth.password.reset_submit`
+
+**Action names:**
+- `auth.password.reset_submit`
+
+**Source:** `auth` (uses pre-auth fallback)
+**Notes:** Never logs the actual password or session token in metadata.
+
+---
+
 ### `src/pages/AuthCallback.jsx`
 **Phase:** 6.0
 **Coverage:**
@@ -563,6 +624,20 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 
 **Source:** `not_found`, level `warning`
 **Notes:** SSG-safe (`typeof window !== 'undefined'` guard). Logs `path`, `search`, `referrer` in metadata.
+
+---
+
+### `src/dashboard/_shared/components/TransaksiWizard.jsx`
+**Phase:** Phase 2 Missing Error Logging
+**Coverage:** Multi-step transaction writes (purchases, sales, deliveries, and vehicle/driver auto-registration).
+- `purchases.insert` -> `broker.purchase.create.wizard`
+- `sales.insert` -> `broker.sale.create.wizard`
+- `vehicles.insert` (auto-register) -> `broker.transaction.create` with `failed_step: 'vehicle_auto_register'`
+- `drivers.insert` (auto-register) -> `broker.transaction.create` with `failed_step: 'driver_auto_register'`
+- `deliveries.insert` -> `broker.delivery.create.wizard`
+- Outer catch: `broker.transaction.create` (logError with metadata including partial commit indicators)
+
+**Notes:** If a step fails, the outer catch will log the partial status of the transaction (`partial: true/false`, `purchase_id`, `sale_id`, `delivery_id`).
 
 ---
 
@@ -726,6 +801,74 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 - `peternak.vaccination.create`
 
 **Notes:** Logs added before existing `throw error` — toast in outer catch unchanged. Vaksinasi is broiler-specific (not yet generalized to other peternak verticals).
+
+---
+
+### `src/lib/hooks/useCashFlow.js`
+**Phase:** Phase 3 Missing Error Logging
+**Coverage:** 7 core cash-flow queries + 1 secondary sales query (8 total).
+- `payments.select` → `broker.cashflow.fetch`
+- `purchases.select` → `broker.cashflow.fetch`
+- `deliveries.select` → `broker.cashflow.fetch`
+- `extra_expenses.select` → `broker.cashflow.fetch`
+- `sales.select` (unpaid, piutang) → `broker.cashflow.fetch`
+- `loss_reports.select` → `broker.cashflow.fetch`
+- `vehicle_expenses.select` → `broker.cashflow.fetch`
+- `sales.select` (all period) → `broker.cashflow.fetch`
+
+**Notes:** Previously these queries silently defaulted to `[]` on failure, causing corrupted dashboard metrics. Now each checks the `.error` field, calls `logSupabaseError` with `{ table, operation, component, actionName }`, and throws so React Query surfaces the error to the UI.
+
+---
+
+### `src/dashboard/peternak/_shared/components/TaskSheets.jsx`
+**Phase:** Phase 3 Missing Error Logging
+**Coverage:** Two inline soft-delete buttons inside `CompleteTaskSheet`.
+- Weighing entry delete → `peternak.weight_record.delete_inline`
+- Health log delete → `peternak.health_log.delete_inline`
+
+**Action names:**
+- `peternak.weight_record.delete_inline`
+- `peternak.health_log.delete_inline`
+
+**Notes:** Safe metadata = `{ record_id }` only. No notes, eartag, or animal data logged. If the Supabase update fails, `logSupabaseError` is called then the error is re-thrown so the outer `catch (_err)` shows the generic toast (`'Gagal menghapus data'`). Toast UX preserved.
+
+---
+
+### `src/dashboard/peternak/_shared/components/TaskCards.jsx`
+**Phase:** Phase 3 Missing Error Logging
+**Coverage:** Two inline soft-delete buttons inside `InteractiveCheckCard` (the card variant of the same flow).
+- Weighing entry delete → `peternak.weight_record.delete_inline`
+- Health log delete → `peternak.health_log.delete_inline`
+
+**Action names:**
+- `peternak.weight_record.delete_inline`
+- `peternak.health_log.delete_inline`
+
+**Notes:** Identical pattern to `TaskSheets.jsx`. Same actionNames are intentionally shared between the two components as they are the same logical operation. Safe metadata policy: `{ record_id }` only.
+
+---
+
+### `src/dashboard/peternak/ai/PrediksiHasilPage.jsx`
+**Phase:** Phase 3 Missing Error Logging
+**Coverage:** Two-step AI save flow in `saveMutation.mutationFn`.
+- `ai_conversations.insert` → `ai.prediction.save`
+- `ai_pending_entries.insert` → `ai.prediction.save`
+
+**Action names:**
+- `ai.prediction.save`
+
+**Notes:** Metadata is strictly limited to `{ batch_id }` for the conversation step and `{ conversation_id, batch_id }` for the entry step. **No AI prompt text, prediction output, recommendation text, or raw model response is logged.** The existing `onError` toast (`'Gagal menyimpan prediksi'`) is fully preserved.
+
+---
+
+### `src/dashboard/peternak/broiler/AnakKandang.jsx`
+**Phase:** Phase 2 Missing Error Logging
+**Coverage:** Worker CRUD (create/update) and worker payment records.
+- `farm_workers.insert` -> `peternak.worker.create`
+- `farm_workers.update` -> `peternak.worker.update`
+- `worker_payments.insert` -> `peternak.worker_payment.create`
+
+**Notes:** Generic toasts are used to keep database error messages away from the user. Logs use safe metadata (`worker_id`, `peternak_farm_id`, `base_salary`, `bonus_per_kg`, `payment_type`, `payment_date`, `amount`) and avoid logging worker name or phone.
 
 ---
 
@@ -898,8 +1041,6 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 - DB triggers (out of scope) handle stock deduction + customer stats, fired on `egg_sale_items` insert. Partial commit case (sale row + no items) leaves stock unreconciled — `metadata.partial: true, step: 'sale_items_insert', sale_id, item_count` makes superadmin reconciliation possible.
 - No raw cart payload logged — only `sale_id` (UUID) + `item_count` (number).
 - Outer `catch (err)` keeps the existing `Transaksi gagal: ...` toast intact.
-
----
 
 ---
 
@@ -1100,14 +1241,18 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 ---
 
 ### `src/pages/Invite.jsx`
-**Phase:** 6.F
+**Phase:** 6.F + Phase 1 Missing Error Logging
 **Coverage:** Invite accept flow -- two sequential mutations in `handleAcceptInvite`.
-
-**Action names:**
 - `invite.accept.profile_update` -- `profiles.update` (write name + user_type)
 - `invite.accept.mark_accepted` -- `team_invitations.update status='accepted'`
+- `rpc('get_invitation_by_token')` check and catches -> `auth.invite.verify_token`
 
-**Notes:** Both use `logSupabaseError` and re-throw. No invite code or OTP token is logged. `component: 'Invite'`.
+**Action names:**
+- `invite.accept.profile_update`
+- `invite.accept.mark_accepted`
+- `auth.invite.verify_token`
+
+**Notes:** Uses `logSupabaseError` for authenticated mutations and `logError` (with pre-auth gateway `source: 'auth'`) for token verification checks. No invite code or OTP token is logged (metadata restricted to safe fields like `token_length`). `component: 'Invite'`.
 
 ---
 
@@ -1265,6 +1410,14 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `auth.callback_unexpected` | `src/pages/AuthCallback.jsx` | 6.0 | Catch-all for promise chain throws (prevents blank-page hang) |
 | `auth.fetch_memberships` | `src/lib/hooks/useAuth.jsx` | 6.2 | tenant_memberships SELECT failure |
 | `auth.fetch_profiles` | `src/lib/hooks/useAuth.jsx` | 6.2 | profiles SELECT failure during auth bootstrap |
+| `auth.invite.accept_current` | `src/pages/AcceptInvite.jsx` | Phase 1 Missing Error Logging | existing profile query and upsert/membership creation with current account |
+| `auth.invite.login_submit` | `src/pages/AcceptInvite.jsx` | Phase 1 Missing Error Logging | signInWithPassword, profiles, and invitations update |
+| `auth.invite.register_submit` | `src/pages/AcceptInvite.jsx` | Phase 1 Missing Error Logging | signUp and invitations update |
+| `auth.invite.switch_tenant` | `src/pages/AcceptInvite.jsx` | Phase 1 Missing Error Logging | tenant switcher profile/membership update |
+| `auth.invite.verify_code` | `src/pages/AcceptInvite.jsx` | Phase 1 Missing Error Logging | edge function verify-invite-code call catches and failures |
+| `auth.invite.verify_token` | `src/pages/Invite.jsx` | Phase 1 Missing Error Logging | rpc('get_invitation_by_token') check and catches |
+| `auth.password.reset_request` | `src/pages/ForgotPassword.jsx` | Phase 1 Missing Error Logging | resetPasswordForEmail failure |
+| `auth.password.reset_submit` | `src/pages/ResetPassword.jsx` | Phase 1 Missing Error Logging | updateUser password update failure |
 | `breeding.animal.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_animals.insert` |
 | `breeding.animal.update` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_animals.update` |
 | `breeding.birth.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_births.insert` |
@@ -1277,6 +1430,7 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `breeding.weight.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_weight_records.insert` |
 | `broker.delivery.fetch` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | Initial deliveries select for the update flow |
 | `broker.delivery.update` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | deliveries.update (status, arrived count/weight, mortality) |
+| `broker.delivery.create.wizard` | `src/dashboard/_shared/components/TransaksiWizard.jsx` | Phase 2 Missing Error Logging | deliveries.insert (in Transaksi Wizard) |
 | `broker.driver.create` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | drivers.insert (new driver) |
 | `broker.driver.delete` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | drivers.update is_deleted=true (soft delete) |
 | `broker.driver.update` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | drivers.update (edit existing) |
@@ -1288,6 +1442,7 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `broker.notification.create` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | "Pengiriman Tiba" notification insert |
 | `broker.purchase.create` | `src/dashboard/_shared/components/FormBeliModal.jsx` | 6.3 | purchases.insert |
 | `broker.purchase.create.farm_sync` | `src/dashboard/_shared/components/FormBeliModal.jsx` | 6.3 | farms.update population sync after purchase (partial commit flag) |
+| `broker.purchase.create.wizard` | `src/dashboard/_shared/components/TransaksiWizard.jsx` | Phase 2 Missing Error Logging | purchases.insert (in Transaksi Wizard) |
 | `broker.sale.delivery_sync` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | sales.total_revenue cumulative recompute after delivery arrival |
 | `broker.vehicle.create` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | vehicles.insert (new vehicle) |
 | `broker.vehicle.delete` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | vehicles.update is_deleted=true (soft delete) |
@@ -1309,6 +1464,8 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `broker.rpa.update` | `src/dashboard/broker/poultry_broker/RPA.jsx` + `RPADetail.jsx` | 6.F | rpa_clients.update |
 | `broker.sale.bulk_mark_paid` | `src/dashboard/broker/poultry_broker/Beranda.jsx` | 6.F | sales.update payment_status='lunas' loop |
 | `broker.sale.create` | `src/dashboard/_shared/components/FormJualModal.jsx` | 6.F | sales.insert (broker sale record creation) |
+| `broker.sale.create.wizard` | `src/dashboard/_shared/components/TransaksiWizard.jsx` | Phase 2 Missing Error Logging | sales.insert (in Transaksi Wizard) |
+| `broker.transaction.create` | `src/dashboard/_shared/components/TransaksiWizard.jsx` | Phase 2 Missing Error Logging | Overall multi-step transaction write status and vehicle/driver registration |
 | `dairy.animal.add` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_animals.insert` |
 | `dairy.inventory.update` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_transactions.insert` |
 | `dairy.inventory.update.stock_sync` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_inventory.update` qty sync after transaction (partial commit) |
@@ -1402,7 +1559,8 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.farm.create` | `src/lib/hooks/usePeternakData.js` | 6.F | `peternak_farms.insert` |
 | `peternak.farm.delete` | `src/lib/hooks/usePeternakData.js` | 6.F | `peternak_farms.update is_deleted=true` |
 | `peternak.cycle_expense.add` | `src/dashboard/peternak/broiler/LaporanSiklus.jsx` | 6.F | cycle_expenses.insert (AddExpenseSheet in cycle report page) |
-| `peternak.farm.setup` | `src/dashboard/peternak/broiler/SetupFarm.jsx` | 6.F | peternak_farms.insert (first-run onboarding setup; distinct from peternak.farm.create hook) |
+| `peternak.farm.setup` | `src/dashboard/peternak/broiler/SetupFarm.jsx` | 6.F + Phase 1 Missing Error Logging | peternak_farms.insert (first-run onboarding setup) and general catch |
+| `peternak.farm.setup_cycle` | `src/dashboard/peternak/broiler/SetupFarm.jsx` | Phase 1 Missing Error Logging | breeding_cycles.insert check inside setup flow |
 | `peternak.farm.update` | `src/lib/hooks/usePeternakData.js` | 6.F | `peternak_farms.update` |
 | `peternak.farm_ops_cost.create` | `src/lib/hooks/usePeternakTaskData.js` | 6.B | farm-wide Listrik & Air ops cost insert (split across active batches) |
 | `peternak.farm_ops_cost.delete` | `src/lib/hooks/usePeternakTaskData.js` | 6.B | farm-wide Listrik & Air ops cost soft-delete |
@@ -1428,6 +1586,9 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.sale.delete.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals status='active' revert after sale soft-delete (partial commit) |
 | `peternak.sale.update` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | sales.update (edit penjualan row) |
 | `peternak.vaccination.create` | `src/dashboard/peternak/broiler/Vaksinasi.jsx` | 6.3 | vaccination_records.insert |
+| `peternak.worker.create` | `src/dashboard/peternak/broiler/AnakKandang.jsx` | Phase 2 Missing Error Logging | farm_workers.insert |
+| `peternak.worker.update` | `src/dashboard/peternak/broiler/AnakKandang.jsx` | Phase 2 Missing Error Logging | farm_workers.update |
+| `peternak.worker_payment.create` | `src/dashboard/peternak/broiler/AnakKandang.jsx` | Phase 2 Missing Error Logging | worker_payments.insert |
 | `peternak.weight_record.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.insert |
 | `peternak.weight_record.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.latest_weight_kg sync after weigh-in (partial commit) |
 | `peternak.weight_record.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.update is_deleted=true |

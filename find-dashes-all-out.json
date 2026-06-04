@@ -1,0 +1,2057 @@
+[
+  {
+    "file": "src\\components\\invoice\\InvoicePreviewModal.jsx",
+    "line": 353,
+    "content": "Download — Pro Only"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\DeliveryReceipt.jsx",
+    "line": 225,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\DeliveryReceipt.jsx",
+    "line": 377,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PaymentReceipt.jsx",
+    "line": 202,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PaymentReceipt.jsx",
+    "line": 275,
+    "content": "{'✓  HUTANG TELAH LUNAS — TERIMA KASIH'}"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PaymentReceipt.jsx",
+    "line": 301,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PeternakInvoice.jsx",
+    "line": 241,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PeternakInvoice.jsx",
+    "line": 377,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PurchaseInvoice.jsx",
+    "line": 190,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PurchaseInvoice.jsx",
+    "line": 307,
+    "content": "<Text style={s.paidText}>✓  PEMBELIAN TELAH DILAKUKAN — LUNAS</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\PurchaseInvoice.jsx",
+    "line": 331,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\RPATokoInvoice.jsx",
+    "line": 272,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\RPATokoInvoice.jsx",
+    "line": 488,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SaleInvoice.jsx",
+    "line": 223,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SaleInvoice.jsx",
+    "line": 372,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SembakoInvoice.jsx",
+    "line": 272,
+    "content": "<Text style={s.companyDetail}>TernakOS — Platform Manajemen Peternakan</Text>"
+  },
+  {
+    "file": "src\\components\\invoice\\templates\\SembakoInvoice.jsx",
+    "line": 493,
+    "content": "<Text style={s.footerText}>Powered by TernakOS — ternakos.com</Text>"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminBeranda.jsx",
+    "line": 169,
+    "content": "? `${planExpiredCount} sudah expired — belum downgrade`"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminBeranda.jsx",
+    "line": 203,
+    "content": "PERTUMBUHAN TENANT — 6 BULAN"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminPricing.jsx",
+    "line": 679,
+    "content": "ADD-ON JENIS TERNAK — PETERNAK PRO"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminPricing.jsx",
+    "line": 1143,
+    "content": "Harga yang terdeteksi outlier (&gt;40% deviasi) — perlu persetujuan manual"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminSettings.jsx",
+    "line": 613,
+    "content": "Berlaku untuk semua vertikal — global per plan"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminSettings.jsx",
+    "line": 705,
+    "content": "<p className=\"text-[12px] font-bold text-[#94A3B8]\">Gratis Selamanya — tidak ada trial</p>"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminSubscriptions.jsx",
+    "line": 202,
+    "content": "toast.warning('Invoice tidak dapat dibatalkan — status bukan pending.')"
+  },
+  {
+    "file": "src\\dashboard\\admin\\AdminUsers.jsx",
+    "line": 829,
+    "content": "{detailSub.status === 'trial' ? `Trial Berakhir (${detailSub.daysLeft} Hari)` : detailSub.status === 'expired' ? 'Expired — Perlu Renewal' : 'Aktif'}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\ai\\AIChatBubble.jsx",
+    "line": 22,
+    "content": "content: 'Halo! Ceritakan transaksimu — beli, jual, bayar, atau kirim ayam.\\nAku yang catat ke sistem.',"
+  },
+  {
+    "file": "src\\dashboard\\broker\\egg_broker\\brokerTelurTutorialSteps.js",
+    "line": 8,
+    "content": "desc: 'Platform manajemen broker telur — kelola stok, jual via POS, dan pantau supplier Anda dari satu tempat.',"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\Armada.jsx",
+    "line": 1266,
+    "content": "Catat Biaya — {vehicle?.vehicle_plate}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\Beranda.jsx",
+    "line": 1304,
+    "content": "<p className=\"text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]\">Tren Harga Pasar — {province}</p>"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\brokerAyamTutorialSteps.js",
+    "line": 8,
+    "content": "desc: 'Platform manajemen broker ayam — catat transaksi beli/jual, kelola armada pengiriman, dan pantau performa bisnis Anda secara real-time.',"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\CashFlow.jsx",
+    "line": 524,
+    "content": "{alert.rpa_clients?.rpa_name} — {alert.urgency === 'red' ? `jatuh tempo ${alert.daysUntilDue} hari lagi` : `belum bayar ${alert.daysSinceTx} hari`}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\CashFlow.jsx",
+    "line": 612,
+    "content": "<span className=\"text-[10px] font-black uppercase tracking-widest text-red-400 bg-red-400/10 px-2 py-0.5 rounded\">Defisit — piutang belum cair</span>"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\CashFlow.jsx",
+    "line": 863,
+    "content": "{(data?.proyeksiNet || 0) >= 0 ? \"Bisnis Sehat — Tagih piutang sebelum beli lagi\" : \"Perhatikan Likuiditas — Proyeksi Masih Defisit\"}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\pengiriman\\LossCard.jsx",
+    "line": 168,
+    "content": "<p className={cn(\"font-sans font-normal text-slate-500 uppercase leading-tight\", \"text-[9px]\")}>Rp 0 — tdk pengaruhi revenue</p>"
+  },
+  {
+    "file": "src\\dashboard\\broker\\poultry_broker\\Transaksi.jsx",
+    "line": 878,
+    "content": "title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis — Upgrade ke Pro' : undefined}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoCreateInvoiceSheet.jsx",
+    "line": 620,
+    "content": "toast.error(`Stok ${prod?.product_name} tidak cukup — tersedia ${available} ${prod?.unit ?? 'unit'}`)"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoCreateInvoiceSheet.jsx",
+    "line": 716,
+    "content": "STEP 0 — Pilih Toko"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoCreateInvoiceSheet.jsx",
+    "line": 852,
+    "content": "STEP 1 — Input Produk"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoCreateInvoiceSheet.jsx",
+    "line": 931,
+    "content": "STEP 2 — Pengiriman"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoCreateInvoiceSheet.jsx",
+    "line": 1117,
+    "content": "STEP 3 — Summary & Payment"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoCreateInvoiceSheet.jsx",
+    "line": 1179,
+    "content": "Sisa kelebihan {formatIDR((editSale.paid_amount || 0) - totalAmount)} — invoice akan ditandai <strong>LUNAS</strong>."
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoDeliveryShared.jsx",
+    "line": 680,
+    "content": "label: `${s.invoice_number} — ${s.sembako_customers?.customer_name || s.customer_name || 'Umum'}`,"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\components\\SembakoDeliveryShared.jsx",
+    "line": 758,
+    "content": "• {item.product_name} — {item.quantity} {item.unit}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\Penjualan.jsx",
+    "line": 177,
+    "content": "title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis — Upgrade ke Pro' : undefined}"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\sembakoTutorialSteps.js",
+    "line": 8,
+    "content": "desc: 'Platform manajemen distributor sembako — buat invoice, kelola gudang, dan pantau pengiriman ke toko-toko Anda.',"
+  },
+  {
+    "file": "src\\dashboard\\broker\\sembako_broker\\TokoSupplierDetail.jsx",
+    "line": 510,
+    "content": "✅ Pas — hutang akan lunas setelah pembayaran ini"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\AnalisisPerformaPage.jsx",
+    "line": 147,
+    "content": "const dashIdx  = cleaned.indexOf(' — ')"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\AnalisisPerformaPage.jsx",
+    "line": 220,
+    "content": "<p className=\"font-black text-white text-[15px] mb-1\">Analisis Performa — Pro</p>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\AnalisisPerformaPage.jsx",
+    "line": 311,
+    "content": "'1. [TINGGI] Judul singkat — Penjelasan 1 kalimat.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\AnalisisPerformaPage.jsx",
+    "line": 312,
+    "content": "'2. [SEDANG] Judul singkat — Penjelasan 1 kalimat.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\AnalisisPerformaPage.jsx",
+    "line": 313,
+    "content": "'3. [RENDAH] Judul singkat — Penjelasan 1 kalimat.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\PrediksiHasilPage.jsx",
+    "line": 225,
+    "content": "<p className=\"font-black text-white text-[15px] mb-1\">Prediksi Hasil — Business</p>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\ai\\usePeternakChat.js",
+    "line": 16,
+    "content": "content: 'Halo! Ceritakan catatan harianmu — pakan, timbang, mati, atau pengeluaran. Aku yang catat.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\AnakKandang.jsx",
+    "line": 702,
+    "content": "Riwayat Bayar — {worker.full_name}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 222,
+    "content": "list.push({ type: 'danger', msg: `${farmName}: Hari ke-${age} — sudah melewati target panen (32 hari)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 227,
+    "content": "list.push({ type: 'danger', msg: `${farmName}: Mortalitas kumulatif ${mort.toFixed(1)}% — sangat tinggi (>5%)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 229,
+    "content": "list.push({ type: 'warning', msg: `${farmName}: Mortalitas kumulatif ${mort.toFixed(1)}% — perlu perhatian (>3%)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 237,
+    "content": "list.push({ type: 'danger', msg: `${farmName}: Mortalitas hari ini ${dailyMortPct.toFixed(2)}% — KRITIS (>0.5%/hari)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 239,
+    "content": "list.push({ type: 'warning', msg: `${farmName}: Mortalitas hari ini ${dailyMortPct.toFixed(2)}% — waspada (>0.3%/hari)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 250,
+    "content": "list.push({ type: 'warning', msg: `${farmName}: BB ${avgWGram.toFixed(0)}g — di bawah Cobb 500 hari ke-${age} (target ${cobbTarget}g)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 257,
+    "content": "list.push({ type: 'warning', msg: `${farmName}: FCR ${fcr.toFixed(2)} — efisiensi pakan rendah, periksa manajemen pakan` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 263,
+    "content": "list.push({ type: 'danger', msg: `${farmName}: IP Score ${Math.round(ip)} — performa buruk (<300), evaluasi manajemen` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 265,
+    "content": "list.push({ type: 'warning', msg: `${farmName}: IP Score ${Math.round(ip)} — performa di bawah rata-rata (target ≥350)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 278,
+    "content": "list.push({ type: 'danger', msg: `${farmName}: Vaksin ${sched.name} TERLAMBAT — seharusnya hari ke-${sched.windowStart}–${sched.windowEnd}` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 711,
+    "content": "IP Score — Index Performa"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 762,
+    "content": "const mitraInfo = farm.mitra_company ? ` — ${farm.mitra_company}` : ''"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Beranda.jsx",
+    "line": 806,
+    "content": "{progress >= 100 ? 'Siap panen! 🎉' : `${progress}% — ${daysLeft} hari lagi`}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 205,
+    "content": "{progress >= 100 ? 'Siap panen! 🎉' : `${progress}% — ${daysLeft} hari lagi`}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 319,
+    "content": "if (age > 35) list.push({ type: 'danger', msg: `Hari ke-${age} — melewati target panen 32 hari` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 325,
+    "content": "if (dailyPct > 0.5) list.push({ type: 'danger',  msg: `Mortalitas hari ini ${dailyPct.toFixed(2)}% — KRITIS (>0.5%/hari)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 326,
+    "content": "else if (dailyPct > 0.3) list.push({ type: 'warning', msg: `Mortalitas hari ini ${dailyPct.toFixed(2)}% — waspada (>0.3%)` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 330,
+    "content": "if (mortPct > 5)      list.push({ type: 'danger',  msg: `Mortalitas kumulatif ${mortPct.toFixed(1)}% — sangat tinggi` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 331,
+    "content": "else if (mortPct > 3) list.push({ type: 'warning', msg: `Mortalitas kumulatif ${mortPct.toFixed(1)}% — perlu perhatian` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\FarmBeranda.jsx",
+    "line": 334,
+    "content": "if (fcr !== null && fcr >= 1.85) list.push({ type: 'warning', msg: `FCR ${fcr.toFixed(2)} — efisiensi pakan rendah` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\LaporanSiklus.jsx",
+    "line": 168,
+    "content": "if (ip > 400)  return { label: 'Grade A — Excellent', cls: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20', desc: 'Performa sangat tinggi. Indeks produksi terbaik.' }"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\LaporanSiklus.jsx",
+    "line": 169,
+    "content": "if (ip >= 300) return { label: 'Grade B — Baik',      cls: 'text-amber-400 bg-amber-400/10 border-amber-400/20',   desc: 'Performa baik, sesuai standar produksi komersial.' }"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\LaporanSiklus.jsx",
+    "line": 170,
+    "content": "if (ip >= 200) return { label: 'Grade C — Cukup',     cls: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Performa di bawah rata-rata, perlu perbaikan manajemen.' }"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\LaporanSiklus.jsx",
+    "line": 171,
+    "content": "return              { label: 'Grade D — Rendah',   cls: 'text-red-400 bg-red-400/10 border-red-400/20',     desc: 'Performa rendah, lakukan evaluasi menyeluruh.' }"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\LaporanSiklus.jsx",
+    "line": 478,
+    "content": "{cycle.actual_harvest_date ? ` — ${fmt(cycle.actual_harvest_date)}` : ' — sekarang'}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Pakan.jsx",
+    "line": 56,
+    "content": "{low.map(s => `${FEED_TYPE_LABELS[s.feed_type] ?? s.feed_type} (${s.peternak_farms?.farm_name ?? '—'}) — ${s.quantity_kg.toFixed(1)} kg`).join(' · ')}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Pakan.jsx",
+    "line": 300,
+    "content": "{FEED_TYPE_LABELS[stock.feed_type] ?? stock.feed_type} — {stock.peternak_farms?.farm_name}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\SetupFarm.jsx",
+    "line": 445,
+    "content": "{livestock === 'domba' ? 'Isi populasi awal ternak bapak' : 'Opsional — kamu bisa skip dan tambahkan siklus nanti'}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\SetupFarm.jsx",
+    "line": 509,
+    "content": "Lewati untuk sekarang — setup siklus bisa dilakukan dari menu Siklus"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Siklus.jsx",
+    "line": 408,
+    "content": "{progress >= 100 ? 'Siap panen! 🎉' : `${progress}% — ${daysLeft} hari lagi`}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Siklus.jsx",
+    "line": 628,
+    "content": "Total Biaya — DOC + Pakan + Obat (Rp)"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\broiler\\Vaksinasi.jsx",
+    "line": 100,
+    "content": "notes: 'Opsional — diperlukan jika periode panen > 35 hari.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\domba\\breeding\\Beranda.jsx",
+    "line": 113,
+    "content": "<p className=\"text-[11px] text-[#4B6478]\">Kambing & Domba — Pembibitan</p>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\domba\\breeding\\Beranda.jsx",
+    "line": 120,
+    "content": "message={`${stats.overdue.length} indukan melewati estimasi partus — periksa kondisi segera`}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\kambing\\breeding\\Beranda.jsx",
+    "line": 113,
+    "content": "<p className=\"text-[11px] text-[#4B6478]\">Kambing & Domba — Pembibitan</p>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\kambing\\breeding\\Beranda.jsx",
+    "line": 120,
+    "content": "message={`${stats.overdue.length} indukan melewati estimasi partus — periksa kondisi segera`}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\kambing\\fattening\\Kesehatan.jsx",
+    "line": 17,
+    "content": "{ name: 'Vaksin Anthrax',           interval: 'Daerah endemik — awal kemarau' },"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\layer\\LayerBeranda.jsx",
+    "line": 15,
+    "content": "Dashboard peternak ayam petelur — segera hadir"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\Beranda.jsx",
+    "line": 174,
+    "content": "list.push({ type: 'danger',  msg: `${tag}: Estimasi partus ${Math.abs(hari)} hari yang lalu — cek kondisi indukan` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\Beranda.jsx",
+    "line": 176,
+    "content": "list.push({ type: 'warning', msg: `${tag}: Estimasi partus ${hari} hari lagi — siapkan kandang beranak` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\Beranda.jsx",
+    "line": 179,
+    "content": "list.push({ type: 'warning', msg: `Kelahiran ${b.partus_date}: kembar jantan+betina — pedet betina berisiko freemartin, periksa kesuburannya` })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\LaporanFarm.jsx",
+    "line": 17,
+    "content": "scRatio:        1.7,   // S/C — lower is better"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\LaporanFarm.jsx",
+    "line": 19,
+    "content": "calvingInterval: 365,  // hari — lower is better"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\LaporanFarm.jsx",
+    "line": 20,
+    "content": "mortalitasPerdet: 5,   // % — lower is better"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\LaporanFarm.jsx",
+    "line": 217,
+    "content": "<p className=\"text-[11px] text-[#4B6478]\">Breeding Sapi — Cow-Calf</p>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\LaporanFarm.jsx",
+    "line": 327,
+    "content": "Kelahiran kembar jantan+betina — periksa kesuburan pedet betina sebelum dijadikan calon bibit."
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\breeding\\Reproduksi.jsx",
+    "line": 212,
+    "content": "{a.ear_tag} — {a.breed ?? '?'} (Parity {a.parity})"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\fattening\\TaskSettings.jsx",
+    "line": 15,
+    "content": "label: 'Paket 150 Hari — Intensif',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\sapi\\fattening\\TaskSettings.jsx",
+    "line": 21,
+    "content": "label: 'Paket 180 Hari — Semi-Intensif',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\anak-kandang\\AnakKandangPage.jsx",
+    "line": 71,
+    "content": "Kelola data pekerja, gaji, dan bonus — {workers.length} pekerja terdaftar"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\anak-kandang\\PaymentSheet.jsx",
+    "line": 94,
+    "content": "Riwayat Gaji — {worker.full_name}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\InputHarianSheet.jsx",
+    "line": 315,
+    "content": "Input Harian — Hari ke-{recordAge}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\InputHarianSheet.jsx",
+    "line": 404,
+    "content": "<span style={{ color: '#4B6478', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}> — opsional, 2-3x seminggu</span>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\InputHarianSheet.jsx",
+    "line": 609,
+    "content": "{hint && <span style={{ color: '#4B6478', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}> — {hint}</span>}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\kandang\\KandangViewLayout.jsx",
+    "line": 759,
+    "content": "<option value=\"1.0\">1.0 m² / ekor — Kepadatan Tinggi</option>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\kandang\\KandangViewLayout.jsx",
+    "line": 760,
+    "content": "<option value=\"1.5\">1.5 m² / ekor — Standar Ideal</option>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\kandang\\KandangViewLayout.jsx",
+    "line": 761,
+    "content": "<option value=\"2.0\">2.0 m² / ekor — Kepadatan Rendah (Nyaman)</option>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\MobileViewPeternak\\MobileTaskProgress.jsx",
+    "line": 101,
+    "content": "title={`${t.title || ''} — ${t.status}`}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\penggemukan\\PenggemukanBeranda.jsx",
+    "line": 561,
+    "content": "if (hari > targetDays) list.push({ type: 'danger', isCritical: true, msg: `${b.batch_code}: Hari ke-${hari} — melewati target ${targetDays} hari`, action: () => navigate(`${BASE}/ternak?batch=${b.id}`) })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\penggemukan\\PenggemukanBeranda.jsx",
+    "line": 562,
+    "content": "if (mort > mortalityThreshold) list.push({ type: 'danger', isCritical: true, msg: `${b.batch_code}: Mortalitas ${mort}% — di atas batas ${mortalityThreshold}%`, action: () => navigate(`${BASE}/kesehatan`) })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\penggemukan\\PenggemukanBeranda.jsx",
+    "line": 563,
+    "content": "else if (mort > mortalityWarn) list.push({ type: 'warning', msg: `${b.batch_code}: Mortalitas ${mort}% — perlu dipantau`, action: () => navigate(`${BASE}/kesehatan`) })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\penggemukan\\PenggemukanPakan.jsx",
+    "line": 364,
+    "content": "⚠ Qty mungkin belum dialokasi — periksa di konsol"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\penggemukan\\PenggemukanPakan.jsx",
+    "line": 542,
+    "content": "toast.warning('Biaya pakan belum diisi — HPP tidak akan akurat. Isi di form ini atau di tab Biaya.', { duration: 4000 })"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\penggemukan\\PenggemukanPenjualan.jsx",
+    "line": 523,
+    "content": "<p className=\"text-[9px] font-black text-cyan-400/70 uppercase tracking-widest\">BEP Sisa — Akrual vs Kas</p>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\SiklusSheet.jsx",
+    "line": 142,
+    "content": "description: `DOC Chick In — ${form.supplier_doc || 'tidak diisi'} ${form.strain ? `(${form.strain})` : ''}`.trim(),"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskCards.jsx",
+    "line": 706,
+    "content": "Skor {weighingData.famacha_score} — {parseInt(weighingData.famacha_score) <= 2 ? 'Normal' : parseInt(weighingData.famacha_score) === 3 ? 'Perhatian' : 'Perlu Tindakan'}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskCards.jsx",
+    "line": 862,
+    "content": "Semua {config.animalLabelPlural} tercatat — siap diselesaikan"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskHeader.jsx",
+    "line": 179,
+    "content": "Mode <strong className=\"text-[#94A3B8]\">View Only</strong> — hanya bisa melihat data"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskSheets.jsx",
+    "line": 861,
+    "content": "{format(new Date(task.completed_at), 'EEEE, d MMMM yyyy — HH:mm', { locale: idLocale })} WIB"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskSheets.jsx",
+    "line": 1152,
+    "content": "Skor {weighingData.famacha_score} — {parseInt(weighingData.famacha_score) <= 2 ? 'Normal' : parseInt(weighingData.famacha_score) === 3 ? 'Perhatian' : 'Perlu Tindakan'}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskSheets.jsx",
+    "line": 1400,
+    "content": "Total: {total}% — sesuaikan hingga 100%"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\TaskSheets.jsx",
+    "line": 1687,
+    "content": "<SelectItem value=\"harian\" className=\"rounded-lg\">Setiap Hari (Harian — 30 Tugas)</SelectItem>"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\ternak\\AnimalQRSheet.jsx",
+    "line": 98,
+    "content": "dark:  '#000000',  // Black QR on white — required for scan reliability"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\ternak\\QuickWeighSheet.jsx",
+    "line": 170,
+    "content": "Skor {famacha} — {parseInt(famacha) <= 2 ? 'Normal' : parseInt(famacha) === 3 ? 'Perhatian' : 'Perlu Tindakan'}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\tutorialSteps.js",
+    "line": 50,
+    "content": "title: 'Input Harian — Kunci Akurasi',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\tutorialSteps.js",
+    "line": 69,
+    "content": "desc: 'Platform manajemen ternak lengkap — dari kandang, siklus produksi, hingga laporan keuangan, semua dalam satu tempat.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\components\\UniversalTaskSettings.jsx",
+    "line": 721,
+    "content": "{b.batch_code} — {b.kandang_name}"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 19,
+    "content": "biosecurity: 'Semprot kandang Natrium Hipoklorit 2% atau kapur tohor. Batasi lalu lintas orang/kendaraan. Pakai APD lengkap. Lapor pemerintah — penyakit strategis nasional.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 49,
+    "content": "gejala: 'Mata merah, berair banyak, belekan; selaput mata keruh/biru; mata tertutup karena silau; bisa satu atau dua mata; kasus lanjut kornea memutih — bisa menyebabkan kebutaan permanen',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 63,
+    "content": "obat: 'Tidak direkomendasikan mengobati sendiri — konsultasi dokter hewan/Dinas Peternakan',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 65,
+    "content": "estimasi_sembuh: 'Tidak bisa sembuh total — manajemen populasi dan culling',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 74,
+    "content": "tindakan: 'Injeksi antibiotik SESEGERA MUNGKIN — setiap jam keterlambatan memperburuk prognosis. Antiinflamasi untuk turunkan demam dan radang paru. Pisahkan dari kawanan segera',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 91,
+    "content": "biosecurity: 'VAKSINASI adalah kunci (Covexin-8 atau Ultravac 5 in 1). Hindari perubahan pakan mendadak — transisi konsentrat bertahap 7–14 hari.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 133,
+    "content": "gejala: 'Penurunan bobot drastis meski makan banyak; anemia (selaput mata pucat — skor FAMACHA); rahang bawah bengkak berisi cairan (bottle jaw); bulu kusam/kasar; kembung ringan; diare atau konstipasi; pertumbuhan anak domba jauh tertinggal',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 144,
+    "content": "pathogen: 'Bukan infeksi — gangguan fermentasi rumen akibat legum/hijauan basah berlebihan',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 157,
+    "content": "gejala: 'Feses encer/cair, bisa berbau busuk atau berdarah; ekor dan belakang tubuh kotor; lesu; dehidrasi (mata cekung, kulit tidak elastis); nafsu makan turun; anak domba tampak kurus dengan perut kempis — anak domba bisa mati dehidrasi dalam 24 jam',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 181,
+    "content": "gejala: 'Selaput mata (konjungtiva) pucat hingga putih (skor FAMACHA 4–5); lesu, tidak semangat; penurunan bobot; bulu kusam; pada kasus parah: edema submandibular (bottle jaw — rahang bawah bengkak berisi cairan); jantung berdegup keras',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 204,
+    "content": "pathogen: 'Kadar kalsium darah turun drastis — sering pada induk sesaat setelah atau sebelum melahirkan',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 206,
+    "content": "tindakan: 'DARURAT — injeksi Kalsium Boroglukonat IV sangat lambat (10–15 menit) atau SC di beberapa titik. Hangatkan tubuh domba. Jangan beri makan sampai domba bisa berdiri sendiri',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 223,
+    "content": "biosecurity: 'Pantau BCS (kondisi tubuh) induk — jangan biarkan kurus saat bunting. Naikkan konsentrat bertahap di 6 minggu terakhir kebuntingan.',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 233,
+    "content": "estimasi_sembuh: 'Tergantung jenis dan jumlah racun — bisa dari jam hingga tidak tertolong',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 240,
+    "content": "pathogen: 'Defisiensi Thiamin (Vit B1) — dipicu perubahan pakan mendadak ke konsentrat tinggi atau tanaman mengandung thiaminase',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 241,
+    "content": "gejala: 'Buta MENDADAK (tidak responsif terhadap cahaya), kepala mendongak ke atas (star gazing), berjalan memutar, kejang, kepala melengkung ke belakang (opisthotonos), depresi berat — kerusakan otak PERMANEN jika terlambat ditangani',"
+  },
+  {
+    "file": "src\\dashboard\\peternak\\_shared\\data\\diseaseDatabase.js",
+    "line": 242,
+    "content": "tindakan: 'Injeksi Thiamin IV atau IM dosis tinggi SESEGERA MUNGKIN — setiap jam keterlambatan mengurangi peluang pemulihan. Kurangi/hentikan pakan konsentrat tinggi. Steroid pendukung',"
+  },
+  {
+    "file": "src\\dashboard\\rumah_potong\\rpa\\Distribusi.jsx",
+    "line": 1127,
+    "content": "title={quota.isAtLimit ? 'Kuota invoice bulan ini habis — Upgrade ke Pro' : undefined}"
+  },
+  {
+    "file": "src\\dashboard\\rumah_potong\\rpa\\Hutang.jsx",
+    "line": 374,
+    "content": "{ct} — {order.requested_count?.toLocaleString('id-ID')} ekor"
+  },
+  {
+    "file": "src\\dashboard\\rumah_potong\\rpa\\rpaTutorialSteps.js",
+    "line": 8,
+    "content": "desc: 'Platform manajemen Rumah Potong Ayam — kelola order pemotongan, distribusi, dan pantau margin bisnis Anda.',"
+  },
+  {
+    "file": "src\\dashboard\\rumah_potong\\rph\\RPHBeranda.jsx",
+    "line": 13,
+    "content": "RPH Dashboard — Coming Soon"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\AIConfirmCard.jsx",
+    "line": 274,
+    "content": "return `Koreksi ${(data.target_intent || '').replace('CATAT_', '') || '?'} — ${data.field_to_correct || '?'}`"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\AIConfirmCard.jsx",
+    "line": 401,
+    "content": "{FIELD_LABELS[entity.nameField] || entity.nameField} — pilih yang sesuai:"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\AIConfirmCard.jsx",
+    "line": 576,
+    "content": "<p className=\"text-[10px] font-bold text-amber-300/90\">AI kurang yakin — owner perlu verifikasi</p>"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\AIConfirmCard.jsx",
+    "line": 797,
+    "content": "AI kurang yakin ({Math.round(confidence * 100)}%) — cek datanya"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\AppSidebar.jsx",
+    "line": 780,
+    "content": "? `${item.title} — Upgrade ke ${item.planRequired === 'business' ? 'Business' : 'Pro'}`"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\AppSidebar.jsx",
+    "line": 980,
+    "content": "title={!canAddKandang ? `Batas kandang plan kamu ${limitLabel} — upgrade untuk tambah lebih` : 'Tambah kandang baru'}"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\onboarding\\PeternakSapiForm.jsx",
+    "line": 10,
+    "content": "{ key: '150', label: '150 Hari — Intensif', desc: 'Konsentrat penuh, target ADG ~1 kg/hari' },"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\onboarding\\PeternakSapiForm.jsx",
+    "line": 11,
+    "content": "{ key: '180', label: '180 Hari — Semi-Intensif', desc: 'Hijauan + konsentrat, target ADG ~0.8 kg/hari' },"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\onboarding\\PeternakSapiForm.jsx",
+    "line": 19,
+    "content": "{ key: '150', label: t('setup_sapi_temp_150_title', '150 Hari — Intensif'), desc: t('setup_sapi_temp_150_desc', 'Konsentrat penuh, target ADG ~1 kg/hari') },"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\onboarding\\PeternakSapiForm.jsx",
+    "line": 20,
+    "content": "{ key: '180', label: t('setup_sapi_temp_180_title', '180 Hari — Semi-Intensif'), desc: t('setup_sapi_temp_180_desc', 'Hijauan + konsentrat, target ADG ~0.8 kg/hari') },"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\transactions\\BrokerPageHeader.jsx",
+    "line": 86,
+    "content": "Kamu dalam mode <strong className=\"text-[#94A3B8]\">View Only</strong> — hanya bisa melihat data"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\TransaksiWizard.jsx",
+    "line": 429,
+    "content": "title=\"Step 1 — Dari Kandang Mana?\""
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\TransaksiWizard.jsx",
+    "line": 451,
+    "content": "title=\"Step 2 — Beli dari Kandang Mana?\""
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\WelcomeOnlyOverlay.jsx",
+    "line": 11,
+    "content": "manajer:      { label: 'Manajer',        desc: 'Kamu punya akses penuh operasional — kelola transaksi, pantau performa tim, dan lihat laporan bisnis.' },"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\wizard\\WizardStepBeli.jsx",
+    "line": 92,
+    "content": "export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dari Kandang Mana?', orderData }) {"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\wizard\\WizardStepJual.jsx",
+    "line": 259,
+    "content": "<p className=\"text-[11px] font-black uppercase tracking-widest text-[#4B6478]\">Step 2 — Jual ke Siapa?</p>"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\wizard\\WizardStepOrder.jsx",
+    "line": 237,
+    "content": "<p className=\"text-[11px] font-black uppercase tracking-widest text-[#4B6478]\">Step 1 — Order dari Siapa?</p>"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\components\\wizard\\WizardStepPengiriman.jsx",
+    "line": 353,
+    "content": "<p className=\"text-[10px] font-black uppercase tracking-widest text-[#4B6478]\">Step 3 — Detail Pengiriman</p>"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\Market.jsx",
+    "line": 414,
+    "content": "return `Stok ${ct} siap panen${loc ? ` — ${loc}` : ''}`"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\Market.jsx",
+    "line": 416,
+    "content": "return `Penawaran ${ct}${qty ? ` — ${qty}` : ''}${loc ? ` — ${loc}` : ''}`"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\Market.jsx",
+    "line": 418,
+    "content": "return `Butuh${qty ? ` ${qty}` : ''} ${ct}${loc ? ` — ${loc}` : ''}`"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\Market.jsx",
+    "line": 525,
+    "content": "desc: 'Saya peternak — ingin jual ayam siap panen ke broker atau buyer',"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\Market.jsx",
+    "line": 532,
+    "content": "desc: 'Saya broker — ingin tawarkan ayam ke RPA atau buyer',"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\Market.jsx",
+    "line": 539,
+    "content": "desc: 'Saya RPA/buyer — ingin cari ayam dari broker atau peternak',"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\UpgradePlan.jsx",
+    "line": 770,
+    "content": "notes:        `${isRenewal ? t('upgrade_renew', 'Perpanjang') : t('upgrade_to', 'Upgrade ke')} ${tPlan(selectedPlan)} — ${billingMonths} bulan`,"
+  },
+  {
+    "file": "src\\dashboard\\_shared\\pages\\UpgradePlan.jsx",
+    "line": 853,
+    "content": "{t('upgrade_trial_title', 'Coba {plan} {days} Hari — Gratis')"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 37,
+    "content": "<p>FCR atau <strong>Feed Conversion Ratio</strong> adalah ukuran efisiensi pakan — berapa kilogram pakan yang dibutuhkan untuk menghasilkan satu kilogram bobot hidup ayam. Sederhananya: <strong>FCR 1,7 artinya 1,7 kg pakan menghasilkan 1 kg berat ayam</strong>.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 83,
+    "content": "<p>Standar kepadatan broiler adalah 8–10 ekor/m² untuk sistem open house dan 10–14 ekor/m² untuk closed house. Kepadatan berlebih meningkatkan kompetisi pakan, stres, dan mortalitas — semuanya memperburuk FCR.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 93,
+    "content": "<li><strong>Timbang konsumsi pakan setiap hari</strong> — jangan estimasi. Selisih 50 kg pakan per hari yang tidak tercatat akan merusak perhitungan FCR akhir siklus.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 94,
+    "content": "<li><strong>Timbang sampel ayam 3x seminggu</strong> — minimal 50 ekor per kandang. Ini membantu deteksi dini jika pertumbuhan melambat.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 95,
+    "content": "<li><strong>Catat mortalitas harian dengan penyebab</strong> — pola kematian yang berulang pada hari yang sama atau bagian kandang yang sama adalah indikasi masalah teknis.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 96,
+    "content": "<li><strong>Bandingkan FCR mingguan dengan target</strong> — jangan tunggu panen untuk tahu FCR. Intervensi lebih awal = dampak lebih besar.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 97,
+    "content": "<li><strong>Analisis FCR per batch, bukan per tahun</strong> — perbandingkan FCR antar siklus untuk mengidentifikasi pola musiman atau perubahan supplier pakan.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 101,
+    "content": "<p>Realita lapangan: sebagian besar peternak mandiri tidak memiliki sistem pencatatan yang memadai. Pakan dicatat di buku tulis, bobot ayam diperkirakan, dan FCR baru dihitung setelah panen — sering kali tidak akurat karena data yang hilang atau tidak konsisten. Akibatnya, masalah pada FCR baru terdeteksi terlambat dan tidak bisa diintervensi lagi.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 125,
+    "content": "<p>Indeks Performa (IP) — atau sering disebut <em>Performance Index</em> atau <em>Production Efficiency Factor (PEF)</em> — adalah satu angka tunggal yang merangkum keseluruhan efisiensi produksi kandang broiler Anda dalam satu siklus. Berbeda dengan FCR yang hanya mengukur efisiensi pakan, IP menggabungkan empat variabel sekaligus: bobot rata-rata panen, livability (tingkat hidup), FCR, dan umur panen.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 161,
+    "content": "<tr><td>&gt; 375</td><td>🏆 Sangat Baik</td><td>Performa top — biasanya dicapai closed house dengan manajemen ketat</td></tr>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 164,
+    "content": "<p>IP 335 dari contoh di atas masuk kategori <strong>Baik</strong> — sudah layak profit, tapi masih ada ruang untuk perbaikan.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 172,
+    "content": "<p>Setiap ekor yang mati mengurangi angka livability dan menurunkan IP langsung. Program brooding yang tepat di 7 hari pertama adalah kuncinya — 60–70% mortalitas terjadi di fase brooding. Pastikan suhu brooding konsisten (32–34°C di hari 1), tanpa draft angin, dan air bersih tersedia sejak DOC masuk.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 181,
+    "content": "<p>IP bisa diproyeksikan mingguan menggunakan data yang sudah ada. Jika IP proyeksi minggu ke-3 sudah di bawah target, masih ada waktu untuk intervensi — tambah pakan, perbaiki ventilasi, atau hubungi petugas kesehatan hewan.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 184,
+    "content": "<p>Riset di lapangan menunjukkan bahwa peningkatan IP sebesar 50 poin (misalnya dari 300 ke 350) dalam kandang 5.000 ekor dapat menghasilkan tambahan pendapatan bersih <strong>Rp 3–7 juta per siklus</strong>, tergantung harga jual dan biaya produksi lokal. Dalam setahun dengan 5–6 siklus, selisih ini bisa mencapai <strong>Rp 15–42 juta</strong> — hanya dari perbaikan manajemen, tanpa tambahan modal.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 202,
+    "content": "excerpt: 'Angka kematian ayam broiler yang tinggi bukan hanya masalah kemanusiaan — ini langsung menghantam profitabilitas kandang. Artikel ini membahas 7 langkah konkret yang bisa diterapkan hari ini.',"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 212,
+    "content": "<p>Jika mortality Anda secara konsisten di atas 5%, itu sinyal ada masalah sistemik yang perlu ditangani segera — bukan sekadar \"nasib\".</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 217,
+    "content": "<p>Statistik menunjukkan 60–70% kematian dalam satu siklus terjadi di 7 hari pertama. DOC (Day Old Chick) sangat rentan terhadap suhu tidak menentu, draft angin, dan dehidrasi. Suhu brooding yang tidak konsisten — terlalu panas atau terlalu dingin — adalah pembunuh utama di fase ini.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 245,
+    "content": "<h3>Langkah 4: Biosekuriti Ketat — Tidak Ada Kompromi</h3>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 249,
+    "content": "<p>Ventilasi yang buruk mengakumulasi amonia dari kotoran, yang merusak saluran pernapasan ayam dan membuka jalan infeksi. Kadar amonia aman di bawah 25 ppm — jika Anda masuk kandang dan mata pedih, itu sudah di atas batas aman. Buka tirai atau tambah exhaust fan terutama di siang hari dan malam panas.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 252,
+    "content": "<p>Tanda-tanda ayam sakit: berdiri terpisah dari kelompok, kepala menunduk, bulu kusam, nafas berat atau berbunyi. Isolasi segera ke kandang karantina — satu ayam sakit yang tidak diisolasi bisa menginfeksi ratusan ekor sebelum Anda menyadarinya.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 261,
+    "content": "<p>📋 <strong>Catat mortality harian, pantau tren, dan dapatkan alert otomatis saat angka mortalitas melampaui batas normal — semuanya ada di TernakOS.</strong></p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 276,
+    "content": "excerpt: 'Baru memulai usaha ternak ayam broiler? Panduan ini memandu Anda langkah demi langkah — dari persiapan kandang sebelum DOC masuk hingga pencatatan harian yang wajib dilakukan setiap hari.',"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 281,
+    "content": "<p>Di bisnis broiler, Anda tidak bisa \"untung-untungan\". Dengan margin yang tipis (sering kali 3–8% dari nilai penjualan), satu kesalahan manajemen yang seharusnya bisa dicegah bisa mengubah siklus yang seharusnya untung menjadi rugi. Peternak pemula yang paling sukses bukan yang punya kandang terbesar — tapi yang paling disiplin dalam manajemen sehari-hari.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 289,
+    "content": "<p>Pasang litter baru — umumnya sekam padi dengan ketebalan 7–10 cm untuk open house, atau 5–7 cm untuk closed house. Litter berfungsi menyerap kotoran, menjaga kehangatan, dan mengurangi kontak ayam dengan feses. Litter yang basah dan menggumpal adalah sumber penyakit utama.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 292,
+    "content": "<p>Pasang brooder gas atau infra-red minimal 24 jam sebelum DOC masuk agar suhu di area brooding sudah stabil di 32–34°C saat ayam tiba. Jangan menunggu DOC datang baru menyalakan pemanas — suhu ruangan butuh waktu untuk stabil.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 325,
+    "content": "<p>Ayam minum 2x lebih banyak dari yang mereka makan (rasio air:pakan = 2:1). Pastikan nipple atau tempat minum selalu terisi dan berfungsi. Cek setiap pagi dan sore — satu nipple mampet di pojok kandang bisa menyebabkan ayam di area tersebut dehidrasi tanpa Anda tahu.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 367,
+    "content": "<p>Ini bukan soal tidak mau menghitung — ini soal sistem yang tidak ada. Sebagian besar peternak mandiri di Indonesia masih mencatat pengeluaran di buku tulis, beberapa bahkan hanya mengandalkan ingatan. Akibatnya, kalkulasi akhir sering tidak akurat karena biaya kecil yang terlupa, pakan yang tidak dicatat detail, atau biaya tenaga kerja yang tidak dianggap sebagai \"biaya\".</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 377,
+    "content": "<li><strong>Obat, vaksin, vitamin</strong>: Biasanya 2–5% dari total biaya. Jangan dipangkas — investasi di sini mencegah kerugian besar dari wabah penyakit.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 392,
+    "content": "<p><em>Catatan: Harga di bawah ini adalah ilustrasi — harga aktual bervariasi signifikan per wilayah dan waktu. Gunakan harga pasar lokal Anda untuk kalkulasi akurat.</em></p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 430,
+    "content": "<p>Margin bersih: sekitar <strong>5,9%</strong>. Di sinilah pentingnya efisiensi — kenaikan harga pakan Rp 200/kg saja bisa menggerus profit Rp 613.280 (26% dari profit total).</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 438,
+    "content": "<p>Artinya, selama harga jual live bird di atas Rp 20.232/kg, kandang Anda masih untung. Jika harga pasar turun di bawah angka ini, Anda rugi — dan harus mengetahui ini sebelum memutuskan menjual atau menahan.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 449,
+    "content": "<p>💰 <strong>Hitung profit per siklus secara otomatis, pantau biaya real-time, dan dapatkan laporan keuangan kandang tanpa Excel — langsung dari TernakOS.</strong></p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 470,
+    "content": "<p>Sederhana saja: jika ADG Anda 0,8 kg/hari padahal target 1,0 kg/hari, maka dalam 90 hari periode fattening Anda kehilangan potensi bobot <strong>18 kg per ekor</strong>. Dengan harga sapi Rp 60.000/kg, itu Rp 1,08 juta per ekor yang terbuang — bisa puluhan juta untuk kandang dengan 50+ ekor.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 505,
+    "content": "<p>Sapi yang baru masuk kandang butuh 7-14 hari adaptasi (acclimatization period). Selama periode ini ADG bisa rendah atau bahkan negatif — ini normal. Stres karena transportasi, perubahan pakan, atau penyakit subklinis bisa menekan ADG 20-40%.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 512,
+    "content": "<li><strong>Timbang secara konsisten</strong> — Minimal setiap 14 hari sekali dengan timbangan digital. Jangan estimasi visual; selisih 10 kg dalam catatan bisa membuat perhitungan ADG dan break even point menjadi tidak akurat.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 513,
+    "content": "<li><strong>Optimalkan formulasi konsentrat</strong> — Konsultasikan dengan nutrisionis atau gunakan formulasi konsentrat yang sudah terbukti untuk breed dan berat sapi Anda.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 514,
+    "content": "<li><strong>Berikan hijauan berkualitas</strong> — Rumput gajah, kolonjono, atau jerami fermentasi (amoniasi) sebagai sumber serat. Kualitas hijauan berpengaruh signifikan terhadap kesehatan rumen.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 515,
+    "content": "<li><strong>Monitor kesehatan rumen</strong> — Bloat (kembung) dan acidosis adalah musuh ADG. Pastikan transisi pakan dilakukan bertahap, dan selalu sediakan garam mineral ad libitum.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 516,
+    "content": "<li><strong>Catat dan analisis per batch</strong> — Bandingkan ADG setiap batch untuk mengidentifikasi pola: breed mana yang lebih responsif, supplier pakan mana yang menghasilkan ADG lebih baik.</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 521,
+    "content": "<p>Akibatnya, keputusan jual-beli masih berbasis perkiraan — dan sapi sering dijual di bawah potensi optimalnya, atau ditahan terlalu lama sehingga biaya pakan menggerus margin.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 524,
+    "content": "<p>🐄 <strong>Catat bobot sapi per batch, pantau ADG otomatis, dan tahu kapan waktu optimal jual — semuanya tersedia di TernakOS untuk peternak sapi potong.</strong></p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 546,
+    "content": "<li><strong>Modal awal lebih terjangkau</strong> — Harga bakalan kambing/domba Rp 1–3 juta per ekor vs sapi Rp 8–20 juta</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 547,
+    "content": "<li><strong>Siklus lebih pendek</strong> — Fattening 60–90 hari vs sapi 3–6 bulan</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 548,
+    "content": "<li><strong>Permintaan stabil</strong> — Konsumsi daging kambing/domba tumbuh, terutama menjelang Idul Adha, Idul Fitri, dan acara aqiqah</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 549,
+    "content": "<li><strong>Risiko lebih terdiversifikasi</strong> — Dengan 20-30 ekor per batch, risiko kerugian per ekor tidak sebesar sapi</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 579,
+    "content": "<p>ADG di fase ini bisa rendah atau bahkan negatif — ini normal selama tidak ada gejala penyakit.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 584,
+    "content": "<li><strong>Hijauan</strong>: Rumput gajah, kolonjono, atau jerami fermentasi — 2–3 kg/ekor/hari (segar)</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 585,
+    "content": "<li><strong>Konsentrat</strong>: Dedak padi, bungkil kedelai, jagung giling + mineral — 0,3–0,5 kg/ekor/hari</li>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 596,
+    "content": "<p>Jangan tahan terlalu lama setelah target bobot tercapai — pertumbuhan melambat setelah bobot optimal, biaya pakan terus berjalan, dan margin mengecil.</p>"
+  },
+  {
+    "file": "src\\data\\blogPosts.js",
+    "line": 626,
+    "content": "<p>🐐 <strong>Kelola batch fattening kambing & domba Anda dengan sistem pencatatan digital — pantau ADG, biaya pakan, dan profit per batch secara real-time di TernakOS.</strong></p>"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 206,
+    "content": "FORMAT OUTPUT — kembalikan HANYA JSON ini:"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 240,
+    "content": "ROLE: BROKER AYAM — mencatat transaksi jual beli ayam hidup."
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 257,
+    "content": "1. CATAT_PEMBELIAN — user membeli ayam dari peternak/supplier"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 274,
+    "content": "2. CATAT_PENJUALAN — user menjual ayam ke RPA/pembeli"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 292,
+    "content": "3. CATAT_BAYAR — mencatat pembayaran dari customer"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 303,
+    "content": "4. CATAT_PENGIRIMAN — mencatat info pengiriman/armada"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 318,
+    "content": "5. TANYA_DATA — pertanyaan tentang bisnis"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 322,
+    "content": "6. KOREKSI — user mengoreksi data yang baru saja dikirim"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 347,
+    "content": "1. CATAT_HARIAN — catatan harian kandang (mati, sakit, bobot)"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 362,
+    "content": "2. CATAT_PAKAN — catat pemakaian atau pembelian pakan"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 378,
+    "content": "3. CATAT_PANEN — catat hasil panen"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 393,
+    "content": "4. CATAT_PENGELUARAN — catat pengeluaran siklus"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 395,
+    "content": "(Gunakan ini jika bukan pakan — untuk DOC, obat, vaksin, listrik, tenaga kerja, dll)"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 408,
+    "content": "5. TANYA_DATA — pertanyaan tentang data siklus"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 411,
+    "content": "6. KOREKSI — user mengoreksi data yang baru saja dikirim"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 436,
+    "content": "1. BUAT_INVOICE — buat invoice penjualan ke customer"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 456,
+    "content": "2. CATAT_ORDER — order beli ayam hidup dari broker"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 471,
+    "content": "3. TAMBAH_PRODUK — daftarkan produk baru"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 482,
+    "content": "4. TANYA_DATA — pertanyaan tentang data RPA"
+  },
+  {
+    "file": "src\\lib\\aiPrompt.js",
+    "line": 486,
+    "content": "5. KOREKSI — user mengoreksi data yang baru saja dikirim"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 72,
+    "content": "warnings.push(`Tanggal \"${field}\" lebih dari 30 hari lalu — yakin?`)"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 75,
+    "content": "warnings.push(`Tanggal \"${field}\" lebih dari 7 hari ke depan — yakin?`)"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 91,
+    "content": "if (data.qty_ekor > 50000) warnings.push('Jumlah ekor sangat besar (>50.000) — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 94,
+    "content": "if (data.price_per_kg > 100000) warnings.push('Harga per kg sangat mahal (> Rp 100.000) — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 98,
+    "content": "if (data.transport_cost > 5000000) warnings.push('Ongkos angkut mencurigakan (> 5 jt) — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 109,
+    "content": "if (data.qty_ekor > 50000) warnings.push('Jumlah ekor sangat besar (>50.000) — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 112,
+    "content": "if (data.price_per_kg > 100000) warnings.push('Harga per kg sangat mahal (> Rp 100.000) — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 151,
+    "content": "warnings.push('Berat tiba > berat awal — susut negatif?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 154,
+    "content": "if (shrinkPct > 10) warnings.push(`Susut ${shrinkPct.toFixed(1)}% — cukup tinggi`)"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 185,
+    "content": "if (data.dead_count > 500) warnings.push('Deplesi >500 ekor dalam sehari — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 193,
+    "content": "if (data.qty_kg > 50000) warnings.push('Jumlah pakan >50 ton — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 194,
+    "content": "if (data.price_per_kg && data.price_per_kg < 1000) warnings.push('Harga pakan < Rp 1.000/kg — yakin?')"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 203,
+    "content": "warnings.push(`Bobot rata-rata ${avgWeight.toFixed(2)} kg/ekor — di luar range normal`)"
+  },
+  {
+    "file": "src\\lib\\aiValidation.js",
+    "line": 210,
+    "content": "if (data.amount > 1000000000) warnings.push('Nominal >1 miliar — yakin ini benar?')"
+  },
+  {
+    "file": "src\\lib\\constants\\planGating.js",
+    "line": 93,
+    "content": "accentColor: '#F59E0B', // placeholder — may differ when RPH has its own identity"
+  },
+  {
+    "file": "src\\lib\\constants\\sapiTaskTemplates.js",
+    "line": 557,
+    "content": "description: 'Pemberian obat cacing ketiga — tambahan khusus paket 180 hari untuk perlindungan penuh.',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 55,
+    "content": "sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli — semua dalam 3 langkah.',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 90,
+    "content": "desc: 'Wizard transaksi 3 langkah — dari beli kandang sampai kirim ke RPA.',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 262,
+    "content": "sub: 'Kelola ribuan item sembako — beras, minyak, telur — dalam satu invoice tanpa salah hitung.',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 330,
+    "content": "'Analitik Pareto — Produk mana yang paling laris?',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 388,
+    "content": "'Multiple livestock type (Broiler, Petelur — roadmap)',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 467,
+    "content": "sub: 'Timbang, potong, kirim — semua tercatat digital dengan laporan harian otomatis.',"
+  },
+  {
+    "file": "src\\lib\\constants\\subroles.js",
+    "line": 648,
+    "content": "{ q: 'Berapa lama setup awal TernakOS?', a: 'Rata-rata kurang dari 15 menit. Daftar, pilih tipe bisnis, undang anggota tim — langsung bisa pakai.' },"
+  },
+  {
+    "file": "src\\lib\\faq\\broker_ayam.js",
+    "line": 104,
+    "content": "a: 'Ya. Menu Simulator memungkinkan kamu input harga beli kandang, estimasi bobot, biaya kirim, dan target harga jual — sistem langsung menampilkan estimasi margin per kg dan total profit. Berguna sebelum negosiasi harga.',"
+  },
+  {
+    "file": "src\\lib\\faq\\broker_ayam.js",
+    "line": 146,
+    "content": "a: 'TernakOS menggunakan sistem soft-delete — data tidak benar-benar dihapus. Kamu bisa hapus transaksi dari tampilan aktif, dan data tetap bisa dipulihkan dari menu Recycle Bin di Akun jika diperlukan.',"
+  },
+  {
+    "file": "src\\lib\\faq\\peternak_ruminansia.js",
+    "line": 40,
+    "content": "a: 'Ya. Denah kandang interaktif menampilkan distribusi sapi per pen/kandang dengan dot warna berdasarkan tier ADG — hijau (ADG bagus), kuning (sedang), merah (perlu perhatian). Membantu identifikasi ekor yang butuh intervensi.',"
+  },
+  {
+    "file": "src\\lib\\faq\\peternak_ruminansia.js",
+    "line": 79,
+    "content": "a: 'Secara fungsional sangat mirip — batch lifecycle, kartu ternak individual, ADG, FCR, denah kandang, stok pakan, penjualan per ekor atau massal, dan laporan batch. Perbedaan utama ada di satuan target bobot dan referensi standar yang disesuaikan per spesies.',"
+  },
+  {
+    "file": "src\\lib\\faq\\peternak_ruminansia.js",
+    "line": 121,
+    "content": "a: 'Yield liter adalah volume susu yang berhasil diproduksi per sesi pemerahan. Fat% (kadar lemak susu) adalah indikator kualitas — kambing perah berkualitas biasanya memiliki fat% antara 3-5%. Keduanya bisa dicatat per sesi di TernakOS.',"
+  },
+  {
+    "file": "src\\lib\\faq\\sembako.js",
+    "line": 29,
+    "content": "a: 'Ya. Setiap produk bisa memiliki satuan utama dan satuan sekunder dengan konversi otomatis. Contoh: beli per sak (50 kg), jual per kg — TernakOS menghitung konversinya otomatis.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 4,
+    "content": "a: 'Ya. Semua data TernakOS disimpan di Supabase Cloud (PostgreSQL) dengan replikasi real-time. Data tidak pernah tersimpan hanya di HP kamu — meski HP hilang atau rusak, semua data tetap aman dan bisa diakses dari perangkat lain.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 12,
+    "content": "a: 'TernakOS menggunakan sistem caching lokal dan prefetching — data yang sudah dimuat sebelumnya tetap bisa dilihat saat koneksi terputus sementara. Namun untuk input data baru atau sinkronisasi, koneksi internet tetap diperlukan.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 26,
+    "content": "a: 'Bisa. TernakOS berjalan di semua browser modern: Chrome, Firefox, Safari, Edge — baik di HP maupun laptop/komputer desktop. Tampilan otomatis menyesuaikan ukuran layar (responsive design).',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 58,
+    "content": "a: 'Untuk paket Pro dan Business, setelah masa trial 14 hari berakhir, akun masuk mode read-only — kamu masih bisa melihat data yang sudah ada tetapi tidak bisa input data baru. Upgrade ke paket berbayar kapan saja untuk melanjutkan.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 100,
+    "content": "a: 'Ya. TernakOS dirilis pembaruan fitur secara reguler. Update berjalan otomatis di background — tidak perlu download apapun. Pengguna akan dinotifikasi tentang fitur baru melalui notifikasi in-app.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 109,
+    "content": "a: 'Menu Tim → Generate Kode. Sistem membuat kode 6 karakter unik yang berlaku 7 hari. Bagikan kode ini ke karyawan baru dan mereka daftar menggunakan kode tersebut — otomatis terhubung ke bisnis kamu dengan role yang sudah ditentukan.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 145,
+    "content": "a: 'Ya. TernakOS dibangun di atas Supabase (PostgreSQL) — infrastruktur database yang sama yang digunakan oleh ribuan perusahaan teknologi global. Row Level Security (RLS) adalah standar keamanan enterprise.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 174,
+    "content": "a: 'Ada. TernakOS menggunakan sistem soft-delete — data yang dihapus tidak benar-benar hilang. Fitur Recycle Bin di menu Akun memungkinkan kamu melihat dan memulihkan data: transaksi, kandang, RPA, dan pengiriman.',"
+  },
+  {
+    "file": "src\\lib\\faq\\teknis.js",
+    "line": 222,
+    "content": "a: 'Ya. TernakBot AI Assistant tersedia eksklusif di paket Business — unlimited sesi, Analisis Performa, Prediksi Hasil, dan AI Audit Log. Kamu bisa tanya langsung: \"Siapa pembeli yang paling sering nunggak?\" atau \"Bagaimana tren margin bulan ini?\" dan TernakBot menjawab berdasarkan data bisnismu.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 14,
+    "content": "a: 'Ya, TernakOS sepenuhnya mendukung peternak sapi. Tersedia dua modul sapi: (1) Sapi Fattening (Penggemukan) — kelola batch sapi masuk, catat pertumbuhan harian, hitung ADG, FCR, R/C ratio, BEP, denah kandang per pen, kartu ternak digital per ekor, dan laporan laba-rugi per batch. (2) Sapi Breeding (Pembibitan) — manajemen database herd, IB atau kawin alam, tracking kehamilan, pencatatan kelahiran pedet, dan laporan conception rate serta calving interval.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 24,
+    "content": "a: 'TernakOS mendukung enam kategori bisnis peternakan: (1) Peternak Unggas — broiler mandiri dan mitra sistem kemitraan INTI-Plasma. (2) Peternak Sapi — fattening (penggemukan) dan breeding (pembibitan). (3) Peternak Domba — fattening dan breeding. (4) Peternak Kambing — fattening, breeding, dan perah (susu). (5) Broker & Trader — broker ayam, broker telur, dan agen sembako/distributor. (6) Industri Hilir — rumah potong ayam (RPA). Modul sapi perah sedang dalam pengembangan aktif.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 29,
+    "content": "a: 'Di TernakOS, tiga peran ini memiliki fungsi berbeda: (1) Peternak — mengelola kandang/farm, mencatat produksi, pakan, kesehatan ternak, dan performa per siklus/batch. (2) Broker — mengelola rantai distribusi: beli dari peternak, jual ke RPA atau pasar, catat hutang/piutang, dan kelola pengiriman. (3) RPA (Rumah Potong Ayam) — mengelola order masuk dari broker/pelanggan, stok bahan baku, hutang ke supplier, dan distribusi produk jadi. Satu akun bisa memiliki kombinasi beberapa tipe bisnis sekaligus.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 34,
+    "content": "a: 'Ya. TernakOS bukan hanya untuk kandang — platform ini juga mencakup rantai pasok terkait peternakan: (1) Broker Telur — POS berbasis grade (Grade A/B/C), manajemen stok per grade, dan pencatatan piutang pelanggan. (2) Agen/Distributor Sembako — manajemen stok FIFO multi-item (beras, minyak, gula, dll), laporan penjualan, dan analisis margin. Kedua modul ini berdiri sendiri, sehingga bisa digunakan tanpa harus punya kandang.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 39,
+    "content": "a: 'TernakOS tersedia untuk enam tipe bisnis: (1) Broker Ayam — catat beli/jual/pengiriman, (2) Broker Telur — POS dan stok per grade, (3) Distributor Sembako — manajemen stok FIFO multi-item, (4) Peternak Broiler Mandiri/Mitra — recording siklus dan FCR, (5) Peternak Sapi/Kambing/Domba — ADG, batch fattening, breeding, dan kambing perah, (6) Rumah Potong Ayam (RPA) — order, hutang, dan distribusi.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 48,
+    "content": "a: 'Catatan manual rawan hilang, salah hitung, dan tidak bisa diakses real-time oleh seluruh tim. TernakOS menyimpan semua data di cloud, menghitung margin/piutang/FCR otomatis, dan bisa diakses dari HP mana saja kapan saja — termasuk saat di kandang.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 53,
+    "content": "a: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL — standar keamanan bank — yang memastikan data bisnis kamu tidak bisa diakses oleh pengguna lain meskipun berada di platform yang sama. Setiap bisnis terisolasi penuh.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 72,
+    "content": "a: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus — misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard utama tanpa perlu login ulang.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 76,
+    "content": "a: 'Software akuntansi umum dirancang untuk semua industri dan butuh setup akun buku besar yang kompleks. TernakOS dibuat khusus untuk peternakan Indonesia — sudah paham istilah FCR, timbangan hidup, susut berat, piutang RPA, dan siklus kandang. Tidak perlu konfigurasi dari nol.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 99,
+    "content": "a: 'TernakOS Market adalah fitur marketplace berbasis WhatsApp yang mempertemukan peternak, broker, dan RPA. Peternak bisa listing stok ayam siap panen, broker bisa listing penawaran beli, dan RPA bisa posting permintaan stok — semua terhubung via tombol WA langsung.',"
+  },
+  {
+    "file": "src\\lib\\faq\\umum.js",
+    "line": 118,
+    "content": "a: 'Ya. TernakOS menyediakan laporan cash flow, laporan profit per periode, breakdown biaya, dan analisis margin — semua otomatis dari data transaksi yang sudah dicatat. Tidak perlu buat laporan manual di Excel.',"
+  },
+  {
+    "file": "src\\lib\\hooks\\createPenggemukanHooks.js",
+    "line": 1413,
+    "content": "staleTime: 1000 * 60 * 5, // 5 min — used for historical allocation"
+  },
+  {
+    "file": "src\\lib\\hooks\\createPenggemukanHooks.js",
+    "line": 1532,
+    "content": "'This indicates a join duplication bug — check useOperationalCostsByBatches query.'"
+  },
+  {
+    "file": "src\\lib\\hooks\\createPenggemukanHooks.js",
+    "line": 1592,
+    "content": "const totalBiayaGaji = 0    // legacy — selalu 0, kept for return shape"
+  },
+  {
+    "file": "src\\lib\\hooks\\useAdminData.js",
+    "line": 127,
+    "content": "throw new Error('Invoice sudah diproses sebelumnya — konfirmasi tidak dijalankan.')"
+  },
+  {
+    "file": "src\\lib\\hooks\\useAuth.jsx",
+    "line": 223,
+    "content": "console.warn('[useAuth] Called outside <AuthProvider> — returning empty context.')"
+  },
+  {
+    "file": "src\\lib\\hooks\\useBrowserNotifications.js",
+    "line": 141,
+    "content": "requestEnable,      // async — prompts if default, enables if granted, shows status if denied"
+  },
+  {
+    "file": "src\\lib\\hooks\\usePeternakData.js",
+    "line": 502,
+    "content": "toast.warning(`Stok menipis! Sisa ${newQty.toFixed(1)} kg — segera tambah stok`)"
+  },
+  {
+    "file": "src\\lib\\hooks\\usePeternakTaskData.js",
+    "line": 1186,
+    "content": "staleTime: 1000 * 60 * 5, // 5 min cache — payroll data doesn't change often"
+  },
+  {
+    "file": "src\\lib\\hooks\\useSapiBreedingData.js",
+    "line": 384,
+    "content": "est_partus_date,              // opsional — trigger set otomatis jika null"
+  },
+  {
+    "file": "src\\lib\\hooks\\useSembakoData.js",
+    "line": 840,
+    "content": "`Stok ${item.product_name || 'produk'} tidak cukup — tersedia ${available} ${item.unit || 'unit'}, diminta ${item.quantity}`"
+  },
+  {
+    "file": "src\\lib\\hooks\\useSembakoData.js",
+    "line": 964,
+    "content": "toast.warning(`Transaksi diperbarui — kelebihan bayar ${fmt.format(result._overpaid)} dicatat sebagai LUNAS`)"
+  },
+  {
+    "file": "src\\lib\\hooks\\useSembakoData.js",
+    "line": 1253,
+    "content": "throw new Error(`Stok ${item.product_name || 'produk'} tidak cukup — tersedia ${available} ${item.unit || 'unit'}, diminta ${item.quantity}`)"
+  },
+  {
+    "file": "src\\lib\\hooks\\useTernakLimit.js",
+    "line": 40,
+    "content": "staleTime: 1000 * 60 * 2, // 2 menit — count bisa berubah setelah tambah/hapus ternak"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\en.js",
+    "line": 62,
+    "content": "'auth_register_now': 'Register Now — Free',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\en.js",
+    "line": 135,
+    "content": "biz_province_missing_owner: '⚠ Not set — tap to fill',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\en.js",
+    "line": 542,
+    "content": "setup_sapi_temp_150_title: '150 Days — Intensive',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\en.js",
+    "line": 544,
+    "content": "setup_sapi_temp_180_title: '180 Days — Semi-Intensive',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\en.js",
+    "line": 661,
+    "content": "upgrade_trial_title: 'Try {plan} for {days} Days — Free',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\id.js",
+    "line": 62,
+    "content": "'auth_register_now': 'Daftar Sekarang — Gratis',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\id.js",
+    "line": 136,
+    "content": "biz_province_missing_owner: '⚠ Belum diisi — tap untuk isi',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\id.js",
+    "line": 556,
+    "content": "setup_sapi_temp_150_title: '150 Hari — Intensif',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\id.js",
+    "line": 558,
+    "content": "setup_sapi_temp_180_title: '180 Hari — Semi-Intensif',"
+  },
+  {
+    "file": "src\\lib\\i18n\\dictionaries\\id.js",
+    "line": 675,
+    "content": "upgrade_trial_title: 'Coba {plan} {days} Hari — Gratis',"
+  },
+  {
+    "file": "src\\lib\\logger\\errorLogger.js",
+    "line": 144,
+    "content": "console.warn('[TernakOS Logger] Skipping remote log — no authenticated user')"
+  },
+  {
+    "file": "src\\lib\\logger\\errorLogger.js",
+    "line": 163,
+    "content": "console.warn('[TernakOS Logger] system_error_logs table not found — remote logging disabled for this session. Run the migration SQL first.')"
+  },
+  {
+    "file": "src\\lib\\logger\\errorLogger.js",
+    "line": 206,
+    "content": "console.warn('[TernakOS Logger] log_pre_auth_error RPC unavailable — pre-auth logging disabled. Run the migration SQL first.')"
+  },
+  {
+    "file": "src\\lib\\queryClient.js",
+    "line": 7,
+    "content": "staleTime:           1000 * 60 * 5,  // data fresh 5 menit — tidak refetch saat navigasi"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 57,
+    "content": "SECTION HERO — LOCKED: DO NOT MODIFY"
+  },
+  {
+    "file": "src\\pages\\AboutUs.jsx",
+    "line": 489,
+    "content": "SECTION FOUNDER — LOCKED: DO NOT MODIFY"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 35,
+    "content": "Answer — SELALU ADA di DOM (tidak pakai open && ...)."
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 169,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'TernakOS mendukung enam kategori bisnis peternakan: (1) Peternak Unggas — broiler mandiri dan mitra sistem kemitraan INTI-Plasma. (2) Peternak Sapi — fattening (penggemukan) dan breeding (pembibitan). (3) Peternak Domba — fattening dan breeding. (4) Peternak Kambing — fattening, breeding, dan perah (susu). (5) Broker & Trader — broker ayam, broker telur, dan agen sembako/distributor. (6) Industri Hilir — rumah potong ayam (RPA). Modul sapi perah sedang dalam pengembangan aktif.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 174,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Ya, TernakOS sepenuhnya mendukung peternak sapi. Tersedia dua modul sapi: (1) Sapi Fattening (Penggemukan) — kelola batch sapi masuk, catat pertumbuhan harian, hitung ADG, FCR, R/C ratio, BEP, denah kandang per pen, kartu ternak digital per ekor, dan laporan laba-rugi per batch. (2) Sapi Breeding (Pembibitan) — manajemen database herd, IB atau kawin alam, tracking kehamilan, pencatatan kelahiran pedet, dan laporan conception rate serta calving interval.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 184,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Di TernakOS, tiga peran ini memiliki fungsi berbeda: (1) Peternak — mengelola kandang/farm, mencatat produksi, pakan, kesehatan ternak, dan performa per siklus/batch. (2) Broker — mengelola rantai distribusi: beli dari peternak, jual ke RPA atau pasar, catat hutang/piutang, dan kelola pengiriman. (3) RPA (Rumah Potong Ayam) — mengelola order masuk dari broker/pelanggan, stok bahan baku, hutang ke supplier, dan distribusi produk jadi. Satu akun bisa memiliki kombinasi beberapa tipe bisnis sekaligus.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 194,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS bukan hanya untuk kandang — platform ini juga mencakup rantai pasok terkait peternakan: (1) Broker Telur — POS berbasis grade (Grade A/B/C), manajemen stok per grade, dan pencatatan piutang pelanggan. (2) Agen/Distributor Sembako — manajemen stok FIFO multi-item (beras, minyak, gula, dll), laporan penjualan, dan analisis margin. Kedua modul ini berdiri sendiri, sehingga bisa digunakan tanpa harus punya kandang.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 209,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL — standar keamanan bank — yang memastikan data bisnis kamu tidak bisa diakses oleh pengguna lain meskipun berada di platform yang sama. Setiap bisnis terisolasi penuh.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 214,
+    "content": "acceptedAnswer: { '@type': 'Answer', text: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus — misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard utama tanpa perlu login ulang.' },"
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 278,
+    "content": "title=\"FAQ TernakOS — Sapi, Domba, Kambing, Broiler, Broker & RPA | Semua yang Perlu Anda Tahu\""
+  },
+  {
+    "file": "src\\pages\\FAQPage.jsx",
+    "line": 317,
+    "content": "{totalVisible} pertanyaan tersedia — temukan jawaban seputar fitur, keamanan, harga, dan cara kerja TernakOS."
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 7,
+    "content": "desc: 'Wizard 3 langkah — dari beli kandang sampai audit transaksi & kirim nota ke WhatsApp.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 86,
+    "content": "sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli — semua dalam 3 langkah. Hemat 2 jam/hari pencatatan.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 100,
+    "content": "a: 'Aplikasi broker ayam adalah sistem digital untuk mencatat pembelian dari kandang, penjualan ke RPA/pasar, pengiriman, dan piutang dalam satu platform. Berbeda dengan buku atau Excel, data otomatis terhitung — margin, susut timbangan, dan saldo piutang selalu akurat tanpa hitung manual.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_ayam.js",
+    "line": 112,
+    "content": "a: 'Setelah transaksi selesai, klik tombol \"Kirim Nota\" — sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi. Pembeli langsung terima detail transaksi tanpa kamu perlu ketik ulang.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 7,
+    "content": "desc: 'Buat invoice penjualan multi-item dalam hitungan detik — support satuan ganda, dual harga, dan sistem tempo.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 60,
+    "content": "'Analitik Pareto — produk & customer paling menguntungkan',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 70,
+    "content": "sub: 'Kelola ribuan item sembako — beras, minyak, telur — dalam satu invoice tanpa salah hitung.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 76,
+    "content": "{ before: 'Stok dicatat manual, sering selisih saat opname', after: 'Batch tracking otomatis — setiap masuk & keluar tercatat' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_sembako.js",
+    "line": 84,
+    "content": "a: 'FIFO (First In First Out) artinya barang yang masuk lebih dulu harus keluar lebih dulu. Ini mencegah barang mengendap dan expired. TernakOS mengelola FIFO per batch otomatis — kamu tidak perlu urutkan manual.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 7,
+    "content": "desc: 'Catat penjualan langsung dari grid produk — cart, customer, payment status, invoice selesai dalam hitungan detik.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 9,
+    "content": "'Grid produk dengan stok realtime — klik untuk tambah ke cart',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 73,
+    "content": "{ before: 'Input penjualan satu-satu di buku, sering salah hitung', after: 'POS grid produk — klik, pilih customer, checkout selesai' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\broker_telur.js",
+    "line": 82,
+    "content": "a: 'Setelah transaksi selesai, klik tombol \"Kirim Nota\" — sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 26,
+    "content": "desc: 'Tanya langsung: \"Batch mana ADG-nya tertinggal?\" atau \"Ringkas performa bulan ini\" — AI merangkum data bisnis kamu dalam hitungan detik.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 31,
+    "content": "desc: 'Beranda interaktif per farm: ringkasan batch aktif, performa keuangan, dan metrik kunci — diperbarui otomatis tanpa reload.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 41,
+    "content": "desc: 'Row Level Security (RLS) PostgreSQL — data bisnis kamu tidak bisa diakses pengguna lain. Backup otomatis real-time di cloud.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 52,
+    "content": "a: 'Rata-rata kurang dari 15 menit. Daftar, pilih tipe bisnis, undang anggota tim — langsung bisa pakai. Tidak perlu instalasi software apapun.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 68,
+    "content": "a: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus — misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 72,
+    "content": "a: 'Ada. Mulai dari plan Pro, Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir — dengan batasan akses yang sesuai jabatannya. Pada plan Starter, akses dibatasi untuk Owner saja (mandiri).',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 76,
+    "content": "a: 'Bisa. TernakOS berjalan di semua browser modern — Chrome, Firefox, Safari, Edge — di HP maupun laptop tanpa instalasi apapun.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\constants.js",
+    "line": 80,
+    "content": "a: 'Data tersimpan otomatis di cloud (Supabase PostgreSQL) dengan replikasi real-time. Tidak perlu backup manual — data kamu aman meski HP hilang atau rusak.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 7,
+    "content": "desc: 'Setup farm sekali, kelola semua kandang dari satu dashboard — dukung model mandiri maupun kemitraan.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 89,
+    "content": "sub: 'Catat FCR, mortalitas, dan vaksinasi harian — semua terhitung otomatis. Bandingkan performa antar siklus kandang.\\n\\n*Ayam Layer (Petelur) sedang dikembangkan — tersedia segera.*',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 96,
+    "content": "{ before: 'Jadwal vaksinasi lupa atau terlewat', after: 'Jadwal vaksinasi standar Cobb — alert otomatis ke HP pengelola' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_ayam.js",
+    "line": 132,
+    "content": "a: 'Fitur peternak ayam layer (petelur) sedang dalam pengembangan — termasuk recording produksi telur harian, HDP (Hen Day Production), dan laporan produksi. Subscriber Pro akan mendapat akses otomatis saat fitur live.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 19,
+    "content": "desc: 'Catat masuk, pantau performa, tutup batch saat panen — tanpa kertas.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 24,
+    "content": "'BEP otomatis — tahu kapan balik modal',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 32,
+    "content": "desc: 'Lihat posisi ternak di kandang — performa batch terbaca sekilas.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 72,
+    "content": "desc: 'Laba-rugi penggemukan & breeding otomatis — stok pakan terpantau sebelum habis.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 86,
+    "content": "sub: 'Dari koloni penggemukan massal hingga tracking reproduksi breeding dan pencatatan susu harian — kambing, domba, dan kambing perah didukung dalam satu platform digital tanpa kertas.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 101,
+    "content": "a: 'Penggemukan (Fattening) menggunakan sistem batch koloni — kamu input populasi massal per kandang, tracking ADG, FCR, BEP, dan tutup batch saat panen. Breeding menggunakan tracking individu — setiap ternak punya kartu dengan silsilah, siklus reproduksi, dan rekam medik sendiri.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 113,
+    "content": "a: 'TernakOS merangkum semua biaya per batch: harga beli ternak masuk, biaya pakan, biaya operasional (listrik, air), biaya kesehatan — lalu dikurangi pendapatan penjualan. HPP per ekor, R/C ratio, BEP, dan laba bersih per batch langsung tersedia.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_kambing_domba.js",
+    "line": 121,
+    "content": "a: 'Ya. Modul Breeding mendukung tracking IB maupun kawin alam — termasuk inseminator, tanggal, status kehamilan, dan pencatatan kelahiran cempe. Conception rate dan calving interval dihitung otomatis dari data yang diinput.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 7,
+    "content": "desc: 'Kelola beberapa batch sekaligus — tutup batch lama, buka batch baru tanpa gangguan.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 13,
+    "content": "'BEP otomatis per batch — tahu kapan balik modal',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 20,
+    "content": "desc: 'Setiap sapi punya kartu digital — dari beli masuk sampai jual keluar.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 32,
+    "content": "desc: 'Visualisasi posisi setiap sapi — lihat performa sekilas tanpa buka kartu satu-satu.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 70,
+    "content": "desc: 'Laba-rugi per batch terhitung otomatis — tidak perlu Excel lagi.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 85,
+    "content": "sub: 'Sistem lengkap untuk sapi penggemukan & breeding — tracking bobot per ekor, penugasan tim anak kandang, reproduksi, hingga laporan keuangan batch otomatis.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 90,
+    "content": "{ before: 'Catat bobot sapi di buku, susah cari histori per ekor', after: 'Kartu ternak digital dengan ADG otomatis — prediksi panen realtime' },"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 100,
+    "content": "a: 'ADG (Average Daily Gain) adalah rata-rata pertambahan bobot harian sapi — kunci efisiensi di usaha fattening. TernakOS menghitung ADG otomatis: (Bobot Terkini − Bobot Masuk) ÷ Jumlah Hari di Farm. Setiap kali kamu input penimbangan baru, ADG dan prediksi tanggal panen langsung diperbarui.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\peternak_sapi.js",
+    "line": 120,
+    "content": "a: 'R/C Ratio (Revenue to Cost) mengukur efisiensi: R/C > 1 artinya usaha menguntungkan. BEP (Break Even Point) adalah titik balik modal — kapan pendapatan penjualan sapi menutupi semua biaya. TernakOS menghitung keduanya otomatis per batch berdasarkan data biaya dan harga jual aktual.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\rpa.js",
+    "line": 56,
+    "content": "sub: 'Timbang, potong, kirim — semua tercatat digital dengan laporan harian otomatis.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\data\\rpa.js",
+    "line": 74,
+    "content": "a: 'Data transaksi di TernakOS tercatat transparan untuk semua pihak. Harga, bobot, tanggal, dan status pembayaran tersimpan digital — tidak ada ruang untuk dispute karena datanya sama-sama bisa dilihat.',"
+  },
+  {
+    "file": "src\\pages\\fitur\\index.jsx",
+    "line": 238,
+    "content": "Ini bukan janji — ini yang kamu rasakan di hari pertama pakai."
+  },
+  {
+    "file": "src\\pages\\harga\\components\\PricingCards.jsx",
+    "line": 153,
+    "content": "💡 Punya lebih dari 1 jenis ternak aktif? Tambahkan +Rp&nbsp;99.000/bln per jenis. Maks 2 add-on — lebih dari itu otomatis lebih hemat upgrade ke Business."
+  },
+  {
+    "file": "src\\pages\\harga\\data\\pricingData.js",
+    "line": 75,
+    "content": "a: 'TernakBot AI tersedia eksklusif di plan Business — unlimited sesi, Analisis Performa, Prediksi Hasil, dan AI Audit Log. Starter dan Pro belum mendapatkan akses TernakBot.',"
+  },
+  {
+    "file": "src\\pages\\harga\\data\\pricingData.js",
+    "line": 246,
+    "content": "'Input harian: mortalitas, pakan, bobot — FCR realtime',"
+  },
+  {
+    "file": "src\\pages\\harga\\data\\pricingData.js",
+    "line": 248,
+    "content": "'Jadwal vaksinasi: ND+IB, Gumboro, booster — log per dosis',"
+  },
+  {
+    "file": "src\\pages\\harga\\index.jsx",
+    "line": 216,
+    "content": "Upgrade ke Pro untuk unlock fitur lengkap — trial {data?.trialDays || 14} hari gratis, tanpa kartu kredit."
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 224,
+    "content": "? `Harga Ayam Broiler Hidup Hari Ini di ${currentProvince} — Update ${todayFmt} | TernakOS`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 225,
+    "content": ": `Harga Ayam Broiler Hidup Hari Ini — Update Harian Real Data | TernakOS`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 227,
+    "content": "? `Harga ayam broiler hidup hari ini di ${currentProvince} — ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 228,
+    "content": ": `Harga ayam broiler hidup hari ini — ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 493,
+    "content": "'name': `Harga Ayam Broiler Hidup Harian — ${provinceLabel}`,"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 628,
+    "content": ": `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional — rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 789,
+    "content": "Dibanding platform lain, kami punya data transaksi nyata broker — bukan sekadar scraping."
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 1008,
+    "content": "body: 'Harga beli dan jual pada chart berasal dari transaksi nyata broker yang menggunakan platform ini — bukan estimasi atau perhitungan manual. Setiap transaksi masuk ke rata-rata provinsi secara real-time.',"
+  },
+  {
+    "file": "src\\pages\\HargaPasarPublic.jsx",
+    "line": 1148,
+    "content": "Semakin banyak broker aktif, semakin akurat harga pasar yang ditampilkan — untuk kepentingan semua pelaku bisnis ayam broiler."
+  },
+  {
+    "file": "src\\pages\\LandingPage.jsx",
+    "line": 45,
+    "content": "\"description\": cfg.company_description ?? \"Platform SaaS manajemen peternakan #1 di Indonesia — mendukung peternak sapi potong, domba, kambing, broiler, broker ayam, broker telur, agen sembako, dan RPA. Fitur: batch fattening, ADG, FCR, piutang, laporan laba-rugi, dan monitoring harga pasar real-time.\","
+  },
+  {
+    "file": "src\\pages\\Login.jsx",
+    "line": 616,
+    "content": "{t('auth_register_now', 'Daftar Sekarang — Gratis')}"
+  },
+  {
+    "file": "src\\pages\\Login.jsx",
+    "line": 866,
+    "content": "Daftar Sekarang — Gratis"
+  },
+  {
+    "file": "src\\pages\\NotFound.jsx",
+    "line": 23,
+    "content": "message: `404 — ${window.location.pathname}`,"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 41,
+    "content": "body: 'Setiap baris data terlindungi oleh RLS Supabase. Tenant A tidak pernah bisa membaca data Tenant B — bahkan di level query database.',"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 65,
+    "content": "body: 'Data Anda tidak dijual, tidak dibagi, tidak digunakan untuk iklan. TernakOS berdiri sendiri — tidak ada investor yang mendikte kebijakan data kami.',"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 222,
+    "content": "'Anda bisa meminta penghapusan data kapan saja — respons dalam 72 jam',"
+  },
+  {
+    "file": "src\\pages\\SecurityPage.jsx",
+    "line": 225,
+    "content": "'Backup data tersedia — ekspor ke Excel/CSV bisa dilakukan kapan saja dari dashboard',"
+  },
+  {
+    "file": "src\\pages\\TermsPage.jsx",
+    "line": 78,
+    "content": "Dengan mendaftar, masuk, atau menggunakan platform TernakOS — baik melalui email/password maupun melalui Akun Google (Google Sign-In) — Anda secara tegas menyetujui Syarat & Ketentuan ini serta Kebijakan Privasi kami yang berlaku secara bersamaan."
+  },
+  {
+    "file": "src\\pages\\TermsPage.jsx",
+    "line": 267,
+    "content": "<p className=\"mt-4\"><strong className=\"text-white\">Hak TernakOS:</strong> Seluruh elemen platform TernakOS — termasuk namun tidak terbatas pada kode sumber, desain antarmuka, algoritma, merek, dan logo — adalah milik eksklusif TernakOS Indonesia dan dilindungi oleh hukum hak cipta dan hak kekayaan intelektual Republik Indonesia. Anda tidak diperkenankan menyalin, memodifikasi, mendistribusikan, atau menggunakan elemen tersebut tanpa izin tertulis.</p>"
+  },
+  {
+    "file": "src\\pages\\TermsPage.jsx",
+    "line": 300,
+    "content": "TernakOS berhak mengubah Syarat & Ketentuan ini sewaktu-waktu. Untuk perubahan yang bersifat material — seperti perubahan harga, pembatasan fitur, atau kebijakan data — kami akan memberikan pemberitahuan melalui:"
+  },
+  {
+    "file": "src\\sections\\Comparison.jsx",
+    "line": 266,
+    "content": "<span className=\"text-[10px] font-mono text-gray-500\">Google Sheets — Manual</span>"
+  },
+  {
+    "file": "src\\sections\\Hero.jsx",
+    "line": 164,
+    "content": "Platform pencatatan mandiri & kemitraan untuk peternak ayam, sapi, domba, dan broker. FCR, HPP, mortalitas, hingga penagihan piutang — semua dalam satu dasbor."
+  },
+  {
+    "file": "src\\sections\\Hero.jsx",
+    "line": 380,
+    "content": "{mockupTab === 'overview' && \"Dasbor Ternak Domba — CV Indo Domba Jaya\"}"
+  },
+  {
+    "file": "src\\sections\\MarketPrice.jsx",
+    "line": 15,
+    "content": "desc: \"Setiap kali broker mencatat transaksi, harga secara otomatis masuk to sistem. Kamu tahu rata-rata harga pasar hari ini — bahkan sebelum mulai negosiasi.\","
+  },
+  {
+    "file": "src\\sections\\MarketPrice.jsx",
+    "line": 17,
+    "content": "'Data dari transaksi nyata — bukan rumor WA',"
+  },
+  {
+    "file": "src\\sections\\MarketPrice.jsx",
+    "line": 306,
+    "content": "<p className=\"text-[11px] md:text-xs font-bold text-text-primary uppercase tracking-wider\">Data Harga Pasar — Regional & Nasional</p>"
+  }
+]

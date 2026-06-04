@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, UserPlus, LogIn, ArrowLeft, ShieldCheck, Mail, AlertTriangle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { logError } from '@/lib/logger/errorLogger';
+import { logSupabaseError } from '@/lib/logger/supabaseLogger';
 
 import SEO from '@/components/SEO';
 
@@ -78,6 +80,17 @@ export default function AcceptInvite() {
       });
 
       if (error) {
+        logError({
+          level: 'error',
+          source: 'auth',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.verify_code',
+          error: error,
+          metadata: {
+            token_length: code?.length,
+            status: error.status ?? error?.context?.status,
+          }
+        });
         const status = error.status ?? error?.context?.status;
         if (status === 429) {
           const retryAfter = data?.retryAfter ?? 1800;
@@ -101,7 +114,15 @@ export default function AcceptInvite() {
         setFormData(prev => ({ ...prev, email: data.invitation.email }));
       }
       setView('choice');
-    } catch (_err) {
+    } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'AcceptInvite',
+        actionName: 'auth.invite.verify_code',
+        error: err,
+        metadata: { token_length: code?.length }
+      });
       toast.error('Gagal memverifikasi kode');
     } finally {
       setLoading(false);
@@ -113,11 +134,21 @@ export default function AcceptInvite() {
     if (!currentUser || !invitation) return;
     setIsSubmitting(true);
     try {
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: existProfileError } = await supabase
         .from('profiles')
         .select('tenant_id, role')
         .eq('auth_user_id', currentUser.id)
         .maybeSingle();
+
+      if (existProfileError) {
+        logSupabaseError(existProfileError, {
+          table: 'profiles',
+          operation: 'select',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.accept_current',
+        });
+        throw existProfileError;
+      }
 
       // Block only if they already own THIS specific tenant
       if (existingProfile?.role === 'owner' && existingProfile?.tenant_id === invitation.tenant_id) {
@@ -125,13 +156,23 @@ export default function AcceptInvite() {
         return;
       }
 
-      const { data: ownerProfile } = await supabase
+      const { data: ownerProfile, error: ownerProfileError } = await supabase
         .from('profiles')
         .select('user_type')
         .eq('tenant_id', invitation.tenant_id)
         .eq('role', 'owner')
         .limit(1)
         .maybeSingle();
+
+      if (ownerProfileError) {
+        logSupabaseError(ownerProfileError, {
+          table: 'profiles',
+          operation: 'select',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.accept_current',
+        });
+        throw ownerProfileError;
+      }
 
       const userType = ownerProfile?.user_type || 'peternak';
 
@@ -145,7 +186,16 @@ export default function AcceptInvite() {
           full_name: currentUser.user_metadata?.full_name || '',
         }, { onConflict: 'auth_user_id,tenant_id' });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        logSupabaseError(memberError, {
+          table: 'tenant_memberships',
+          operation: 'upsert',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.accept_current',
+          tenantId: invitation.tenant_id,
+        });
+        throw memberError;
+      }
 
       // 2. Update/Create profile session for this tenant
       const { error: profileError } = await supabase
@@ -158,16 +208,48 @@ export default function AcceptInvite() {
           business_model_selected: true,
           onboarded: true,
         }, { onConflict: 'auth_user_id,tenant_id' });
-      if (profileError) throw profileError;
 
-      await supabase
+      if (profileError) {
+        logSupabaseError(profileError, {
+          table: 'profiles',
+          operation: 'upsert',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.accept_current',
+          tenantId: invitation.tenant_id,
+        });
+        throw profileError;
+      }
+
+      const { error: inviteError } = await supabase
         .from('team_invitations')
         .update({ status: 'accepted' })
         .eq('id', invitation.id);
 
+      if (inviteError) {
+        logSupabaseError(inviteError, {
+          table: 'team_invitations',
+          operation: 'update',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.accept_current',
+          tenantId: invitation.tenant_id,
+        });
+        throw inviteError;
+      }
+
       toast.success('Berhasil bergabung dengan tim!');
       navigate(`/${userType === 'rpa' ? 'rpa-buyer' : userType}/beranda`);
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'AcceptInvite',
+        actionName: 'auth.invite.accept_current',
+        error: err,
+        metadata: {
+          tenant_id: invitation?.tenant_id,
+          invitation_role: invitation?.role,
+        }
+      });
       toast.error(err.message || 'Gagal bergabung');
     } finally {
       setIsSubmitting(false);
@@ -201,20 +283,45 @@ export default function AcceptInvite() {
           }
         }
       });
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        logError({
+          level: 'error',
+          source: 'auth',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.register_submit',
+          error: signUpError,
+          metadata: {
+            tenant_id: invitation?.tenant_id,
+            invitation_role: invitation?.role,
+            token_length: invitation?.token?.length
+          }
+        });
+        throw signUpError;
+      }
 
       const user = authData.user;
       if (!user) throw new Error('Gagal membuat user');
 
       // 2. Mark invitation as accepted
       //    (profiles.upsert skipped — handle_new_user() DB trigger handles it via invite_token)
-      await supabase
+      const { error: inviteError } = await supabase
         .from('team_invitations')
         .update({ status: 'accepted' })
         .eq('id', invitation.id);
 
+      if (inviteError) {
+        logSupabaseError(inviteError, {
+          table: 'team_invitations',
+          operation: 'update',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.register_submit',
+          tenantId: invitation?.tenant_id,
+        });
+        throw inviteError;
+      }
+
       // 3. Navigate — derive rolePath from tenant owner's user_type
-      const { data: ownerProfile } = await supabase
+      const { data: ownerProfile, error: ownerProfileError } = await supabase
         .from('profiles')
         .select('user_type')
         .eq('tenant_id', invitation.tenant_id)
@@ -222,12 +329,33 @@ export default function AcceptInvite() {
         .limit(1)
         .maybeSingle();
 
+      if (ownerProfileError) {
+        logSupabaseError(ownerProfileError, {
+          table: 'profiles',
+          operation: 'select',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.register_submit',
+        });
+        throw ownerProfileError;
+      }
+
       const userType = ownerProfile?.user_type || 'broker';
       const rolePath = userType === 'rpa' ? 'rpa-buyer' : userType;
 
       toast.success('Pendaftaran berhasil! Bergabung dengan tim.');
       navigate(`/${rolePath}/beranda`);
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'AcceptInvite',
+        actionName: 'auth.invite.register_submit',
+        error: err,
+        metadata: {
+          tenant_id: invitation?.tenant_id,
+          invitation_role: invitation?.role,
+        }
+      });
       toast.error(err.message || 'Gagal membuat akun');
     } finally {
       setIsSubmitting(false);
@@ -253,11 +381,21 @@ export default function AcceptInvite() {
       const { data: { user } } = await supabase.auth.getUser();
 
       // 2. Fetch existing profile
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: profileSelectError } = await supabase
         .from('profiles')
         .select('tenant_id, role')
         .eq('auth_user_id', user.id)
         .maybeSingle();
+
+      if (profileSelectError) {
+        logSupabaseError(profileSelectError, {
+          table: 'profiles',
+          operation: 'select',
+          component: 'AcceptInvite',
+          actionName: 'auth.invite.login_submit',
+        });
+        throw profileSelectError;
+      }
 
       // 2a. Block only if they already own THIS specific tenant
       if (existingProfile?.role === 'owner' && existingProfile?.tenant_id === invitation.tenant_id) {
@@ -268,18 +406,39 @@ export default function AcceptInvite() {
 
       // 2b. Already in this tenant — skip update, just navigate
       if (existingProfile?.tenant_id === invitation.tenant_id) {
-        await supabase
+        const { error: inviteUpdateError } = await supabase
           .from('team_invitations')
           .update({ status: 'accepted' })
           .eq('id', invitation.id);
 
-        const { data: ownerProfile } = await supabase
+        if (inviteUpdateError) {
+          logSupabaseError(inviteUpdateError, {
+            table: 'team_invitations',
+            operation: 'update',
+            component: 'AcceptInvite',
+            actionName: 'auth.invite.login_submit',
+            tenantId: invitation.tenant_id,
+          });
+          throw inviteUpdateError;
+        }
+
+        const { data: ownerProfile, error: ownerProfileError } = await supabase
           .from('profiles')
           .select('user_type')
           .eq('tenant_id', invitation.tenant_id)
           .eq('role', 'owner')
           .limit(1)
           .maybeSingle();
+
+        if (ownerProfileError) {
+          logSupabaseError(ownerProfileError, {
+            table: 'profiles',
+            operation: 'select',
+            component: 'AcceptInvite',
+            actionName: 'auth.invite.login_submit',
+          });
+          throw ownerProfileError;
+        }
 
         const userType = ownerProfile?.user_type || 'broker';
         toast.success('Kamu sudah terdaftar di tim ini!');
@@ -289,13 +448,23 @@ export default function AcceptInvite() {
 
       // 2c. Different tenant — require explicit confirmation before overwriting
       const doUpdate = async () => {
-        const { data: ownerProfile } = await supabase
+        const { data: ownerProfile, error: ownerProfileError } = await supabase
           .from('profiles')
           .select('user_type')
           .eq('tenant_id', invitation.tenant_id)
           .eq('role', 'owner')
           .limit(1)
           .maybeSingle();
+
+        if (ownerProfileError) {
+          logSupabaseError(ownerProfileError, {
+            table: 'profiles',
+            operation: 'select',
+            component: 'AcceptInvite',
+            actionName: 'auth.invite.switch_tenant',
+          });
+          throw ownerProfileError;
+        }
 
         const userType = ownerProfile?.user_type || 'broker';
 
@@ -309,7 +478,16 @@ export default function AcceptInvite() {
             full_name: user.user_metadata?.full_name || '',
           }, { onConflict: 'auth_user_id,tenant_id' });
 
-        if (memberError) throw memberError;
+        if (memberError) {
+          logSupabaseError(memberError, {
+            table: 'tenant_memberships',
+            operation: 'upsert',
+            component: 'AcceptInvite',
+            actionName: 'auth.invite.switch_tenant',
+            tenantId: invitation.tenant_id,
+          });
+          throw memberError;
+        }
 
         // 2. Update/Create profile session for this tenant
         const { error: profileError } = await supabase
@@ -322,12 +500,33 @@ export default function AcceptInvite() {
             business_model_selected: true,
             onboarded: true
           }, { onConflict: 'auth_user_id,tenant_id' });
-        if (profileError) throw profileError;
 
-        await supabase
+        if (profileError) {
+          logSupabaseError(profileError, {
+            table: 'profiles',
+            operation: 'upsert',
+            component: 'AcceptInvite',
+            actionName: 'auth.invite.switch_tenant',
+            tenantId: invitation.tenant_id,
+          });
+          throw profileError;
+        }
+
+        const { error: inviteUpdateError } = await supabase
           .from('team_invitations')
           .update({ status: 'accepted' })
           .eq('id', invitation.id);
+
+        if (inviteUpdateError) {
+          logSupabaseError(inviteUpdateError, {
+            table: 'team_invitations',
+            operation: 'update',
+            component: 'AcceptInvite',
+            actionName: 'auth.invite.switch_tenant',
+            tenantId: invitation.tenant_id,
+          });
+          throw inviteUpdateError;
+        }
 
         toast.success('Berhasil bergabung dengan tim!');
         navigate(`/${userType === 'rpa' ? 'rpa-buyer' : userType}/beranda`);
@@ -338,6 +537,17 @@ export default function AcceptInvite() {
       setConfirmingSwitch(true);
 
     } catch (_err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'AcceptInvite',
+        actionName: 'auth.invite.login_submit',
+        error: _err,
+        metadata: {
+          tenant_id: invitation?.tenant_id,
+          invitation_role: invitation?.role,
+        }
+      });
       toast.error('Gagal masuk. Periksa kembali password Anda.');
     } finally {
       setIsSubmitting(false);
@@ -350,6 +560,17 @@ export default function AcceptInvite() {
     try {
       await pendingUpdateFn();
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'AcceptInvite',
+        actionName: 'auth.invite.switch_tenant',
+        error: err,
+        metadata: {
+          tenant_id: invitation?.tenant_id,
+          invitation_role: invitation?.role,
+        }
+      });
       toast.error('Gagal memindahkan akses: ' + (err.message || ''));
       await supabase.auth.signOut({ scope: 'local' });
       setConfirmingSwitch(false);

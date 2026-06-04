@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -429,11 +430,40 @@ function WorkerSheet({ open, onClose, worker, farms, onSaved }) {
 
       if (isEdit) {
         const { error } = await supabase.from('farm_workers').update(payload).eq('id', worker.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'farm_workers',
+            operation: 'update',
+            component: 'WorkerSheet',
+            actionName: 'peternak.worker.update',
+            tenantId: tenant?.id,
+            metadata: {
+              worker_id: worker.id,
+              peternak_farm_id: form.peternak_farm_id,
+              base_salary: Number(form.base_salary) || 0,
+              bonus_per_kg: Number(form.bonus_per_kg) || 0,
+            }
+          })
+          throw error
+        }
         toast.success('Data anak kandang diperbarui!')
       } else {
         const { error } = await supabase.from('farm_workers').insert([payload])
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'farm_workers',
+            operation: 'insert',
+            component: 'WorkerSheet',
+            actionName: 'peternak.worker.create',
+            tenantId: tenant?.id,
+            metadata: {
+              peternak_farm_id: form.peternak_farm_id,
+              base_salary: Number(form.base_salary) || 0,
+              bonus_per_kg: Number(form.bonus_per_kg) || 0,
+            }
+          })
+          throw error
+        }
         toast.success('Anak kandang berhasil ditambahkan!')
       }
 
@@ -441,7 +471,7 @@ function WorkerSheet({ open, onClose, worker, farms, onSaved }) {
       onClose()
     } catch (err) {
       console.error('WorkerSheet error:', err)
-      toast.error('Gagal menyimpan data.')
+      toast.error('Gagal menyimpan data pekerja. Coba lagi.')
     } finally {
       setLoading(false)
     }
@@ -674,14 +704,29 @@ function PaymentSheet({ open, onClose, worker }) {
         amount: Number(form.amount),
         notes: form.notes || null,
       }])
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'worker_payments',
+          operation: 'insert',
+          component: 'PaymentSheet',
+          actionName: 'peternak.worker_payment.create',
+          tenantId: tenant?.id,
+          metadata: {
+            worker_id: worker.id,
+            payment_type: form.payment_type,
+            payment_date: form.payment_date,
+            amount: Number(form.amount),
+          }
+        })
+        throw error
+      }
       toast.success('Pembayaran tercatat!')
       queryClient.invalidateQueries({ queryKey: ['worker-payments', worker.id] })
       setForm({ payment_date: today, payment_type: 'gaji', amount: 0, notes: '' })
       setAddMode(false)
     } catch (err) {
       console.error('PaymentSheet error:', err)
-      toast.error('Gagal mencatat pembayaran.')
+      toast.error('Gagal menyimpan pembayaran pekerja. Coba lagi.')
     } finally {
       setLoading(false)
     }

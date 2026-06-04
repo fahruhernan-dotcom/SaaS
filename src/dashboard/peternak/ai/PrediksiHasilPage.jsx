@@ -18,6 +18,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useAIQuota } from '@/lib/hooks/useAIQuota'
 import { UPGRADE_MESSAGES } from '@/lib/constants/planGating'
 import { formatIDR } from '@/lib/format'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ── Vertical config ────────────────────────────────────────────
 const VERTICAL_CONFIG = {
@@ -315,7 +316,10 @@ export default function PrediksiHasilPage() {
         })
         .select('id')
         .single()
-      if (convErr) throw convErr
+      if (convErr) {
+        logSupabaseError(convErr, { table: 'ai_conversations', operation: 'insert', component: 'PrediksiHasilPage', actionName: 'ai.prediction.save', metadata: { batch_id: selectedBatchId } })
+        throw convErr
+      }
 
       // 2. Store prediction as pending entry (PREDIKSI_HASIL intent)
       const { error: entryErr } = await supabase
@@ -331,7 +335,10 @@ export default function PrediksiHasilPage() {
           },
           status: 'committed',
         })
-      if (entryErr) throw entryErr
+      if (entryErr) {
+        logSupabaseError(entryErr, { table: 'ai_pending_entries', operation: 'insert', component: 'PrediksiHasilPage', actionName: 'ai.prediction.save', metadata: { conversation_id: conv.id, batch_id: selectedBatchId } })
+        throw entryErr
+      }
     },
     onSuccess: () => {
       toast.success('Prediksi disimpan ke riwayat!')

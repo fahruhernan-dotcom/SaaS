@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, XCircle, Building2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { logSupabaseError } from '@/lib/logger/supabaseLogger';
+import { logError } from '@/lib/logger/errorLogger';
 
 export default function Invite() {
   const { token } = useParams();
@@ -25,7 +26,32 @@ export default function Invite() {
           .rpc('get_invitation_by_token', { p_token: token });
         const data = rows?.[0] ?? null;
 
-        if (error || !data) {
+        if (error) {
+          logError({
+            level: 'error',
+            source: 'auth',
+            component: 'Invite',
+            actionName: 'auth.invite.verify_token',
+            error: error,
+            metadata: {
+              token_length: token?.length,
+            }
+          });
+          setErrorStatus('invalid');
+          return;
+        }
+
+        if (!data) {
+          logError({
+            level: 'warning',
+            source: 'auth',
+            component: 'Invite',
+            actionName: 'auth.invite.verify_token',
+            error: new Error('No invitation found for token'),
+            metadata: {
+              token_length: token?.length,
+            }
+          });
           setErrorStatus('invalid');
           return;
         }
@@ -43,6 +69,16 @@ export default function Invite() {
         setInviteData(data);
         setErrorStatus(null);
       } catch (err) {
+        logError({
+          level: 'error',
+          source: 'auth',
+          component: 'Invite',
+          actionName: 'auth.invite.verify_token',
+          error: err,
+          metadata: {
+            token_length: token?.length,
+          }
+        });
         console.error("Token verification error:", err);
         setErrorStatus('invalid');
       } finally {
@@ -90,6 +126,17 @@ export default function Invite() {
       navigate(getBrokerBasePath({ sub_type: inviteData.tenant_sub_type }) + '/beranda');
       
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'Invite',
+        actionName: 'auth.invite.accept_token_submit',
+        error: err,
+        metadata: {
+          tenant_id: inviteData?.tenant_id,
+          role: inviteData?.role,
+        }
+      });
       console.error(err);
       toast.error('Gagal menerima undangan', { description: err.message });
       setIsAccepting(false);
