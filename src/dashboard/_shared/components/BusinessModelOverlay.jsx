@@ -17,7 +17,8 @@ import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // Verticals that need a dedicated setup step after business name.
 // Driven by StepSetup's VERTICAL_SETUP_CONFIG — single source of truth.
-const SETUP_REQUIRED_VERTICALS = new Set(Object.keys(VERTICAL_SETUP_CONFIG))
+// Note: Kandang/Initial batch setup has been moved out of the required onboarding flow to reduce initial friction.
+const SETUP_REQUIRED_VERTICALS = new Set()
 
 // Step labels for progress bar — peternak (5 steps max) and non-peternak (3 steps)
 const STEP_LABELS_PETERNAK       = ['Kategori', 'Hewan', 'Spesialisasi', 'Nama Farm', 'Setup Awal']
