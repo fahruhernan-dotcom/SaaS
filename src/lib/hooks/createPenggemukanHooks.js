@@ -502,7 +502,7 @@ export function createPenggemukanHooks(prefix) {
     return useMutation({
       mutationFn: async ({
         batch_id, ear_tag, breed, sex, age_estimate,
-        entry_age_months, _age_confidence, _acquisition_type,
+        entry_age_months, age_confidence, acquisition_type,
         entry_date, entry_weight_kg, entry_bcs, entry_condition,
         purchase_price_idr, source, kandang_slot, notes,
         quarantine_start, quarantine_end, quarantine_notes,
@@ -513,6 +513,8 @@ export function createPenggemukanHooks(prefix) {
             tenant_id: tenant.id,
             batch_id, ear_tag, breed, sex,
             age_estimate: age_estimate || entry_age_months ? String(age_estimate || entry_age_months) : null,
+            age_confidence,
+            acquisition_type,
             entry_date, entry_weight_kg, entry_bcs, entry_condition,
             purchase_price_idr: purchase_price_idr || 0,
             source, kandang_slot, notes,
@@ -597,6 +599,8 @@ export function createPenggemukanHooks(prefix) {
             entry_weight_kg: entryWeight,
             entry_bcs: a.entry_bcs ? String(a.entry_bcs).replace(',', '.') : null,
             age_estimate: entry_age_months ? String(entry_age_months) : null,
+            age_confidence: age_confidence || null,
+            acquisition_type: acquisition_type || null,
             purchase_price_idr: purchasePrice,
             latest_weight_kg: entryWeight,
             latest_weight_date: a.entry_date,

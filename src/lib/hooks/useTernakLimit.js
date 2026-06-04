@@ -17,21 +17,40 @@ export function useTernakLimit(speciesGroup) {
   const { data, isLoading } = useQuery({
     queryKey: ['ternak-limit', tenantId, speciesGroup],
     queryFn: async () => {
-      const [countRes, limitRes] = await Promise.all([
-        supabase.rpc('get_active_ternak_count', {
-          p_tenant_id: tenantId,
-          p_species_group: speciesGroup,
-        }),
-        supabase.rpc('get_ternak_limit', {
-          p_tenant_id: tenantId,
-          p_species_group: speciesGroup,
-        }),
-      ])
+      let currentCount = 0
 
-      if (countRes.error) throw countRes.error
+      if (speciesGroup === 'domba_kambing') {
+        const [dombaF, dombaB, kambingF, kambingB] = await Promise.all([
+          supabase.from('domba_penggemukan_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('domba_breeding_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('kambing_penggemukan_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('kambing_breeding_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
+        ])
+
+        if (dombaF.error) throw dombaF.error
+        if (dombaB.error) throw dombaB.error
+        if (kambingF.error) throw kambingF.error
+        if (kambingB.error) throw kambingB.error
+
+        currentCount = (dombaF.count || 0) + (dombaB.count || 0) + (kambingF.count || 0) + (kambingB.count || 0)
+      } else if (speciesGroup === 'sapi') {
+        const [sapiF, sapiB] = await Promise.all([
+          supabase.from('sapi_penggemukan_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('sapi_breeding_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif', 'bunting']).eq('is_deleted', false),
+        ])
+
+        if (sapiF.error) throw sapiF.error
+        if (sapiB.error) throw sapiB.error
+
+        currentCount = (sapiF.count || 0) + (sapiB.count || 0)
+      }
+
+      const limitRes = await supabase.rpc('get_ternak_limit', {
+        p_tenant_id: tenantId,
+        p_species_group: speciesGroup,
+      })
       if (limitRes.error) throw limitRes.error
 
-      const currentCount = countRes.data ?? 0
       const limit = limitRes.data  // null = unlimited
 
       return { currentCount, limit }

@@ -74,6 +74,7 @@ export function AddAnimalSheet({ batchId, animals = [], onAdd, isPending, animal
       sex:                data.sex,
       entry_age_months:   data.entry_age_months ? parseInt(data.entry_age_months) : null,
       age_confidence:     data.age_confidence,
+      acquisition_type:   data.acquisition_type,
       entry_date:         data.entry_date,
       entry_weight_kg:    parseFloat(data.entry_weight_kg),
       entry_bcs:          data.entry_bcs ? parseFloat(data.entry_bcs) : null,
