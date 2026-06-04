@@ -79,6 +79,7 @@ import { isSuperadmin as checkIsSuperadmin, isOwner, isStaff } from '@/lib/auth'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
+import { logError } from '@/lib/logger/errorLogger'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { usePlanConfigs } from '@/lib/hooks/useAdminData'
@@ -95,6 +96,7 @@ export default function AppSidebar({ open, onClose }) {
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
   const [tenantMenuOpen, setTenantMenuOpen] = useState(false)
   const [expandedFarms, setExpandedFarms] = useState({})
+  const [isSwitching, setIsSwitching] = useState(false)
   // Start UTAMA collapsed when already on a per-farm route so kandang sections get focus
   const [utamaCollapsed, setUtamaCollapsed] = useState(
     () => /^\/peternak\/[^/]+\/kandang\//.test(location.pathname)
@@ -202,7 +204,7 @@ export default function AppSidebar({ open, onClose }) {
   const isDombaBreeding    = vertical === 'peternak_domba_breeding'
   const isKambingPenggemukan = vertical === 'peternak_kambing_penggemukan'
   const isKambingBreeding    = vertical === 'peternak_kambing_breeding'
-  const isFatteningPremium = isDombaPenggemukan || isKambingPenggemukan
+  const _isFatteningPremium = isDombaPenggemukan || isKambingPenggemukan
   const isSapiPenggemukan    = vertical === 'peternak_sapi_penggemukan'
   const isSapiBreeding       = vertical === 'peternak_sapi_breeding'
   const isRPA      = vertical === 'rumah_potong_rpa' || model?.category === 'rumah_potong'
@@ -549,33 +551,97 @@ export default function AppSidebar({ open, onClose }) {
                       <DropdownMenuItem
                         key={p.id}
                         onClick={async () => {
+                          if (isSwitching) return
+                          setIsSwitching(true)
                           const targetVertical = p.tenants?.business_vertical
                           const targetPath = getBerandaPath(targetVertical, p.tenants)
                           
-                          // 1. Switch tenant state (including DB persist)
-                          const ok = await switchTenant(p.tenant_id)
-                          if (!ok) return
-                          
-                          // 2. Clear ONLY tenant-specific cache
-                          queryClient.invalidateQueries({
-                            predicate: (query) => {
-                              const key = query.queryKey
-                              const globalKeys = [
-                                'market-prices',
-                                'harga-pasar',
-                                'market-listings',
-                                'pricing-plans',
-                                'discount-codes',
-                              ]
-                              return !globalKeys.some(gk => 
-                                Array.isArray(key) && key[0] === gk
-                              )
+                          let resolvedPath = targetPath
+                          if (!resolvedPath || typeof resolvedPath !== 'string' || !resolvedPath.startsWith('/')) {
+                            logError({
+                              level: 'warning',
+                              source: 'app',
+                              component: 'AppSidebar',
+                              actionName: 'app.business.switch',
+                              error: { message: `Unresolved target route: ${resolvedPath}`, code: 'unresolved_route' },
+                              metadata: {
+                                from_tenant_id: tenant?.id,
+                                to_tenant_id: p.tenant_id,
+                                target_business_vertical: targetVertical,
+                                target_sub_type: p.tenants?.sub_type,
+                                target_route: resolvedPath,
+                                current_path: window.location.pathname,
+                                errorClass: 'RouteResolutionError',
+                              }
+                            })
+                            resolvedPath = '/dashboard' // Safe fallback
+                          }
+
+                          try {
+                            // 1. Switch tenant state (including DB persist)
+                            const ok = await switchTenant(p.tenant_id)
+                            if (!ok) {
+                              logError({
+                                level: 'error',
+                                source: 'app',
+                                component: 'AppSidebar',
+                                actionName: 'app.business.switch',
+                                error: { message: 'Tenant switch verification returned false', code: 'switch_failed' },
+                                metadata: {
+                                  from_tenant_id: tenant?.id,
+                                  to_tenant_id: p.tenant_id,
+                                  target_business_vertical: targetVertical,
+                                  target_sub_type: p.tenants?.sub_type,
+                                  target_route: resolvedPath,
+                                  current_path: window.location.pathname,
+                                  errorClass: 'SwitchVerificationError',
+                                }
+                              })
+                              toast.error('Gagal pindah bisnis. Coba lagi.')
+                              return
                             }
-                          })
-                          
-                          // 3. Navigate to the correct vertical dashboard
-                          navigate(targetPath)
-                          setTenantMenuOpen(false)
+                            
+                            // 2. Clear ONLY tenant-specific cache
+                            queryClient.invalidateQueries({
+                              predicate: (query) => {
+                                const key = query.queryKey
+                                const globalKeys = [
+                                  'market-prices',
+                                  'harga-pasar',
+                                  'market-listings',
+                                  'pricing-plans',
+                                  'discount-codes',
+                                ]
+                                return !globalKeys.some(gk => 
+                                  Array.isArray(key) && key[0] === gk
+                                )
+                              }
+                            })
+                            
+                            // 3. Navigate to the correct vertical dashboard
+                            navigate(resolvedPath)
+                            setTenantMenuOpen(false)
+                          } catch (err) {
+                            logError({
+                              level: 'error',
+                              source: 'app',
+                              component: 'AppSidebar',
+                              actionName: 'app.business.switch',
+                              error: err,
+                              metadata: {
+                                from_tenant_id: tenant?.id,
+                                to_tenant_id: p.tenant_id,
+                                target_business_vertical: targetVertical,
+                                target_sub_type: p.tenants?.sub_type,
+                                target_route: resolvedPath,
+                                current_path: window.location.pathname,
+                                errorClass: err?.constructor?.name || 'Error',
+                              }
+                            })
+                            toast.error('Gagal pindah bisnis. Coba lagi.')
+                          } finally {
+                            setIsSwitching(false)
+                          }
                         }}
                         className={`gap-3 rounded-lg p-2.5 cursor-pointer transition-all mb-1 flex items-center focus:bg-white/[0.06] focus:text-white ${
                           isActive ? 'bg-emerald-500/8 border border-emerald-500/20 text-white' : 'hover:bg-[#182434] hover:text-white text-slate-300 border border-transparent'
@@ -1291,21 +1357,88 @@ export default function AppSidebar({ open, onClose }) {
                 return (
                   <button
                     key={p.id}
-                    onClick={() => {
+                    onClick={async () => {
+                      if (isSwitching) return
+                      setIsSwitching(true)
                       const targetVertical = p.tenants?.business_vertical
                       const targetPath = getBerandaPath(targetVertical, p.tenants)
-                      switchTenant(p.tenant_id)
-                      // Clear ONLY tenant-specific cache
-                      queryClient.invalidateQueries({
-                        predicate: (query) => {
-                          const key = query.queryKey
-                          const globalKeys = ['market-prices', 'harga-pasar', 'market-listings', 'pricing-plans', 'discount-codes']
-                          return !globalKeys.some(gk => Array.isArray(key) && key[0] === gk)
+
+                      let resolvedPath = targetPath
+                      if (!resolvedPath || typeof resolvedPath !== 'string' || !resolvedPath.startsWith('/')) {
+                        logError({
+                          level: 'warning',
+                          source: 'app',
+                          component: 'AppSidebar',
+                          actionName: 'app.business.switch',
+                          error: { message: `Unresolved target route: ${resolvedPath}`, code: 'unresolved_route' },
+                          metadata: {
+                            from_tenant_id: tenant?.id,
+                            to_tenant_id: p.tenant_id,
+                            target_business_vertical: targetVertical,
+                            target_sub_type: p.tenants?.sub_type,
+                            target_route: resolvedPath,
+                            current_path: window.location.pathname,
+                            errorClass: 'RouteResolutionError',
+                          }
+                        })
+                        resolvedPath = '/dashboard' // Safe fallback
+                      }
+
+                      try {
+                        const ok = await switchTenant(p.tenant_id)
+                        if (!ok) {
+                          logError({
+                            level: 'error',
+                            source: 'app',
+                            component: 'AppSidebar',
+                            actionName: 'app.business.switch',
+                            error: { message: 'Tenant switch verification returned false', code: 'switch_failed' },
+                            metadata: {
+                              from_tenant_id: tenant?.id,
+                              to_tenant_id: p.tenant_id,
+                              target_business_vertical: targetVertical,
+                              target_sub_type: p.tenants?.sub_type,
+                              target_route: resolvedPath,
+                              current_path: window.location.pathname,
+                              errorClass: 'SwitchVerificationError',
+                            }
+                          })
+                          toast.error('Gagal pindah bisnis. Coba lagi.')
+                          return
                         }
-                      })
-                      setMobileSwitcherOpen(false)
-                      if (!isDesktop) onClose?.()
-                      navigate(targetPath)
+
+                        // Clear ONLY tenant-specific cache
+                        queryClient.invalidateQueries({
+                          predicate: (query) => {
+                            const key = query.queryKey
+                            const globalKeys = ['market-prices', 'harga-pasar', 'market-listings', 'pricing-plans', 'discount-codes']
+                            return !globalKeys.some(gk => Array.isArray(key) && key[0] === gk)
+                          }
+                        })
+                        setMobileSwitcherOpen(false)
+                        if (!isDesktop) onClose?.()
+                        navigate(resolvedPath)
+                      } catch (err) {
+                        logError({
+                          level: 'error',
+                          source: 'app',
+                          component: 'AppSidebar',
+                          actionName: 'app.business.switch',
+                          error: err,
+                          metadata: {
+                            from_tenant_id: tenant?.id,
+                            to_tenant_id: p.tenant_id,
+                            target_business_vertical: targetVertical,
+                            target_sub_type: p.tenants?.sub_type,
+                            target_route: resolvedPath,
+                            current_path: window.location.pathname,
+                            errorClass: err?.constructor?.name || 'Error',
+                          }
+                        })
+                        toast.error('Gagal pindah bisnis. Coba lagi.')
+                      } finally {
+                        setIsSwitching(false)
+                      }
                     }}
                     className={`w-full flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-all text-left ${
                       isActive ? 'bg-emerald-500/8 border border-emerald-500/20 text-white' : 'bg-white/[0.02] border border-white/[0.06] hover:bg-[#182434] hover:text-white text-slate-300'
