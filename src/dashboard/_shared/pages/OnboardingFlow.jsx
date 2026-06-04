@@ -121,10 +121,13 @@ export default function OnboardingFlow() {
               actionName: 'onboarding.redirect_failed',
               error: { message: `No KEY_TO_PATH mapping for vertical "${selectedKey}"`, code: 'unmapped_vertical' },
               metadata: {
-                vertical: selectedKey,
-                role: profile?.user_type || profile?.role || null,
-                hasTenant: !!profile?.tenant_id,
-                isNewBusiness,
+                profile_id: profile?.id ?? null,
+                auth_user_id: user?.id ?? null,
+                tenant_id: profile?.tenant_id ?? null,
+                selected_vertical: selectedKey || null,
+                selected_business_model: selectedKey || null,
+                is_first_time_onboarding: !profile?.onboarded || !profile?.business_model_selected,
+                is_new_business: isNewBusiness,
               },
             })
             navigate('/', { replace: true })

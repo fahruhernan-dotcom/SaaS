@@ -48,6 +48,8 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   const debounceRef = useRef(null)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteInput, setInviteInput] = useState('')
+  const [createdTenantId, setCreatedTenantId] = useState(null)
+  const isSubmittingRef = useRef(false)
   const nav = useNav()
 
   // Verticals that need extra setup step
@@ -220,10 +222,16 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       return
     }
 
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
     setLoading(true)
+
+    let resolvedTenantId = null
+    let isFirstTimeOnboarding = false
+    let userTypeMismatch = false
+    let targetAuthId = user?.id || profile?.auth_user_id
+
     try {
-      const targetAuthId = user?.id || profile?.auth_user_id
-      
       const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
       if (!targetAuthId || targetAuthId === 'undefined' || !isUUID(targetAuthId)) {
@@ -231,28 +239,52 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         throw new Error('User session missing or invalid auth ID')
       }
 
-      let resolvedTenantId = profile?.tenant_id === 'undefined' ? null : profile?.tenant_id
+      // Check loaded user businesses/memberships to prevent duplicate tenant creation
+      let existingMatchedTenantId = null
+      if (!isNewBusiness) {
+        const { data: existingProfiles, error: fetchError } = await supabase
+          .from('profiles')
+          .select('tenant_id, tenants(id, business_vertical, sub_type, is_active)')
+          .eq('auth_user_id', targetAuthId)
+
+        if (fetchError) {
+          console.warn('[Onboarding] Failed to fetch existing user profiles:', fetchError.message)
+        }
+
+        if (existingProfiles && existingProfiles.length > 0) {
+          const match = existingProfiles.find(p => 
+            p.tenants?.is_active && 
+            (p.tenants?.business_vertical === model.key || p.tenants?.sub_type === model.sub_type)
+          )
+          if (match) {
+            existingMatchedTenantId = match.tenant_id
+            console.log('[Onboarding] Found existing active business with same vertical/sub_type. Reusing tenant:', existingMatchedTenantId)
+          }
+        }
+      }
+
+      resolvedTenantId = createdTenantId || existingMatchedTenantId || (profile?.tenant_id === 'undefined' ? null : profile?.tenant_id)
 
       // New user onboarding check
-      const isFirstTimeOnboarding = !profile?.onboarded || !profile?.business_model_selected
-
-      // If they have a resolvedTenantId but it's their first time and NOT an explicit new business,
-      // we can reuse the existing placeholder tenant.
-      const canReuseExistingTenant = isFirstTimeOnboarding && resolvedTenantId && !isNewBusiness
+      isFirstTimeOnboarding = !profile?.onboarded || !profile?.business_model_selected
 
       // When picking a vertical with different user_type than existing profile,
       // we normally route through create_new_business RPC instead of trying to UPDATE the existing profile.
-      const userTypeMismatch = Boolean(
+      userTypeMismatch = Boolean(
         profile?.user_type &&
         model.user_type &&
         profile.user_type !== model.user_type
       )
 
-      // Only create via RPC if we CANNOT reuse the existing tenant
+      // If they have a resolvedTenantId but it's their first time and NOT an explicit new business,
+      // we can reuse the existing placeholder tenant.
+      const canReuseExistingTenant = isFirstTimeOnboarding && resolvedTenantId && !isNewBusiness && !userTypeMismatch
+
+      // Only create via RPC if we CANNOT reuse the existing tenant, and we haven't already created one in this flow
       let shouldCreateViRPC = false
       if (canReuseExistingTenant) {
         shouldCreateViRPC = false
-      } else if (isNewBusiness || !resolvedTenantId || userTypeMismatch) {
+      } else if ((isNewBusiness || !resolvedTenantId || userTypeMismatch) && !createdTenantId) {
         shouldCreateViRPC = true
       }
 
@@ -276,6 +308,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
           if (!quota.canAdd) {
             toast.error(t('onboarding_error_quota_full', 'Jatah bisnis bapak sudah penuh ({usage}/{limit}). Silakan beli slot tambahan di Portal Add-on.').replace('{usage}', quota.usage).replace('{limit}', quota.limit))
             setLoading(false)
+            isSubmittingRef.current = false
             return
           }
         }
@@ -303,6 +336,17 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             operation: 'rpc',
             component: 'BusinessModelOverlay',
             actionName: 'onboarding.create_new_business',
+            metadata: {
+              profile_id: profile?.id ?? null,
+              auth_user_id: targetAuthId,
+              tenant_id: resolvedTenantId,
+              selected_vertical: selected || null,
+              selected_business_model: model.key || null,
+              onboarding_step: step,
+              is_first_time_onboarding: isFirstTimeOnboarding,
+              is_new_business: isNewBusiness,
+              user_type_mismatch: userTypeMismatch,
+            }
           })
           throw rpcError
         }
@@ -313,7 +357,8 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         }
 
         console.log('[Onboarding] RPC create_new_business success, returned tenant_id:', rpcData)
-        // Resolve the new tenant_id for setup step saving
+        // Store created tenant_id in state to prevent duplicates on subsequent steps failure & retry
+        setCreatedTenantId(rpcData)
         resolvedTenantId = rpcData
 
         // Point active session at the new tenant so the subsequent refetchProfile
@@ -328,8 +373,6 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 
       if (!resolvedTenantId || resolvedTenantId === 'undefined' || !isUUID(resolvedTenantId)) {
         console.error('[Onboarding] resolvedTenantId is invalid before profile update:', resolvedTenantId)
-        // Specific log so superadmin can tell missing-tenant from generic fatal.
-        // Prevents the .eq('tenant_id', null) silent 0-row update case downstream.
         logError({
           level: 'error',
           source: 'action',
@@ -337,10 +380,15 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
           actionName: 'onboarding.missing_tenant_id',
           error: { message: 'resolvedTenantId is invalid before profile update', code: 'missing_tenant_id' },
           metadata: {
-            vertical: selected || null,
-            isNewBusiness: !!isNewBusiness,
-            shouldCreateViRPC,
-            hasProfile: !!profile,
+            profile_id: profile?.id ?? null,
+            auth_user_id: targetAuthId,
+            tenant_id: resolvedTenantId || null,
+            selected_vertical: selected || null,
+            selected_business_model: model.key || null,
+            onboarding_step: step,
+            is_first_time_onboarding: isFirstTimeOnboarding,
+            is_new_business: isNewBusiness,
+            user_type_mismatch: userTypeMismatch,
           },
         })
         throw new Error('Tenant ID is invalid/undefined')
@@ -358,7 +406,6 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       // Skip the profile update after RPC success since create_new_business() already handles it.
       if (!shouldCreateViRPC) {
         const profilePayload = {
-          user_type: model.user_type,
           business_model_selected: true,
           onboarded: true,
           onboarding_completed_at: new Date().toISOString(),
@@ -377,43 +424,30 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             message: profError.message,
             details: profError.details,
             hint: profError.hint,
-            payload: { user_type: model.user_type, auth_user_id: targetAuthId, tenant_id: resolvedTenantId },
+            payload: { auth_user_id: targetAuthId, tenant_id: resolvedTenantId },
           })
           logSupabaseError(profError, {
             table: 'profiles',
             operation: 'update',
             component: 'BusinessModelOverlay',
             actionName: 'onboarding.update_profile',
+            metadata: {
+              profile_id: profile?.id ?? null,
+              auth_user_id: targetAuthId,
+              tenant_id: resolvedTenantId,
+              selected_vertical: selected || null,
+              selected_business_model: model.key || null,
+              onboarding_step: step,
+              is_first_time_onboarding: isFirstTimeOnboarding,
+              is_new_business: isNewBusiness,
+              user_type_mismatch: userTypeMismatch,
+            }
           })
         } else {
           console.log('[Onboarding] profiles update success')
         }
       } else {
         console.log('[Onboarding] Skipping redundant profiles update after RPC success')
-      }
-
-      // --- DEFENSIVE RECOVERY: Ensure owner tenant membership exists ---
-      // Scoped strictly to the active onboarding tenant (resolvedTenantId) and current authenticated user (targetAuthId).
-      // Skip if the business was created via create_new_business RPC as it already handles owner membership.
-      if (!shouldCreateViRPC) {
-        const { error: memberError } = await supabase
-          .from('tenant_memberships')
-          .upsert({
-            tenant_id: resolvedTenantId,
-            auth_user_id: targetAuthId,
-            role: profile?.role || 'owner',
-            full_name: profile?.full_name || user?.user_metadata?.full_name || '',
-          }, { onConflict: 'auth_user_id,tenant_id' })
-
-        if (memberError) {
-          console.warn('[Onboarding] Defensive tenant_memberships upsert failed:', memberError.message)
-          logSupabaseError(memberError, {
-            table: 'tenant_memberships',
-            operation: 'upsert',
-            component: 'BusinessModelOverlay',
-            actionName: 'onboarding.defensive_membership_upsert',
-          })
-        }
       }
 
       if (resolvedTenantId) {
@@ -450,6 +484,17 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             operation: 'update',
             component: 'BusinessModelOverlay',
             actionName: 'onboarding.update_tenant',
+            metadata: {
+              profile_id: profile?.id ?? null,
+              auth_user_id: targetAuthId,
+              tenant_id: resolvedTenantId,
+              selected_vertical: selected || null,
+              selected_business_model: model.key || null,
+              onboarding_step: step,
+              is_first_time_onboarding: isFirstTimeOnboarding,
+              is_new_business: isNewBusiness,
+              user_type_mismatch: userTypeMismatch,
+            }
           })
           throw tenError
         }
@@ -514,6 +559,17 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             operation: 'insert',
             component: 'BusinessModelOverlay',
             actionName: 'onboarding.insert_initial_batch',
+            metadata: {
+              profile_id: profile?.id ?? null,
+              auth_user_id: targetAuthId,
+              tenant_id: resolvedTenantId,
+              selected_vertical: selected || null,
+              selected_business_model: model.key || null,
+              onboarding_step: step,
+              is_first_time_onboarding: isFirstTimeOnboarding,
+              is_new_business: isNewBusiness,
+              user_type_mismatch: userTypeMismatch,
+            }
           })
         }
       }
@@ -524,6 +580,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         if (onComplete) onComplete(selected)
       }, 1800)
     } catch (err) {
+      isSubmittingRef.current = false
       console.error('[Onboarding] saveAndComplete FATAL error:', {
         message: err?.message,
         code: err?.code,
@@ -539,7 +596,17 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         component: 'BusinessModelOverlay',
         actionName: 'onboarding.saveAndComplete_fatal',
         error: err,
-        metadata: { vertical: selected || null, isNewBusiness: !!isNewBusiness },
+        metadata: {
+          profile_id: profile?.id ?? null,
+          auth_user_id: targetAuthId || null,
+          tenant_id: resolvedTenantId || null,
+          selected_vertical: selected || null,
+          selected_business_model: model?.key || null,
+          onboarding_step: step,
+          is_first_time_onboarding: isFirstTimeOnboarding,
+          is_new_business: isNewBusiness,
+          user_type_mismatch: userTypeMismatch,
+        },
       })
 
       // Friendly toast for trigger-enforced user_type lock (P0001).
@@ -553,7 +620,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       if (isUserTypeLocked) {
         toast.error(t('onboarding_error_cannot_change_type', 'Tidak bisa mengubah tipe bisnis akun ini. Buat bisnis baru lewat menu "Tambah Bisnis".'))
       } else {
-        toast.error(t('onboarding_error_save_failed', 'Gagal menyimpan pilihan. Silakan coba lagi.'))
+        toast.error(t('onboarding_error_save_failed', 'Gagal menyelesaikan onboarding. Coba lagi sebentar lagi.'))
       }
       setLoading(false)
     }
