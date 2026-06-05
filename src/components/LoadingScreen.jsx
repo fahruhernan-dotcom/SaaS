@@ -8,7 +8,7 @@ const LoadingScreen = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="fixed inset-0 bg-[#06090F] z-[9999] flex flex-col items-center justify-center gap-5"
+      className="fixed inset-0 bg-[#06090F] z-[9999] flex flex-col items-center justify-center gap-5 select-none cursor-default"
     >
       {/* CSS Keyframes for the sweep animation */}
       <style>

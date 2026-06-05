@@ -809,18 +809,17 @@ function FeedLogSheet({
 
             {/* ── Reporting Schema Section ── */}
             <div className="px-5 pt-3">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Skema Pelaporan</span>
-                <div className="h-px bg-white/[0.05] flex-1" />
+              <div className="flex items-center gap-4 text-[#64748B] my-6">
+                <div className="h-[1px] flex-1 bg-white/5" />
+                <span className="text-[9px] font-black uppercase tracking-[0.4em]">REPORTING SCHEMA</span>
+                <div className="h-[1px] flex-1 bg-white/5" />
               </div>
 
               {/* Hijauan */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-black text-emerald-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span>🌿</span> Hijauan
-                  </label>
-                  <span className="text-[10px] text-[#4B6478] font-mono">
+              <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">🌿 Hijauan *</label>
+                  <span className="text-[10px] text-[#4B6478] font-mono mr-4">
                     {form.hijauan_kg ? `${form.hijauan_kg} kg` : '—'}
                   </span>
                 </div>
@@ -836,18 +835,16 @@ function FeedLogSheet({
                     value={form.hijauan_kg}
                     suffix="kg"
                     onChange={val => setForm({ ...form, hijauan_kg: val })}
-                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                    className={cn('h-16 rounded-[28px] bg-black/40 border-none font-display text-xl px-8 focus:bg-black/60 transition-all shadow-inner text-white', focusCls)}
                   />
                 </div>
               </div>
 
               {/* Konsentrat */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-black text-blue-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <span>🌾</span> Konsentrat
-                  </label>
-                  <span className="text-[10px] text-[#4B6478] font-mono">
+              <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">🌾 Konsentrat *</label>
+                  <span className="text-[10px] text-[#4B6478] font-mono mr-4">
                     {form.konsentrat_kg ? `${form.konsentrat_kg} kg` : '—'}
                   </span>
                 </div>
@@ -863,83 +860,98 @@ function FeedLogSheet({
                     value={form.konsentrat_kg}
                     suffix="kg"
                     onChange={val => setForm({ ...form, konsentrat_kg: val })}
-                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                    className={cn('h-16 rounded-[28px] bg-black/40 border-none font-display text-xl px-8 focus:bg-black/60 transition-all shadow-inner text-white', focusCls)}
                   />
                 </div>
               </div>
 
               {/* Dedak + Lainnya row */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">🟤 Dedak</label>
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">🟤 Dedak</label>
                   <InputNumber
                     step={0.1}
                     placeholder="0.0"
                     value={form.dedak_kg}
                     suffix="kg"
                     onChange={val => setForm({ ...form, dedak_kg: val })}
-                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                    className={cn('h-16 rounded-[28px] bg-black/40 border-none font-display text-base px-6 focus:bg-black/60 transition-all shadow-inner text-white', focusCls)}
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">📦 Lainnya</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">📦 Lainnya</label>
                   <InputNumber
                     step={0.1}
                     placeholder="0.0"
                     value={form.other_feed_kg}
                     suffix="kg"
                     onChange={val => setForm({ ...form, other_feed_kg: val })}
-                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                    className={cn('h-16 rounded-[28px] bg-black/40 border-none font-display text-base px-6 focus:bg-black/60 transition-all shadow-inner text-white', focusCls)}
                   />
                 </div>
               </div>
 
               {/* Total input summary */}
               {totalInput > 0 && (
-                <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] mb-4">
+                <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] mb-6">
                   <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Total Input</span>
                   <span className="text-sm font-black text-white">{totalInput.toFixed(1)} <span className="text-[10px] font-normal text-[#4B6478]">kg</span></span>
                 </div>
               )}
 
               {/* ── Sisa Pakan Feedback ── */}
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Sisa Pakan</span>
-                  <div className="h-px bg-white/[0.05] flex-1" />
+              <div className="mb-6 space-y-4">
+                <div className="flex flex-col gap-2 ml-4">
+                  <label className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em]">Feedback Sisa Pakan *</label>
+                  <p className="text-[9px] font-medium text-slate-500 uppercase tracking-widest">Wajib diisi untuk akurasi monitoring pakan</p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 mb-2">
-                  {SISA_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => handleSisaMode(opt.id)}
-                      className={cn(
-                        'py-2.5 rounded-xl border text-[11px] font-black transition-all',
-                        sisaMode === opt.id ? opt.cls : 'border-white/[0.06] bg-white/[0.02] text-[#4B6478]',
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { id: 'habis', label: 'Habis/Puas', icon: '👍', active: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_30px_rgba(2, 26, 2,0.3)]' },
+                    { id: 'sedikit', label: 'Sisa Sedikit', icon: '🟡', active: 'bg-amber-500 border-amber-400 text-slate-900 shadow-[0_0_30px_rgba(245,158,11,0.3)]' },
+                    { id: 'banyak', label: 'Sisa Banyak', icon: '🔴', active: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_30px_rgba(244,63,94,0.3)]' },
+                  ].map((opt) => {
+                    const isSelected = sisaMode === opt.id
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => handleSisaMode(opt.id)}
+                        className={cn(
+                          "flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all duration-300 active:scale-95 group",
+                          isSelected ? opt.active : "bg-black/20 border-white/5 text-slate-500 hover:bg-black/40 hover:border-white/10"
+                        )}
+                      >
+                        <span className={cn("text-2xl mb-1.5 transition-transform duration-500", isSelected ? "scale-125 rotate-[12deg]" : "group-hover:scale-110")}>
+                          {opt.icon}
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em]">{opt.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
+
                 {/* Numeric input — shown when sedikit/banyak, or always as fallback */}
                 {(sisaMode === 'sedikit' || sisaMode === 'banyak' || !sisaMode) && (
-                  <InputNumber
-                    step={0.1}
-                    placeholder={sisaMode === 'sedikit' ? '0.1 – 5 kg' : sisaMode === 'banyak' ? '> 5 kg' : '0.0'}
-                    value={form.sisa_pakan_kg}
-                    suffix="kg"
-                    onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
-                    className={cn('bg-white/[0.03] border-amber-500/20 text-amber-300 placeholder:text-[#4B6478] font-black transition-colors', focusCls)}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Sisa Pakan (kg)</label>
+                    <InputNumber
+                      step={0.1}
+                      placeholder={sisaMode === 'sedikit' ? '0.1 – 5 kg' : sisaMode === 'banyak' ? '> 5 kg' : '0.0'}
+                      value={form.sisa_pakan_kg}
+                      suffix="kg"
+                      onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
+                      className={cn('bg-white/[0.03] border-white/5 text-amber-300 placeholder:text-[#4B6478] font-black rounded-2xl h-14 px-6', focusCls)}
+                    />
+                  </div>
                 )}
               </div>
 
               {/* ── Biaya Pakan (kandang schema only) ── */}
               {config.logSchema === 'kandang' && (
-                <div className="mb-4">
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                <div className="mb-6 space-y-2">
+                  <label className="block text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">
                     Biaya Pakan Hari Ini (Rp){' '}
                     <span className="normal-case text-amber-400/70 font-medium">— penting untuk HPP</span>
                   </label>
@@ -947,24 +959,21 @@ function FeedLogSheet({
                     placeholder="0"
                     value={form.feed_cost_idr}
                     onChange={val => setForm({ ...form, feed_cost_idr: val })}
-                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                    className={cn('bg-white/[0.03] border-white/5 text-white placeholder:text-[#4B6478] rounded-2xl h-14 px-6 transition-colors', focusCls)}
                   />
                 </div>
               )}
 
-              {/* ── Catatan Observasi ── */}
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Catatan Observasi</span>
-                  <div className="h-px bg-white/[0.05] flex-1" />
-                </div>
+              {/* ── Observation Notes ── */}
+              <div className="mb-4 space-y-4">
+                <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Observation Notes</label>
                 <textarea
                   placeholder="Kondisi ternak, nafsu makan, hal yang perlu dicatat..."
                   rows={2}
                   value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })}
                   className={cn(
-                    'w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none resize-none transition-colors',
+                    'w-full bg-black/30 border border-white/5 rounded-2xl p-5 text-sm text-white focus:border-[#7C3AED]/50 outline-none min-h-[100px] resize-none shadow-2xl transition-all hover:bg-black/40',
                     focusCls,
                   )}
                 />

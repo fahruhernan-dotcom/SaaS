@@ -489,7 +489,7 @@ export default function AppSidebar({ open, onClose }) {
     <>
       <SidebarHeader style={{padding: '16px 16px 8px'}}>
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer" onClick={() => navigate(berandaPath)}>
+        <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer select-none" onClick={() => navigate(berandaPath)}>
           <img src="/logo.png" alt="TernakOS Icon" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
           <div className="">
             <p className="font-display font-extrabold text-[15px] text-foreground leading-none">
@@ -508,7 +508,7 @@ export default function AppSidebar({ open, onClose }) {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="bg-[#121A23] hover:bg-[#182434] border border-white/[0.08] rounded-xl p-2.5 h-auto transition-all shadow-md shadow-black/15 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent"
+                  className="bg-[#121A23] hover:bg-[#182434] border border-white/[0.08] rounded-xl p-2.5 h-auto transition-all shadow-md shadow-black/15 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent select-none cursor-pointer"
                 >
                   <div 
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border overflow-hidden"
@@ -816,7 +816,7 @@ export default function AppSidebar({ open, onClose }) {
             {collapsible ? (
               <button
                 onClick={() => setUtamaCollapsed(v => !v)}
-                className="w-full flex items-center justify-between px-2 mb-1 bg-transparent border-none cursor-pointer group"
+                className="w-full flex items-center justify-between px-2 mb-1 bg-transparent border-none cursor-pointer select-none group"
               >
                 <span className="text-[10px] font-bold tracking-[0.15em] text-slate-400 group-hover:text-slate-350 transition-colors">
                   {group.label}
@@ -828,7 +828,7 @@ export default function AppSidebar({ open, onClose }) {
                 />
               </button>
             ) : (
-              <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1">
+              <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1 select-none cursor-default">
                 {group.label}
               </SidebarGroupLabel>
             )}
@@ -851,12 +851,12 @@ export default function AppSidebar({ open, onClose }) {
                         asChild={!isLocked}
                         isActive={isActive}
                         tooltip={isLocked ? lockTooltip : item.title}
-                        className={`rounded-xl mb-0.5 transition-all duration-200 ${
+                        className={`rounded-xl mb-0.5 transition-all duration-200 select-none ${
                           isLocked
                             ? 'opacity-50 cursor-not-allowed'
                             : isActive
-                              ? 'bg-opacity-10'
-                              : 'hover:bg-white/[0.04] text-slate-300 hover:text-white'
+                              ? 'bg-opacity-10 cursor-pointer'
+                              : 'hover:bg-white/[0.04] text-slate-300 hover:text-white cursor-pointer'
                         }`}
                         style={isActive && !isLocked ? { 
                           background: `${color}18`, 
@@ -993,7 +993,7 @@ export default function AppSidebar({ open, onClose }) {
                               <SidebarMenuButton
                                 asChild
                                 isActive={isActive}
-                                className={`rounded-xl mb-0.5 transition-all ${
+                                className={`rounded-xl mb-0.5 transition-all select-none cursor-pointer ${
                                   isActive ? '' : 'hover:bg-white/[0.03] text-foreground'
                                 }`}
                                 style={isActive ? {
@@ -1060,7 +1060,7 @@ export default function AppSidebar({ open, onClose }) {
 
         {/* ── LAINNYA ── */}
         <SidebarGroup className="mt-2">
-          <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1">
+          <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1 select-none cursor-default">
             LAINNYA
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -1164,7 +1164,7 @@ export default function AppSidebar({ open, onClose }) {
             cursor: isSuperadmin ? 'pointer' : 'default',
             transition: 'all 0.2s',
           }}
-          className={isSuperadmin ? 'hover:bg-amber-500/10 hover:border-amber-500/35 transition-all' : ''}
+          className={`select-none ${isSuperadmin ? 'hover:bg-amber-500/10 hover:border-amber-500/35 transition-all' : ''}`}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -1268,7 +1268,7 @@ export default function AppSidebar({ open, onClose }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-[#121A23] border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl shadow-black/40 z-50"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-[#121A23] border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl shadow-black/40 z-50 select-none cursor-default"
               >
                 {/* User info header */}
                 <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/8">
@@ -1340,7 +1340,7 @@ export default function AppSidebar({ open, onClose }) {
           {/* Trigger button */}
           <button
             onClick={() => setDropdownOpen(prev => !prev)}
-            className="w-full flex items-center gap-2.5 rounded-xl hover:bg-white/[0.03] transition-colors px-3 py-2.5"
+            className="w-full flex items-center gap-2.5 rounded-xl hover:bg-white/[0.03] transition-colors px-3 py-2.5 select-none cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
               {userInitials}
@@ -1363,7 +1363,7 @@ export default function AppSidebar({ open, onClose }) {
   const renderMobileSwitcher = () => {
     return (
       <Sheet open={mobileSwitcherOpen} onOpenChange={setMobileSwitcherOpen}>
-        <SheetContent side="bottom" className="bg-[#121A23] border-t border-white/[0.08] rounded-t-2xl p-4 z-[9999] shadow-2xl shadow-black/50">
+        <SheetContent side="bottom" className="bg-[#121A23] border-t border-white/[0.08] rounded-t-2xl p-4 z-[9999] shadow-2xl shadow-black/50 select-none cursor-default">
           <SheetHeader className="text-left mb-4">
             <SheetTitle className="text-slate-100 text-lg font-bold">Ganti Model Bisnis</SheetTitle>
             <SheetDescription className="text-slate-400 text-xs">
@@ -1518,7 +1518,7 @@ export default function AppSidebar({ open, onClose }) {
               <SheetTitle>Navigasi Sidebar</SheetTitle>
               <SheetDescription>Menu navigasi utama aplikasi TernakOS.</SheetDescription>
             </SheetHeader>
-            <Sidebar collapsible="none" className="border-none bg-transparent" style={{ width: '100%', height: '100%' }}>
+            <Sidebar collapsible="none" className="border-none bg-transparent select-none cursor-default" style={{ width: '100%', height: '100%' }}>
               <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto', overscrollBehavior: 'contain' }}>
                 {sidebarContent}
               </div>
@@ -1532,7 +1532,7 @@ export default function AppSidebar({ open, onClose }) {
 
   return (
     <>
-      <Sidebar collapsible="offcanvas" style={{ background: '#0D141B' }}>
+      <Sidebar collapsible="offcanvas" className="select-none cursor-default" style={{ background: '#0D141B' }}>
         {sidebarContent}
       </Sidebar>
       {renderMobileSwitcher()}
