@@ -542,30 +542,47 @@ export function useBulkAddSapiAnimals() {
   const { tenant } = useAuth()
   return useMutation({
     mutationFn: async ({ batch_id, animals }) => {
-      const rows = animals.map(a => ({
-        tenant_id: tenant.id,
-        batch_id,
-        ear_tag: a.ear_tag,
-        species: a.species || 'sapi',
-        breed: a.breed || null,
-        sex: a.sex,
-        entry_date: a.entry_date,
-        entry_weight_kg: parseFloat(a.entry_weight_kg),
-        entry_age_months: a.entry_age_months ? parseInt(a.entry_age_months) : null,
-        age_confidence: a.age_confidence || 'estimasi',
-        acquisition_type: a.acquisition_type || 'beli',
-        purchase_price_idr: a.purchase_price_idr ? parseInt(a.purchase_price_idr) : 0,
-        source: a.source || null,
-        notes: a.notes || null,
-        status: 'active',
-        latest_weight_kg: parseFloat(a.entry_weight_kg),
-        latest_weight_date: a.entry_date,
-      }))
+      const parseW = (v) => v ? Number(String(v).replace(',', '.')) || 0 : 0
+      const rows = animals.map(a => {
+        const entryWeight = parseW(a.entry_weight_kg)
+        const priceKg = a.price_per_kg ? Number(a.price_per_kg) : 0
+        const purchasePrice = a.purchase_price_idr 
+          ? Number(a.purchase_price_idr)
+          : (entryWeight > 0 && priceKg > 0 ? Math.round(entryWeight * priceKg) : 0)
+
+        return {
+          tenant_id: tenant.id,
+          batch_id,
+          ear_tag: a.ear_tag,
+          species: a.species || 'sapi',
+          breed: a.breed || null,
+          sex: a.sex,
+          entry_date: a.entry_date,
+          entry_weight_kg: entryWeight,
+          entry_age_months: a.entry_age_months ? parseInt(a.entry_age_months) : null,
+          age_confidence: a.age_confidence || 'estimasi',
+          acquisition_type: a.acquisition_type || 'beli',
+          purchase_price_idr: purchasePrice,
+          source: a.source || null,
+          notes: a.notes || null,
+          status: 'active',
+          latest_weight_kg: entryWeight,
+          latest_weight_date: a.entry_date,
+        }
+      })
 
       const { error } = await supabase
         .from('sapi_penggemukan_animals')
         .insert(rows)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'sapi_penggemukan_animals',
+          operation: 'insert',
+          component: 'useSapiPenggemukanData',
+          actionName: 'peternak.sapi.animal.bulk_add',
+        })
+        throw error
+      }
 
       // Increment counter for each animal added
       for (let i = 0; i < animals.length; i++) {

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
+import { resolveBusinessVertical } from '../businessModel'
 
 /**
  * Cek limit ternak aktif per tenant berdasarkan plan.
@@ -11,7 +12,7 @@ import { useAuth } from './useAuth'
  *   canAdd true → boleh tambah ternak baru
  */
 export function useTernakLimit(speciesGroup) {
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
   const tenantId = tenant?.id
 
   const { data, isLoading } = useQuery({
@@ -19,30 +20,49 @@ export function useTernakLimit(speciesGroup) {
     queryFn: async () => {
       let currentCount = 0
 
-      if (speciesGroup === 'domba_kambing') {
-        const [dombaF, dombaB, kambingF, kambingB] = await Promise.all([
-          supabase.from('domba_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('domba_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('kambing_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('kambing_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
-        ])
+      const vertical = resolveBusinessVertical(profile, tenant)
+      let tableName = null
+      if (vertical && vertical.startsWith('peternak_')) {
+        tableName = `${vertical.replace('peternak_', '')}_animals`
+      }
 
-        if (dombaF.error) throw dombaF.error
-        if (dombaB.error) throw dombaB.error
-        if (kambingF.error) throw kambingF.error
-        if (kambingB.error) throw kambingB.error
+      if (tableName) {
+        const { count, error } = await supabase
+          .from(tableName)
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .eq('status', 'active')
+          .or('is_deleted.is.null,is_deleted.eq.false')
 
-        currentCount = (dombaF.count || 0) + (dombaB.count || 0) + (kambingF.count || 0) + (kambingB.count || 0)
-      } else if (speciesGroup === 'sapi') {
-        const [sapiF, sapiB] = await Promise.all([
-          supabase.from('sapi_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('sapi_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif', 'bunting']).eq('is_deleted', false),
-        ])
+        if (error) throw error
+        currentCount = count || 0
+      } else {
+        // Fallback to old behavior if no table could be resolved
+        if (speciesGroup === 'domba_kambing') {
+          const [dombaF, dombaB, kambingF, kambingB] = await Promise.all([
+            supabase.from('domba_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+            supabase.from('domba_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+            supabase.from('kambing_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+            supabase.from('kambing_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          ])
 
-        if (sapiF.error) throw sapiF.error
-        if (sapiB.error) throw sapiB.error
+          if (dombaF.error) throw dombaF.error
+          if (dombaB.error) throw dombaB.error
+          if (kambingF.error) throw kambingF.error
+          if (kambingB.error) throw kambingB.error
 
-        currentCount = (sapiF.count || 0) + (sapiB.count || 0)
+          currentCount = (dombaF.count || 0) + (dombaB.count || 0) + (kambingF.count || 0) + (kambingB.count || 0)
+        } else if (speciesGroup === 'sapi') {
+          const [sapiF, sapiB] = await Promise.all([
+            supabase.from('sapi_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+            supabase.from('sapi_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif', 'bunting']).eq('is_deleted', false),
+          ])
+
+          if (sapiF.error) throw sapiF.error
+          if (sapiB.error) throw sapiB.error
+
+          currentCount = (sapiF.count || 0) + (sapiB.count || 0)
+        }
       }
 
       const limitRes = await supabase.rpc('get_ternak_limit', {

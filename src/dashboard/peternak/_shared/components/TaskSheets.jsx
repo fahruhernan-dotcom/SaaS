@@ -548,32 +548,6 @@ export function CompleteTaskSheet({
     return 'required'
   }, [locChecking, locError, locVerified, locDistance, activeFarm])
 
-  const isCtaDisabled = locChecking || (isStaff && locError === 'NO_COORDINATES') || (isCompleting && isMultiAnimalTask && !animalsDone)
-
-  let ctaLabel = 'Cek Lokasi'
-  if (task && (task.status === 'pending' || task.status === 'in_progress')) {
-    const isStart = reportConfig || isMultiAnimalTask ? !isCompleting : false
-    const baseVerb = isStart 
-      ? 'Mulai Tugas' 
-      : (isCompleting 
-          ? (isMultiAnimalTask 
-              ? `Selesaikan Tugas (${entriesCount}/${animals.length})` 
-              : 'Selesaikan Tugas') 
-          : 'Tandai Selesai')
-    
-    if (locChecking) {
-      ctaLabel = 'Mengecek Lokasi...'
-    } else if (locVerified) {
-      ctaLabel = baseVerb
-    } else if (locError === 'PERMISSION_DENIED') {
-      ctaLabel = 'Izinkan Lokasi'
-    } else if (locError === 'NO_COORDINATES' && isStaff) {
-      ctaLabel = 'Lokasi Belum Diatur'
-    } else {
-      ctaLabel = 'Cek Lokasi'
-    }
-  }
-
   useEffect(() => {
     if (open && task) {
       setIsCompleting(false)
@@ -630,6 +604,32 @@ export function CompleteTaskSheet({
       setBatchSplits([])
     }
   }, [open, task, activeBatches]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isCtaDisabled = locChecking || (isStaff && locError === 'NO_COORDINATES') || (isCompleting && isMultiAnimalTask && !animalsDone)
+
+  let ctaLabel = 'Cek Lokasi'
+  if (task && (task.status === 'pending' || task.status === 'in_progress')) {
+    const isStart = reportConfig || isMultiAnimalTask ? !isCompleting : false
+    const baseVerb = isStart 
+      ? 'Mulai Tugas' 
+      : (isCompleting 
+          ? (isMultiAnimalTask 
+              ? `Selesaikan Tugas (${entriesCount}/${animals.length})` 
+              : 'Selesaikan Tugas') 
+          : 'Tandai Selesai')
+    
+    if (locChecking) {
+      ctaLabel = 'Mengecek Lokasi...'
+    } else if (locVerified) {
+      ctaLabel = baseVerb
+    } else if (locError === 'PERMISSION_DENIED') {
+      ctaLabel = 'Izinkan Lokasi'
+    } else if (locError === 'NO_COORDINATES' && isStaff) {
+      ctaLabel = 'Lokasi Belum Diatur'
+    } else {
+      ctaLabel = 'Cek Lokasi'
+    }
+  }
 
   if (!task) return null
 
