@@ -4,6 +4,7 @@ import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '../logger/supabaseLogger'
 import { logError } from '../logger/errorLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ─── Pure helper calculations ─────────────────────────────────────────────────
 
@@ -178,7 +179,7 @@ export const useCreatePeternakFarm = () => {
       queryClient.invalidateQueries({ queryKey: ['peternak-farms', tenant?.id] })
       toast.success('Kandang berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -210,7 +211,7 @@ export const useUpdatePeternakFarm = () => {
       queryClient.invalidateQueries({ queryKey: ['peternak-farm', vars.id] })
       toast.success('Informasi kandang diperbarui')
     },
-    onError: (err) => toast.error('Gagal update kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal update kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -234,7 +235,7 @@ export const useDeletePeternakFarm = () => {
       queryClient.invalidateQueries({ queryKey: ['all-cycles', tenant?.id] })
       toast.success('Kandang berhasil dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -279,7 +280,7 @@ export const useCreateCycle = () => {
       queryClient.invalidateQueries({ queryKey: ['active-cycles', tenant?.id] })
       toast.success('Siklus baru berhasil dibuat')
     },
-    onError: (err) => toast.error('Gagal buat siklus: ' + err.message),
+    onError: (err) => toast.error('Gagal buat siklus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -313,7 +314,7 @@ export const useUpdateCycleStatus = () => {
       queryClient.invalidateQueries({ queryKey: ['active-cycles', tenant?.id] })
       toast.success('Status siklus diperbarui')
     },
-    onError: (err) => toast.error('Gagal update siklus: ' + err.message),
+    onError: (err) => toast.error('Gagal update siklus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -472,7 +473,7 @@ export const useUpsertFeedStock = () => {
       queryClient.invalidateQueries({ queryKey: ['feed-stocks', tenant?.id] })
       toast.success('Stok pakan berhasil diupdate')
     },
-    onError: (err) => toast.error('Gagal update stok: ' + err.message),
+    onError: (err) => toast.error('Gagal update stok: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -504,7 +505,7 @@ export const useReduceFeedStock = () => {
         toast.success('Pemakaian pakan dicatat')
       }
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -568,7 +569,7 @@ export const useDeleteCycle = () => {
       queryClient.invalidateQueries({ queryKey: ['cycle', cycleId] })
       toast.success('Siklus dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus siklus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus siklus: ' + normalizeSupabaseError(err).message),
   })
 }
 

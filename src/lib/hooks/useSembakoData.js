@@ -1090,7 +1090,7 @@ export const useCreateSembakoReturn = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-customer-invoices'] })
       toast.success('Nota Berhasil di-Retur')
     },
-    onError: (err) => toast.error('Gagal proses retur: ' + err.message),
+    onError: (err) => toast.error('Gagal proses retur: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1171,7 +1171,7 @@ export const useAdjustBatchStock = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       toast.success('Penyesuaian stok berhasil disimpan')
     },
-    onError: (err) => toast.error('Gagal adjust stok: ' + err.message),
+    onError: (err) => toast.error('Gagal adjust stok: ' + normalizeSupabaseError(err).message),
   })
 }
 

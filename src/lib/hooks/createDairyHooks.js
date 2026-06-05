@@ -10,6 +10,7 @@ import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '../logger/supabaseLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 import { logError } from '../logger/errorLogger'
 
 export function createDairyHooks(prefix) {
@@ -227,7 +228,7 @@ export function createDairyHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
         toast.success('Produksi berhasil dicatat')
       },
-      onError: (err) => toast.error('Gagal simpan: ' + err.message)
+      onError: (err) => toast.error('Gagal simpan: ' + normalizeSupabaseError(err).message)
     })
   }
 
@@ -260,7 +261,7 @@ export function createDairyHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-inventory`] })
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
       },
-      onError: (err) => toast.error('Gagal update inventori: ' + err.message)
+      onError: (err) => toast.error('Gagal update inventori: ' + normalizeSupabaseError(err).message)
     })
   }
 
@@ -283,7 +284,7 @@ export function createDairyHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
         toast.success('Transaksi berhasil dicatat')
       },
-      onError: (err) => toast.error('Gagal simpan transaksi: ' + err.message)
+      onError: (err) => toast.error('Gagal simpan transaksi: ' + normalizeSupabaseError(err).message)
     })
   }
 
@@ -302,7 +303,7 @@ export function createDairyHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
         toast.success('Ternak berhasil didaftarkan')
       },
-      onError: (err) => toast.error('Gagal tambah ternak: ' + err.message)
+      onError: (err) => toast.error('Gagal tambah ternak: ' + normalizeSupabaseError(err).message)
     })
   }
 

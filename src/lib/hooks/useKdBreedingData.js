@@ -4,6 +4,7 @@ import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '../logger/supabaseLogger'
 import { logError } from '../logger/errorLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -226,7 +227,7 @@ export const useAddKdBreedingAnimal = () => {
       qc.invalidateQueries(KEYS.animals(tenant.id))
       toast.success('Ternak berhasil ditambahkan')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -249,7 +250,7 @@ export const useUpdateKdBreedingAnimal = () => {
       qc.invalidateQueries(KEYS.animals(tenant.id))
       toast.success('Data ternak diperbarui')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -307,7 +308,7 @@ export const useAddKdBreedingWeight = () => {
       qc.invalidateQueries(KEYS.animalWeights(vars.animal_id))
       toast.success('Timbangan dicatat')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -328,7 +329,7 @@ export const useAddKdBreedingMating = () => {
       qc.invalidateQueries(KEYS.matings(tenant.id))
       toast.success('Perkawinan dicatat')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -351,7 +352,7 @@ export const useUpdateKdBreedingMating = () => {
       qc.invalidateQueries(KEYS.matings(tenant.id))
       toast.success('Data perkawinan diperbarui')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -373,7 +374,7 @@ export const useAddKdBreedingBirth = () => {
       qc.invalidateQueries(KEYS.matings(tenant.id))
       toast.success('Kelahiran dicatat')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -395,7 +396,7 @@ export const useAddKdBreedingHealthLog = () => {
       if (vars.log_type === 'kematian') qc.invalidateQueries(KEYS.animals(tenant.id))
       toast.success('Log kesehatan dicatat')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -416,7 +417,7 @@ export const useAddKdBreedingFeedLog = () => {
       qc.invalidateQueries(KEYS.feed(tenant.id))
       toast.success('Log pakan dicatat')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }
 
@@ -448,6 +449,6 @@ export const useAddKdBreedingSale = () => {
       qc.invalidateQueries(KEYS.animals(tenant.id))
       toast.success('Penjualan dicatat')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(normalizeSupabaseError(e).message),
   })
 }

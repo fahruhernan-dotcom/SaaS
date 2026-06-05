@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '../logger/supabaseLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -342,7 +343,7 @@ export function useAddSapiBreedingAnimal() {
       qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Ternak berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah ternak: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -367,7 +368,7 @@ export function useUpdateSapiBreedingAnimal() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animal-detail', animalId] })
       toast.success('Data ternak diperbarui')
     },
-    onError: (err) => toast.error('Gagal update: ' + err.message),
+    onError: (err) => toast.error('Gagal update: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -411,7 +412,7 @@ export function useAddSapiBreedingMatingRecord() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animal-detail', dam_id] })
       toast.success('IB/kawin berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat IB: ' + err.message),
+    onError: (err) => toast.error('Gagal catat IB: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -463,7 +464,7 @@ export function useUpdateSapiBreedingMatingStatus() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animal-detail', damId] })
       toast.success('Status kebuntingan diperbarui')
     },
-    onError: (err) => toast.error('Gagal update status: ' + err.message),
+    onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -521,7 +522,7 @@ export function useAddSapiBreedingBirth() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animal-detail', dam_id] })
       toast.success('Kelahiran berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat kelahiran: ' + err.message),
+    onError: (err) => toast.error('Gagal catat kelahiran: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -594,7 +595,7 @@ export function useAddSapiBreedingWeightRecord() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animal-detail', animal_id] })
       toast.success('Data timbang disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan timbang: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan timbang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -635,7 +636,7 @@ export function useAddSapiBreedingHealthLog() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animal-detail', animal_id] })
       toast.success('Log kesehatan disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan log kesehatan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan log kesehatan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -659,7 +660,7 @@ export function useDeleteSapiBreedingHealthLog() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-health-logs', tenant?.id] })
       toast.success('Log dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -697,7 +698,7 @@ export function useAddSapiBreedingFeedLog() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-feed-logs', tenant?.id] })
       toast.success('Log pakan disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan pakan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan pakan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -721,7 +722,7 @@ export function useDeleteSapiBreedingFeedLog() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-feed-logs', tenant?.id] })
       toast.success('Log pakan dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -758,6 +759,6 @@ export function useAddSapiBreedingSale() {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animals', tenant?.id] })
       toast.success('Penjualan berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat penjualan: ' + err.message),
+    onError: (err) => toast.error('Gagal catat penjualan: ' + normalizeSupabaseError(err).message),
   })
 }

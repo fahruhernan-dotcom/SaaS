@@ -5,6 +5,7 @@ import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { calculateSimpleHpp } from '../hpp/penggemukanHppCalcs'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -460,7 +461,7 @@ export function useCreateSapiBatch() {
       qc.invalidateQueries({ queryKey: ['sapi-active-batches', tenant?.id] })
       toast.success('Batch sapi berhasil dibuat')
     },
-    onError: (err) => toast.error('Gagal buat batch: ' + err.message),
+    onError: (err) => toast.error('Gagal buat batch: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -485,7 +486,7 @@ export function useCloseSapiBatch() {
       qc.invalidateQueries({ queryKey: ['sapi-active-batches', tenant?.id] })
       toast.success('Batch ditutup')
     },
-    onError: (err) => toast.error('Gagal tutup batch: ' + err.message),
+    onError: (err) => toast.error('Gagal tutup batch: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -532,7 +533,7 @@ export function useAddSapiAnimal() {
       qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Ternak berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah ternak: ' + normalizeSupabaseError(err).message),
   })
 }
 // ── useBulkAddSapiAnimals ─────────────────────────────────────────────────────
@@ -577,7 +578,7 @@ export function useBulkAddSapiAnimals() {
       qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Semua ternak berhasil ditambahkan!')
     },
-    onError: (err) => toast.error('Gagal tambah bulk: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah bulk: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -600,7 +601,7 @@ export function useUpdateSapiAnimal() {
       qc.invalidateQueries({ queryKey: ['sapi-animal-detail'] })
       toast.success('Data ternak diperbarui')
     },
-    onError: (err) => toast.error('Gagal update: ' + err.message),
+    onError: (err) => toast.error('Gagal update: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -622,7 +623,7 @@ export function useUpdateSapiAnimalStatus() {
       qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
       qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
     },
-    onError: (err) => toast.error('Gagal update status: ' + err.message),
+    onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -680,7 +681,7 @@ export function useAddSapiWeightRecord() {
       qc.invalidateQueries({ queryKey: ['sapi-animal-detail', animal_id] })
       toast.success('Data timbang disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan timbang: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan timbang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -715,7 +716,7 @@ export function useAddSapiFeedLog() {
       qc.invalidateQueries({ queryKey: ['sapi-feed-logs', batch_id] })
       toast.success('Log pakan disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan pakan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan pakan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -736,7 +737,7 @@ export function useDeleteSapiFeedLog() {
       qc.invalidateQueries({ queryKey: ['sapi-feed-logs', batch_id] })
       toast.success('Log pakan dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -783,7 +784,7 @@ export function useAddSapiHealthLog() {
       qc.invalidateQueries({ queryKey: ['sapi-batches'] })
       toast.success('Log kesehatan disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan log kesehatan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan log kesehatan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -804,7 +805,7 @@ export function useDeleteSapiHealthLog() {
       qc.invalidateQueries({ queryKey: ['sapi-health-logs', batch_id] })
       toast.success('Log kesehatan dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -849,7 +850,7 @@ export function useAddSapiSale() {
       qc.invalidateQueries({ queryKey: ['sapi-batches'] })
       toast.success('Penjualan berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat penjualan: ' + err.message),
+    onError: (err) => toast.error('Gagal catat penjualan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -871,7 +872,7 @@ export function useUpdateSapiSale() {
       qc.invalidateQueries({ queryKey: ['sapi-batches'] })
       toast.success('Data penjualan diperbarui')
     },
-    onError: (err) => toast.error('Gagal perbarui data: ' + err.message),
+    onError: (err) => toast.error('Gagal perbarui data: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -902,7 +903,7 @@ export function useDeleteSapiSale() {
       qc.invalidateQueries({ queryKey: ['sapi-batches'] })
       toast.success('Penjualan dihapus & ternak kembali aktif')
     },
-    onError: (err) => toast.error('Gagal hapus penjualan: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus penjualan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1011,7 +1012,7 @@ export function useDeleteSapiWeightRecord() {
       qc.invalidateQueries({ queryKey: ['sapi-animals', batch_id] })
       toast.success('Data timbang dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1039,7 +1040,7 @@ export function useCreateSapiKandang() {
       qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
       toast.success('Kandang berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal buat kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal buat kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1067,7 +1068,7 @@ export function useMoveSapiAnimalToKandang() {
     onSuccess: (_, { batchId }) => {
       qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
     },
-    onError: (err) => toast.error('Gagal memindahkan ternak: ' + err.message),
+    onError: (err) => toast.error('Gagal memindahkan ternak: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1095,7 +1096,7 @@ export function useUpdateSapiKandangPosition() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
     },
-    onError: (err) => toast.error('Gagal simpan posisi: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan posisi: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1124,7 +1125,7 @@ export function useUpdateSapiKandang() {
       qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
       toast.success('Data kandang diperbarui')
     },
-    onError: (err) => toast.error('Gagal update kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal update kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 

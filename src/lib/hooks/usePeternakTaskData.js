@@ -7,6 +7,7 @@ import { logSupabaseError } from '../logger/supabaseLogger'
 import { TEMPLATE_150_HARI, TEMPLATE_180_HARI } from '../constants/sapiTaskTemplates'
 import { TEMPLATE_DOMBA_PENGGEMUKAN_90, TEMPLATE_DOMBA_INTENSIF_90 } from '../constants/taskTemplates/dombaTaskTemplates'
 import { TEMPLATE_KAMBING_PENGGEMUKAN_90 } from '../constants/taskTemplates/kambingTaskTemplates'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 /**
  * Hook mirror: useSapiPenggemukanData.js
@@ -277,7 +278,7 @@ export function useCreateTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template tugas berhasil dibuat')
     },
-    onError: (err) => toast.error('Gagal membuat template: ' + err.message)
+    onError: (err) => toast.error('Gagal membuat template: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -305,7 +306,7 @@ export function useUpdateTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template diperbarui')
     },
-    onError: (err) => toast.error('Gagal update template: ' + err.message)
+    onError: (err) => toast.error('Gagal update template: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -345,7 +346,7 @@ export function useUpsertTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
     },
-    onError: (err) => toast.error('Gagal menyimpan template: ' + err.message)
+    onError: (err) => toast.error('Gagal menyimpan template: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -389,7 +390,7 @@ export function useBulkDeleteTaskTemplates() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Beberapa template berhasil dihapus')
     },
-    onError: (err) => toast.error('Gagal menghapus template: ' + err.message)
+    onError: (err) => toast.error('Gagal menghapus template: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -431,7 +432,7 @@ export function useDeleteTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template dihapus')
     },
-    onError: (err) => toast.error('Gagal menghapus template: ' + err.message)
+    onError: (err) => toast.error('Gagal menghapus template: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -461,7 +462,7 @@ export function useCreateTaskInstance() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances-today', tenant?.id] })
       toast.success('Tugas ad-hoc berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal membuat tugas: ' + err.message)
+    onError: (err) => toast.error('Gagal membuat tugas: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -502,7 +503,7 @@ export function useUpdateTaskStatus() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances-mine'] })
       toast.success('Status tugas diperbarui')
     },
-    onError: (err) => toast.error('Gagal update status: ' + err.message)
+    onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -552,7 +553,7 @@ export function useGenerateInstancesFromTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Jadwal tugas dikembangkan')
     },
-    onError: (err) => toast.error('Gagal mengembangkan jadwal: ' + err.message)
+    onError: (err) => toast.error('Gagal mengembangkan jadwal: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -602,7 +603,7 @@ export function useApplySapiTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template TernakOS berhasil diterapkan!')
     },
-    onError: (err) => toast.error('Gagal menerapkan template: ' + err.message),
+    onError: (err) => toast.error('Gagal menerapkan template: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -651,7 +652,7 @@ export function useApplyDombaTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template TernakOS Domba berhasil diterapkan!')
     },
-    onError: (err) => toast.error('Gagal menerapkan template: ' + err.message),
+    onError: (err) => toast.error('Gagal menerapkan template: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -699,7 +700,7 @@ export function useApplyKambingTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template TernakOS Kambing berhasil diterapkan!')
     },
-    onError: (err) => toast.error('Gagal menerapkan template: ' + err.message),
+    onError: (err) => toast.error('Gagal menerapkan template: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -735,7 +736,7 @@ export function useUpdateTaskAssignment() {
         }
       )
     },
-    onError: (err) => toast.error('Gagal simpan penugasan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan penugasan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -883,7 +884,7 @@ export function useAutoAssignBatch() {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success(`Berhasil membagi rata ${count} tugas yang belum ter-assign`)
     },
-    onError: (err) => toast.error('Gagal Auto-Assign: ' + err.message)
+    onError: (err) => toast.error('Gagal Auto-Assign: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -966,7 +967,7 @@ export function useCreateKandangWorker() {
       qc.invalidateQueries({ queryKey: ['kandang-workers', tenant?.id] })
       toast.success('Anak kandang berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah anak kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah anak kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -993,7 +994,7 @@ export function useUpdateKandangWorker() {
       qc.invalidateQueries({ queryKey: ['kandang-workers', tenant?.id] })
       toast.success('Data anak kandang diperbarui')
     },
-    onError: (err) => toast.error('Gagal update anak kandang: ' + err.message),
+    onError: (err) => toast.error('Gagal update anak kandang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1020,7 +1021,7 @@ export function useDeleteKandangWorker() {
       qc.invalidateQueries({ queryKey: ['kandang-workers', tenant?.id] })
       toast.success('Anak kandang dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1079,7 +1080,7 @@ export function useAddKandangWorkerPayment() {
       qc.invalidateQueries({ queryKey: ['kandang-worker-payments-tenant', tenant?.id] })
       toast.success('Pembayaran berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat pembayaran: ' + err.message),
+    onError: (err) => toast.error('Gagal catat pembayaran: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1107,7 +1108,7 @@ export function useDeleteKandangWorkerPayment() {
       qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
       toast.success('Catatan pembayaran dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1182,7 +1183,7 @@ export function useAddFarmOpsCost(animalType) {
       qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs-multi`] })
       toast.success('Biaya dicatat dan dibagi ke semua batch')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error('Gagal: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -1215,7 +1216,7 @@ export function useDeleteFarmOpsCost(animalType) {
       qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs-multi`] })
       toast.success('Catatan dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 

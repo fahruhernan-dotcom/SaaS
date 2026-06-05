@@ -4,6 +4,7 @@ import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { logError } from '@/lib/logger/errorLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ─── PURCHASE SIDE (beli dari broker) ────────────────────────────────────────
 
@@ -54,7 +55,7 @@ export const useCreatePurchaseOrder = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-dashboard-stats', tenant?.id] })
       toast.success('Order berhasil dikirim ke broker')
     },
-    onError: (err) => toast.error('Gagal kirim order: ' + err.message),
+    onError: (err) => toast.error('Gagal kirim order: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -138,7 +139,7 @@ export const useCreateCustomer = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-customers', tenant?.id] })
       toast.success('Toko berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah toko: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah toko: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -162,7 +163,7 @@ export const useUpdateCustomer = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-customers', tenant?.id] })
       toast.success('Data toko diperbarui')
     },
-    onError: (err) => toast.error('Gagal update toko: ' + err.message),
+    onError: (err) => toast.error('Gagal update toko: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -187,7 +188,7 @@ export const useCreateProduct = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-products', tenant?.id] })
       toast.success('Produk berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah produk: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah produk: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -262,7 +263,7 @@ export const useCreateInvoice = () => {
           description: `Plan Starter dibatasi ${limit} invoice/bulan (${used} terpakai). Upgrade ke Pro untuk unlimited.`,
         })
       } else {
-        toast.error('Gagal buat invoice: ' + err.message)
+        toast.error('Gagal buat invoice: ' + normalizeSupabaseError(err).message)
       }
     },
   })
@@ -329,7 +330,7 @@ export const useRecordCustomerPayment = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-dashboard-stats', tenant?.id] })
       toast.success('Pembayaran berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat pembayaran: ' + err.message),
+    onError: (err) => toast.error('Gagal catat pembayaran: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -356,7 +357,7 @@ export const useUpdatePurchaseOrder = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-purchase-orders', tenant?.id] })
       toast.success('Order diperbarui')
     },
-    onError: (err) => toast.error('Gagal update order: ' + err.message),
+    onError: (err) => toast.error('Gagal update order: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -403,7 +404,7 @@ export const useCreateRPAPayment = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-dashboard-stats', tenant?.id] })
       toast.success('Pembayaran berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat pembayaran: ' + err.message),
+    onError: (err) => toast.error('Gagal catat pembayaran: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -464,7 +465,7 @@ export const useUpsertRPAProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-profile', tenant?.id] })
       toast.success('Profil berhasil disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan profil: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan profil: ' + normalizeSupabaseError(err).message),
   })
 }
 

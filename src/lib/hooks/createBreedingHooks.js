@@ -13,6 +13,7 @@ import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { calcBreedingADG } from './useKdBreedingData'
 import { logSupabaseError } from '../logger/supabaseLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 import { logError } from '../logger/errorLogger'
 
 export function createBreedingHooks(prefix) {
@@ -205,7 +206,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Ternak berhasil ditambahkan')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -228,7 +229,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.animals(tenant.id))
         toast.success('Data ternak diperbarui')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -284,7 +285,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.animalWeights(vars.animal_id))
         toast.success('Timbangan dicatat')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -305,7 +306,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.matings(tenant.id))
         toast.success('Perkawinan dicatat')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -328,7 +329,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.matings(tenant.id))
         toast.success('Data perkawinan diperbarui')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -350,7 +351,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.matings(tenant.id))
         toast.success('Kelahiran dicatat')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -372,7 +373,7 @@ export function createBreedingHooks(prefix) {
         if (vars.log_type === 'kematian') qc.invalidateQueries(KEYS.animals(tenant.id))
         toast.success('Log kesehatan dicatat')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -393,7 +394,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.feed(tenant.id))
         toast.success('Log pakan dicatat')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 
@@ -425,7 +426,7 @@ export function createBreedingHooks(prefix) {
         qc.invalidateQueries(KEYS.animals(tenant.id))
         toast.success('Penjualan dicatat')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => toast.error(normalizeSupabaseError(e).message),
     })
   }
 

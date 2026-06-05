@@ -4,6 +4,7 @@ import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '../logger/supabaseLogger'
 import { logError } from '../logger/errorLogger'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -284,7 +285,7 @@ export function useCreateKdBatch() {
       qc.invalidateQueries({ queryKey: ['kd-active-batches', tenant?.id] })
       toast.success('Batch berhasil dibuat')
     },
-    onError: (err) => toast.error('Gagal buat batch: ' + err.message),
+    onError: (err) => toast.error('Gagal buat batch: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -313,7 +314,7 @@ export function useCloseKdBatch() {
       qc.invalidateQueries({ queryKey: ['kd-active-batches', tenant?.id] })
       toast.success('Batch ditutup')
     },
-    onError: (err) => toast.error('Gagal tutup batch: ' + err.message),
+    onError: (err) => toast.error('Gagal tutup batch: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -360,7 +361,7 @@ export function useAddKdAnimal() {
       qc.invalidateQueries({ queryKey: ['kd-batches', tenant?.id] })
       toast.success('Ternak berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
+    onError: (err) => toast.error('Gagal tambah ternak: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -386,7 +387,7 @@ export function useUpdateKdAnimalStatus() {
       qc.invalidateQueries({ queryKey: ['kd-animal-detail'] })
       qc.invalidateQueries({ queryKey: ['kd-batches', tenant?.id] })
     },
-    onError: (err) => toast.error('Gagal update status: ' + err.message),
+    onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -446,7 +447,7 @@ export function useAddKdWeightRecord() {
       qc.invalidateQueries({ queryKey: ['kd-animal-detail', animal_id] })
       toast.success('Data timbang disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan timbang: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan timbang: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -484,7 +485,7 @@ export function useAddKdFeedLog() {
       qc.invalidateQueries({ queryKey: ['kd-feed-logs', batch_id] })
       toast.success('Log pakan disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan pakan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan pakan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -534,7 +535,7 @@ export function useAddKdHealthLog() {
       qc.invalidateQueries({ queryKey: ['kd-batches'] })
       toast.success('Log kesehatan disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan log kesehatan: ' + err.message),
+    onError: (err) => toast.error('Gagal simpan log kesehatan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -587,7 +588,7 @@ export function useAddKdSale() {
       qc.invalidateQueries({ queryKey: ['kd-batches'] })
       toast.success('Penjualan berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal catat penjualan: ' + err.message),
+    onError: (err) => toast.error('Gagal catat penjualan: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -611,7 +612,7 @@ export function useDeleteKdFeedLog() {
       qc.invalidateQueries({ queryKey: ['kd-feed-logs', batch_id] })
       toast.success('Log pakan dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -636,7 +637,7 @@ export function useDeleteKdWeightRecord() {
       qc.invalidateQueries({ queryKey: ['kd-animals', batch_id] })
       toast.success('Data timbang dihapus')
     },
-    onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
   })
 }
 
@@ -683,7 +684,7 @@ export function useCreateKdKandang() {
       qc.invalidateQueries({ queryKey: ['kd-kandangs', batch_id] })
       toast.success('Kandang berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal buat kandang: ' + err.message)
+    onError: (err) => toast.error('Gagal buat kandang: ' + normalizeSupabaseError(err).message)
   })
 }
 
@@ -709,7 +710,7 @@ export function useMoveAnimalToKandang() {
       qc.invalidateQueries({ queryKey: ['kd-animals', batchId] })
       // Don't toast here to avoid spam during drag and drop, maybe handled later
     },
-    onError: (err) => toast.error('Gagal memindahkan ternak: ' + err.message)
+    onError: (err) => toast.error('Gagal memindahkan ternak: ' + normalizeSupabaseError(err).message)
   })
 }
 

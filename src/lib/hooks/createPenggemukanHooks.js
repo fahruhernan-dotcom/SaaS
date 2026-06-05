@@ -26,6 +26,7 @@ import {
   calcADG, calcHariDiFarm,
 } from './useKdPenggemukanData'
 import { useTenantWorkerPayments } from './usePeternakTaskData'
+import { normalizeSupabaseError } from '@/lib/supabaseErrorHandler'
 
 export function createPenggemukanHooks(prefix) {
   // Table names
@@ -468,7 +469,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
         toast.success('Batch berhasil dibuat')
       },
-      onError: (err) => toast.error('Gagal buat batch: ' + err.message),
+      onError: (err) => toast.error('Gagal buat batch: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -492,7 +493,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
         toast.success('Batch ditutup')
       },
-      onError: (err) => toast.error('Gagal tutup batch: ' + err.message),
+      onError: (err) => toast.error('Gagal tutup batch: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -574,7 +575,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Ternak berhasil ditambahkan')
       },
-      onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
+      onError: (err) => toast.error('Gagal tambah ternak: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -694,7 +695,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         toast.success('Data ternak diperbarui')
       },
-      onError: (err) => toast.error('Gagal update ternak: ' + err.message),
+      onError: (err) => toast.error('Gagal update ternak: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -720,7 +721,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
       },
-      onError: (err) => toast.error('Gagal update status: ' + err.message),
+      onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -750,14 +751,20 @@ export function createPenggemukanHooks(prefix) {
           adg_since_last = days_in_farm > 0 ? calcADG(entry_weight_kg, weight_kg, days_in_farm) : null
         }
 
+        const insertPayload = {
+          tenant_id: tenant.id,
+          animal_id, batch_id,
+          weigh_date, weight_kg, bcs,
+          days_in_farm, adg_since_last, notes,
+        }
+
+        if (prefix === 'domba') {
+          insertPayload.famacha_score = famacha_score
+        }
+
         const { error } = await supabase
           .from(T.weights)
-          .insert({
-            tenant_id: tenant.id,
-            animal_id, batch_id,
-            weigh_date, weight_kg, bcs, famacha_score,
-            days_in_farm, adg_since_last, notes,
-          })
+          .insert(insertPayload)
         if (error) {
           logSupabaseError(error, { table: T.weights, operation: 'insert', component: 'createPenggemukanHooks', actionName: 'peternak.weight_record.create' })
           throw error
@@ -803,7 +810,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history-multi`] })
         toast.success('Data timbang disimpan')
       },
-      onError: (err) => toast.error('Gagal simpan timbang: ' + err.message),
+      onError: (err) => toast.error('Gagal simpan timbang: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -822,19 +829,24 @@ export function createPenggemukanHooks(prefix) {
         const o = other_feed_kg ?? 0
         const s = sisa_pakan_kg ?? 0
 
+        const upsertPayload = {
+          tenant_id: tenant.id,
+          batch_id, log_date, kandang_name, animal_count,
+          hijauan_kg: h,
+          konsentrat_kg: k,
+          dedak_kg: d,
+          other_feed_kg: o,
+          sisa_pakan_kg: s,
+          feed_cost_idr, notes,
+        }
+
+        if (prefix === 'domba') {
+          upsertPayload.feed_orts_category = feed_orts_category
+        }
+
         const { error } = await supabase
           .from(T.feed)
-          .upsert({
-            tenant_id: tenant.id,
-            batch_id, log_date, kandang_name, animal_count,
-            hijauan_kg: h,
-            konsentrat_kg: k,
-            dedak_kg: d,
-            other_feed_kg: o,
-            sisa_pakan_kg: s,
-            feed_orts_category,
-            feed_cost_idr, notes,
-          }, {
+          .upsert(upsertPayload, {
             onConflict: 'batch_id,kandang_name,log_date',
             ignoreDuplicates: false,
           })
@@ -848,7 +860,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-feed-logs-multi`] })
         toast.success('Log pakan disimpan')
       },
-      onError: (err) => toast.error('Gagal simpan pakan: ' + err.message),
+      onError: (err) => toast.error('Gagal simpan pakan: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -944,7 +956,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Log kesehatan disimpan')
       },
-      onError: (err) => toast.error('Gagal simpan log kesehatan: ' + err.message),
+      onError: (err) => toast.error('Gagal simpan log kesehatan: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1016,7 +1028,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Penjualan berhasil dicatat')
       },
-      onError: (err) => toast.error('Gagal catat penjualan: ' + err.message),
+      onError: (err) => toast.error('Gagal catat penjualan: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1045,7 +1057,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-feed-logs-multi`] })
         toast.success('Log pakan dihapus')
       },
-      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+      onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1077,7 +1089,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history-multi`] })
         toast.success('Data timbang dihapus')
       },
-      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+      onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1137,7 +1149,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Penjualan dihapus & ternak kembali aktif')
       },
-      onError: (err) => toast.error('Gagal hapus penjualan: ' + err.message),
+      onError: (err) => toast.error('Gagal hapus penjualan: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1167,7 +1179,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Data penjualan diperbarui')
       },
-      onError: (err) => toast.error('Gagal perbarui data: ' + err.message),
+      onError: (err) => toast.error('Gagal perbarui data: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1195,7 +1207,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
         toast.success('Kandang berhasil ditambahkan')
       },
-      onError: (err) => toast.error('Gagal buat kandang: ' + err.message),
+      onError: (err) => toast.error('Gagal buat kandang: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1249,7 +1261,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
         toast.success('Kandang diperbarui')
       },
-      onError: (err) => toast.error('Gagal update: ' + err.message),
+      onError: (err) => toast.error('Gagal update: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1277,7 +1289,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
         toast.success('Kandang dihapus')
       },
-      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+      onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1321,7 +1333,7 @@ export function createPenggemukanHooks(prefix) {
       onError: (err, _vars, context) => {
         // Roll back to the snapshotted values
         context?.snapshots?.forEach(([key, data]) => qc.setQueryData(key, data))
-        toast.error('Gagal memindahkan ternak: ' + err.message)
+        toast.error('Gagal memindahkan ternak: ' + normalizeSupabaseError(err).message)
       },
       onSettled: (_, _err, { batchId }) => {
         // Always re-sync with the server after the mutation resolves
@@ -1356,7 +1368,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-health-logs-multi`] })
         toast.success('Log kesehatan dihapus')
       },
-      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+      onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1385,7 +1397,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: ['farm-ops-costs', K] })
         toast.success('Biaya operasional dicatat')
       },
-      onError: (err) => toast.error('Gagal catat biaya: ' + err.message),
+      onError: (err) => toast.error('Gagal catat biaya: ' + normalizeSupabaseError(err).message),
     })
   }
 
@@ -1416,7 +1428,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: ['farm-ops-costs', K] })
         toast.success('Biaya operasional dihapus')
       },
-      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+      onError: (err) => toast.error('Gagal hapus: ' + normalizeSupabaseError(err).message),
     })
   }
 
