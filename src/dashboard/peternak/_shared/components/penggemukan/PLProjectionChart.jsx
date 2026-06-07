@@ -33,10 +33,10 @@ export function PLProjectionChart({ batches, feedLogs, operationalCosts, sales }
   }, [batches, feedLogs, operationalCosts, sales])
 
   if (data.length === 0) return (
-    <div className="h-[180px] flex flex-col items-center justify-center text-center bg-white/[0.01] border border-white/[0.02] rounded-2xl">
-      <Wallet size={24} className="text-white/10 mb-2" />
-      <p className="text-xs font-bold text-white/30">Belum ada data laba-rugi</p>
-      <p className="text-[10px] text-[#4B6478] mt-1">Catat pakan, biaya, dan penjualan agar estimasi profit muncul.</p>
+    <div className="h-[180px] flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/[0.02] rounded-2xl">
+      <Wallet size={24} className="text-slate-300 dark:text-white/10 mb-2" />
+      <p className="text-xs font-bold text-slate-400 dark:text-white/30">Belum ada data laba-rugi</p>
+      <p className="text-[10px] text-slate-500 dark:text-[#4B6478] mt-1">Catat pakan, biaya, dan penjualan agar estimasi profit muncul.</p>
     </div>
   )
 
@@ -44,12 +44,13 @@ export function PLProjectionChart({ batches, feedLogs, operationalCosts, sales }
     <div className="w-full">
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#4B6478', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 9, fill: '#4B6478', fontWeight: 'bold' }} axisLine={false} tickLine={false} unit="Jt" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-color-val, rgba(255,255,255,0.04))" vertical={false} />
+          <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-muted-val, #4B6478)', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 9, fill: 'var(--text-muted-val, #4B6478)', fontWeight: 'bold' }} axisLine={false} tickLine={false} unit="Jt" />
           <Tooltip
-            contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
-            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+            contentStyle={{ backgroundColor: 'var(--bg-1-val, #0C1319)', border: '1px solid var(--border-def-val, rgba(255,255,255,0.1))', borderRadius: '12px', fontSize: '11px', color: 'var(--text-primary-val)' }}
+            itemStyle={{ color: 'var(--text-primary-val)' }}
+            cursor={{ fill: 'var(--grid-color-val, rgba(255, 255, 255, 0.05))' }}
             formatter={(v) => [`Rp ${(v * 1_000_000).toLocaleString('id-ID')}`, '']}
           />
           <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>

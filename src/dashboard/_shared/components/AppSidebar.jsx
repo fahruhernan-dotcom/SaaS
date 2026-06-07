@@ -508,7 +508,7 @@ export default function AppSidebar({ open, onClose }) {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="bg-[#121A23] hover:bg-[#182434] border border-white/[0.08] rounded-xl p-2.5 h-auto transition-all shadow-md shadow-black/15 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent select-none cursor-pointer"
+                  className="bg-white dark:bg-[#121A23] hover:bg-slate-50 dark:hover:bg-[#182434] border border-slate-200 dark:border-white/[0.08] rounded-xl p-2.5 h-auto transition-all shadow-sm dark:shadow-md dark:shadow-black/15 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent select-none cursor-pointer text-slate-900 dark:text-slate-100"
                 >
                   <div 
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border overflow-hidden"
@@ -524,23 +524,23 @@ export default function AppSidebar({ open, onClose }) {
                     )}
                   </div>
                   <div className="flex-1 overflow-hidden text-left ml-2.5">
-                    <p className="text-[13px] font-bold truncate leading-tight text-slate-100">
+                    <p className="text-[13px] font-bold truncate leading-tight text-slate-900 dark:text-slate-100">
                       {tenant?.business_name || 'My Business'}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium tracking-wide">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium tracking-wide">
                       {activeVerticalInfo.label}
                     </p>
                   </div>
-                  <ChevronsUpDown size={14} className="text-slate-400 ml-auto" />
+                  <ChevronsUpDown size={14} className="text-slate-550 dark:text-slate-400 ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="bottom"
                 align="start"
-                className="w-64 bg-[#121A23] border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/50 z-[9999]"
+                className="w-64 bg-white dark:bg-[#121A23] border border-slate-200 dark:border-white/[0.08] rounded-xl p-1.5 shadow-xl dark:shadow-2xl dark:shadow-black/50 z-[9999]"
               >
                 <div className="px-2 py-1.5 mb-1 flex items-center justify-between">
-                  <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                  <p className="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">
                     Bisnis Anda ({quota.usage})
                   </p>
                 </div>
@@ -643,13 +643,13 @@ export default function AppSidebar({ open, onClose }) {
                             setIsSwitching(false)
                           }
                         }}
-                        className={`gap-3 rounded-lg p-2.5 cursor-pointer transition-all mb-1 flex items-center focus:bg-white/[0.06] focus:text-white ${
-                          isActive ? 'bg-emerald-500/8 border border-emerald-500/20 text-white' : 'hover:bg-[#182434] hover:text-white text-slate-300 border border-transparent'
+                        className={`gap-3 rounded-lg p-2.5 cursor-pointer transition-all mb-1 flex items-center focus:bg-slate-100 dark:focus:bg-white/[0.06] focus:text-slate-900 dark:focus:text-white ${
+                          isActive ? 'bg-emerald-500/10 dark:bg-emerald-500/8 border border-emerald-500/25 dark:border-emerald-500/20 text-emerald-650 dark:text-white' : 'hover:bg-slate-50 dark:hover:bg-[#182434] hover:text-slate-900 dark:hover:text-white text-slate-650 dark:text-slate-300 border border-transparent'
                         }`}
                       >
                         <div 
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors overflow-hidden"
-                          style={isActive ? { background: `rgba(16, 185, 129, 0.15)`, border: `1px solid rgba(16, 185, 129, 0.25)`, boxShadow: `0 0 10px rgba(16, 185, 129, 0.1)` } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors overflow-hidden ${isActive ? '' : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5'}`}
+                          style={isActive ? { background: `rgba(16, 185, 129, 0.15)`, border: `1px solid rgba(16, 185, 129, 0.25)`, boxShadow: `0 0 10px rgba(16, 185, 129, 0.1)` } : {}}
                         >
                           {(() => {
                             const vIcon = getVerticalInfo(p.tenants?.business_vertical).icon
@@ -661,20 +661,20 @@ export default function AppSidebar({ open, onClose }) {
                           })()}
                         </div>
                         <div className="flex-1 overflow-hidden">
-                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-extrabold text-slate-100' : 'font-semibold text-slate-300'}`}>
+                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-extrabold text-emerald-650 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                             {p.tenants?.business_name || 'My Business'}
                           </p>
-                          <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                             {getVerticalInfo(p.tenants?.business_vertical).label}
                           </p>
                         </div>
-                         {isActive && <Check size={14} className="text-emerald-400 flex-shrink-0" />}
+                         {isActive && <Check size={14} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
                       </DropdownMenuItem>
                     )
                   })}
                 </ScrollArea>
 
-                <DropdownMenuSeparator className="my-1.5 bg-white/[0.06]" />
+                <DropdownMenuSeparator className="my-1.5 bg-slate-200 dark:bg-white/[0.06]" />
 
                 <DropdownMenuItem
                   onSelect={() => {
@@ -685,7 +685,7 @@ export default function AppSidebar({ open, onClose }) {
                     }
                     window.setTimeout(() => setIsAddingBusiness(true), 0)
                   }}
-                  className="gap-3 rounded-lg p-2.5 text-slate-300 transition-colors cursor-pointer hover:bg-white/[0.04] hover:text-white focus:bg-white/[0.06] focus:text-white flex items-center"
+                  className="gap-3 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white focus:bg-slate-100 dark:focus:bg-white/[0.06] focus:text-slate-900 dark:focus:text-white flex items-center"
                   title={!canAddBusiness ? 'Kuota bisnis penuh. Beli slot tambahan.' : undefined}
                 >
                   <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
@@ -702,7 +702,7 @@ export default function AppSidebar({ open, onClose }) {
             </DropdownMenu>
 
             <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
-              <SheetContent hideClose side={isDesktop ? 'right' : 'bottom'} className={`bg-[#0D141B] border-border text-foreground p-0 flex flex-col ${isDesktop ? 'w-[400px] h-full' : 'w-full rounded-t-[28px] max-h-[90vh]'}`}>
+              <SheetContent hideClose side={isDesktop ? 'right' : 'bottom'} className={`bg-white dark:bg-[#0D141B] border-slate-200 dark:border-border text-slate-900 dark:text-foreground p-0 flex flex-col ${isDesktop ? 'w-[400px] h-full' : 'w-full rounded-t-[28px] max-h-[90vh]'}`}>
                 {/* Scrollable Container */}
                 <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar relative">
                   {/* Header with Background Gradient */}
@@ -710,15 +710,15 @@ export default function AppSidebar({ open, onClose }) {
                   
                   <SheetHeader className="p-6 pb-2 text-left relative z-10">
                     <div className="flex items-center justify-between mb-1">
-                      <SheetTitle className="font-display font-extrabold text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Multi-Tenant</SheetTitle>
+                      <SheetTitle className="font-display font-extrabold text-2xl bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-white/60 bg-clip-text text-transparent">Multi-Tenant</SheetTitle>
                       <button 
                         onClick={() => setIsAddingBusiness(false)}
-                        className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                        className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95"
                       >
                         <X size={18} />
                       </button>
                     </div>
-                    <SheetDescription className="text-sm font-medium text-slate-400">
+                    <SheetDescription className="text-sm font-medium text-slate-500 dark:text-slate-400">
                       Kelola ekosistem bisnis Anda secara terpusat.
                     </SheetDescription>
                   </SheetHeader>
@@ -727,15 +727,15 @@ export default function AppSidebar({ open, onClose }) {
                     {/* Hero Card - More Compact */}
                     <div className="relative group mb-5">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-3xl blur opacity-10 group-hover:opacity-25 transition duration-1000"></div>
-                      <div className="relative bg-[#121A23] border border-white/8 rounded-3xl p-5 overflow-hidden">
+                      <div className="relative bg-slate-50 dark:bg-[#121A23] border border-slate-200 dark:border-white/8 rounded-3xl p-5 overflow-hidden">
                         <div className="absolute right-[-10px] top-[-10px] w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl" />
                         
-                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 text-emerald-400">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 text-emerald-600 dark:text-emerald-400">
                           <Building2 size={24} />
                         </div>
                         
-                        <h3 className="text-lg font-bold text-white mb-1.5 leading-tight">Setup Bisnis Baru</h3>
-                        <p className="text-[13px] text-slate-400 leading-relaxed font-medium">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1.5 leading-tight">Setup Bisnis Baru</h3>
+                        <p className="text-[13px] text-slate-650 dark:text-slate-400 leading-relaxed font-medium">
                           Mulai langkah ekspansi Anda. Setiap bisnis baru memiliki data dan infrastruktur keuangan terisolasi.
                         </p>
                       </div>
@@ -745,21 +745,21 @@ export default function AppSidebar({ open, onClose }) {
                     <div className="space-y-4 px-1">
                       <div className="flex items-start gap-3.5">
                         <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check size={12} className="text-emerald-400" />
+                          <Check size={12} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-slate-200">Data Terisolasi Penuh</p>
-                          <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">Keamanan data stok dan transaksi dijamin tidak akan bercampur antar tenant.</p>
+                          <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">Data Terisolasi Penuh</p>
+                          <p className="text-[11px] text-slate-550 dark:text-slate-500 font-medium leading-tight mt-0.5">Keamanan data stok dan transaksi dijamin tidak akan bercampur antar tenant.</p>
                         </div>
                       </div>
                       
                       <div className="flex items-start gap-3.5">
                         <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check size={12} className="text-emerald-400" />
+                          <Check size={12} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-slate-200">Delegasi Tim Kustom</p>
-                          <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">Undang tim berbeda untuk setiap unit bisnis dengan kontrol akses granular.</p>
+                          <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">Delegasi Tim Kustom</p>
+                          <p className="text-[11px] text-slate-550 dark:text-slate-500 font-medium leading-tight mt-0.5">Undang tim berbeda untuk setiap unit bisnis dengan kontrol akses granular.</p>
                         </div>
                       </div>
                     </div>
@@ -767,7 +767,7 @@ export default function AppSidebar({ open, onClose }) {
                 </div>
 
                 {/* Footer Actions - Sticky at bottom */}
-                <div className="p-6 pt-2 pb-6 border-t border-white/5 bg-[#0D141B] z-20">
+                <div className="p-6 pt-2 pb-6 border-t border-slate-100 dark:border-white/5 bg-white dark:bg-[#0D141B] z-20">
                   <div className="flex flex-col gap-2.5">
                     {canAddBusiness ? (
                       <button
@@ -789,13 +789,13 @@ export default function AppSidebar({ open, onClose }) {
                     )}
                     <button
                       onClick={() => setIsAddingBusiness(false)}
-                      className="w-full bg-white/5 hover:bg-white/10 text-slate-400 text-[14px] font-bold py-3.5 rounded-2xl transition-all border border-white/5"
+                      className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 text-[14px] font-bold py-3.5 rounded-2xl transition-all border border-slate-200 dark:border-white/5"
                     >
                       Mungkin Nanti
                     </button>
                   </div>
                   
-                  <p className="text-[9px] text-center text-slate-600 mt-4 font-bold tracking-[0.2em] uppercase">
+                  <p className="text-[9px] text-center text-slate-400 dark:text-slate-600 mt-4 font-bold tracking-[0.2em] uppercase">
                     TernakOS Infrastructure v5.1
                   </p>
                 </div>
@@ -1133,7 +1133,7 @@ export default function AppSidebar({ open, onClose }) {
           {isSuperadmin && (
             <button
               onClick={handleGoToAdmin}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-amber-400 hover:bg-amber-500/10 transition-colors border-none cursor-pointer bg-transparent text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-amber-650 dark:text-amber-400 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 transition-colors border-none cursor-pointer bg-transparent text-left"
             >
               <Shield size={14} className="shrink-0" />
               <span className="text-[13px] font-bold">Admin Panel</span>
@@ -1142,7 +1142,7 @@ export default function AppSidebar({ open, onClose }) {
           
           <button
             onClick={() => setMobileSwitcherOpen(true)}
-            className="md:hidden w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[#64748B] hover:bg-white/[0.04] hover:text-[#94A3B8] transition-colors border-none cursor-pointer bg-transparent text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-500 dark:text-[#64748B] hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-[#94A3B8] transition-colors border-none cursor-pointer bg-transparent text-left"
           >
             <Building2 size={14} className="shrink-0" />
             <span className="text-[13px]">Ganti Model Bisnis</span>
@@ -1155,33 +1155,35 @@ export default function AppSidebar({ open, onClose }) {
         <SidebarSeparator className="mb-2" />
         <div 
           onClick={isSuperadmin ? handleGoToAdmin : undefined}
-          style={{
-            margin: '0 4px 8px',
-            padding: '10px 12px',
-            background: isSuperadmin ? 'rgba(245,158,11,0.03)' : (sub.status === 'expired' ? 'rgba(248,113,113,0.06)' : 'rgba(255,255,255,0.03)'),
-            border: isSuperadmin ? '1px solid rgba(245,158,11,0.15)' : `1px solid ${getStatusColor(sub.status).border}`,
-            borderRadius: '12px',
-            cursor: isSuperadmin ? 'pointer' : 'default',
-            transition: 'all 0.2s',
-          }}
-          className={`select-none ${isSuperadmin ? 'hover:bg-amber-500/10 hover:border-amber-500/35 transition-all' : ''}`}
+          className={`select-none mx-1 px-3 py-2.5 rounded-xl border transition-all ${
+            isSuperadmin 
+              ? 'bg-amber-500/5 dark:bg-amber-500/3 border-amber-500/25 dark:border-amber-500/15 hover:bg-amber-500/10 hover:border-amber-500/35 cursor-pointer' 
+              : sub.status === 'expired' 
+                ? 'bg-red-550/5 dark:bg-red-500/6 border-red-200 dark:border-red-500/25 text-red-655 dark:text-red-400' 
+                : sub.status === 'trial'
+                  ? 'bg-amber-550/5 dark:bg-amber-500/12 border-amber-200 dark:border-amber-500/25 text-amber-600 dark:text-amber-550'
+                  : 'bg-slate-50 dark:bg-white/3 border-slate-200 dark:border-white/5'
+          }`}
+          style={!isSuperadmin && sub.status !== 'expired' && sub.status !== 'trial' ? { borderColor: getStatusColor(sub.status).border } : {}}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{
-                fontSize: '10px', fontWeight: 700,
-                color: '#6B8CAA',
-                textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0
-              }}>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-[#6B8CAA] uppercase tracking-[0.8px] m-0">
                 {isSuperadmin ? 'Status Akun' : 'Plan Aktif'}
               </p>
-              <p style={{
-                fontFamily: 'Sora', fontSize: '13px', fontWeight: 800,
-                color: isSuperadmin ? '#F59E0B' : getStatusColor(sub.status).color,
-                margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '4px'
-              }}>
+              <p className={`font-['Sora'] text-[13px] font-extrabold mt-0.5 flex items-center gap-1 ${
+                isSuperadmin 
+                  ? 'text-amber-650 dark:text-amber-500' 
+                  : sub.status === 'active' 
+                    ? 'text-emerald-600 dark:text-emerald-400' 
+                    : sub.status === 'trial' 
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : sub.status === 'expired'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-slate-600 dark:text-slate-400'
+              }`}>
                 {isSuperadmin ? (
-                  <><Shield size={14} className="text-amber-500" /> PLATFORM ADMIN</>
+                  <><Shield size={14} className="text-amber-550 dark:text-amber-500" /> PLATFORM ADMIN</>
                 ) : (
                   sub.label.toUpperCase()
                 )}
@@ -1190,14 +1192,15 @@ export default function AppSidebar({ open, onClose }) {
 
             {/* Status badge (non-superadmin) */}
             {!isSuperadmin && sub.status !== 'unknown' && (
-              <span style={{
-                fontSize: '10px', fontWeight: 800, borderRadius: '6px', padding: '2px 8px',
-                background: getStatusColor(sub.status).bg,
-                color: getStatusColor(sub.status).color,
-                border: `1px solid ${getStatusColor(sub.status).border}`,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
+              <span className={`text-[10px] font-extrabold rounded-md px-2 py-0.5 border uppercase tracking-wider ${
+                sub.status === 'trial' 
+                  ? 'bg-amber-100 dark:bg-amber-500/12 text-amber-700 dark:text-amber-500 border-amber-200 dark:border-amber-500/25' 
+                  : sub.status === 'active' && sub.plan === 'starter' 
+                    ? 'bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/20' 
+                    : sub.status === 'expired' 
+                      ? 'bg-red-100 dark:bg-red-500/12 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/25' 
+                      : 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
+              }`}>
                 {sub.status === 'trial' ? `${sub.daysLeft} Hari` : sub.status === 'active' && sub.plan === 'starter' ? 'Gratis' : sub.status === 'expired' ? 'Expired' : `${sub.daysLeft} Hari`}
               </span>
             )}
@@ -1205,16 +1208,13 @@ export default function AppSidebar({ open, onClose }) {
 
           {/* Progress bar — shown for trial and expiring paid plans */}
           {!isSuperadmin && (sub.status === 'trial' || (sub.status === 'active' && sub.isExpiringSoon && sub.plan !== 'starter')) && (
-            <div style={{
-              marginTop: '10px', height: '4px',
-              background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${Math.max(8, (sub.daysLeft / (sub.status === 'trial' ? 14 : 30)) * 100)}%`,
-                background: sub.daysLeft <= 3 ? '#F87171' : sub.daysLeft <= 7 ? '#F59E0B' : '#34D399',
-                borderRadius: '99px', transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-              }} />
+            <div className="mt-2.5 h-1 bg-slate-250 dark:bg-white/5 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${
+                  sub.daysLeft <= 3 ? 'bg-red-500' : sub.daysLeft <= 7 ? 'bg-amber-500' : 'bg-emerald-500'
+                }`}
+                style={{ width: `${Math.max(8, (sub.daysLeft / (sub.status === 'trial' ? trialDurationDays : 30)) * 100)}%` }}
+              />
             </div>
           )}
 
@@ -1222,17 +1222,11 @@ export default function AppSidebar({ open, onClose }) {
           {!isSuperadmin && sub.status !== 'unknown' && ((sub.status === 'expired' && sub.plan !== 'starter') || (sub.isExpiringSoon && sub.status === 'active' && sub.plan !== 'starter')) && (
             <button
               onClick={() => navigate('/upgrade')}
-              style={{
-                width: '100%', marginTop: '10px', padding: '8px 12px',
-                background: sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.08)',
-                color: sub.status === 'expired' ? '#F87171' : '#34D399',
-                border: `1px solid ${sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.2)'}`,
-                borderRadius: '10px', fontSize: '11px', fontWeight: 800, fontFamily: 'Sora',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.14)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.08)'}
+              className={`w-full mt-2.5 py-2 px-3 border rounded-xl text-[11px] font-extrabold font-['Sora'] cursor-pointer flex items-center justify-center gap-1.5 transition-all ${
+                sub.status === 'expired'
+                  ? 'bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/15 text-red-655 dark:text-red-450 border-red-200 dark:border-red-500/20'
+                  : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/8 dark:hover:bg-emerald-500/14 text-emerald-655 dark:text-emerald-450 border-emerald-200 dark:border-emerald-500/20'
+              }`}
             >
               <CreditCard size={13} />
               {sub.status === 'expired' ? 'Perbarui Sekarang' : 'Perpanjang Plan'}
@@ -1241,16 +1235,10 @@ export default function AppSidebar({ open, onClose }) {
 
           {/* Mulai Trial button — hanya untuk starter yang belum pernah trial */}
           {canStartTrial && (
-            <div style={{ marginTop: '10px' }}>
+            <div className="mt-2.5">
               <button
                 onClick={handleStartProTrial}
-                style={{
-                  width: '100%', padding: '8px 12px',
-                  background: 'rgba(52,211,153,0.15)', color: '#34D399', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '8px',
-                  fontSize: '12px', fontWeight: 700, fontFamily: 'Sora', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                  boxShadow: '0 2px 12px rgba(52,211,153,0.10)', transition: 'all 0.2s'
-                }}
+                className="w-full py-2 px-3 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-500/25 rounded-lg text-[12px] font-bold font-['Sora'] cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/5 dark:shadow-emerald-500/10 transition-all"
               >
                 <Sparkles size={14} />
                 Mulai Trial PRO ({trialDurationDays} Hari)
@@ -1268,25 +1256,25 @@ export default function AppSidebar({ open, onClose }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-[#121A23] border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl shadow-black/40 z-50 select-none cursor-default"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-[#121A23] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden shadow-xl dark:shadow-black/40 z-50 select-none cursor-default"
               >
                 {/* User info header */}
-                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/8">
-                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
+                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200 dark:border-white/8">
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-600 dark:text-emerald-400 flex-shrink-0 uppercase">
                     {userInitials}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[#F1F5F9] truncate leading-tight">
+                    <p className="text-[13px] font-semibold text-slate-900 dark:text-[#F1F5F9] truncate leading-tight">
                       {profile?.full_name || 'User'}
                     </p>
-                    <p className="text-[11px] text-[#4B6478] truncate">{user?.email}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-[#4B6478] truncate">{user?.email}</p>
                   </div>
                   {(profile?.role || isSuperadmin) && (
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
-                      isSuperadmin ? 'bg-amber-500/10 text-amber-500' :
+                      isSuperadmin ? 'bg-amber-500/10 text-amber-600 dark:text-amber-500' :
                       isOwner(profile) ? 'bg-[#10B981]/10 text-[#10B981]' :
-                      isStaff(profile) ? 'bg-blue-500/10 text-blue-400' :
-                      'bg-white/5 text-[#4B6478]'
+                      isStaff(profile) ? 'bg-blue-500/10 text-blue-555 dark:text-blue-400' :
+                      'bg-slate-100 dark:bg-white/5 text-slate-550 dark:text-[#4B6478]'
                     }`}>
                       {isSuperadmin ? 'SUPERADMIN' : profile?.role?.replace('_', ' ')}
                     </span>
@@ -1303,7 +1291,7 @@ export default function AppSidebar({ open, onClose }) {
                     <button
                       key={label}
                       onClick={onClick}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#94A3B8] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-650 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-55 dark:hover:bg-white/5 cursor-pointer transition-colors border-none bg-transparent text-left"
                     >
                       <Icon size={16} className="shrink-0" />
                       <span>{label}</span>
@@ -1312,25 +1300,25 @@ export default function AppSidebar({ open, onClose }) {
 
                   {isSuperadmin && (
                     <>
-                      <div className="h-px bg-white/8 mx-2 my-1" />
+                      <div className="h-px bg-slate-200 dark:bg-white/8 mx-2 my-1" />
                       <button
                         onClick={() => { handleGoToAdmin(); setDropdownOpen(false) }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-400 hover:bg-amber-500/10 cursor-pointer transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-655 dark:text-amber-400 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 cursor-pointer transition-colors border-none bg-transparent text-left font-bold"
                       >
                         <Shield size={16} className="shrink-0" />
-                        <span className="font-bold">Admin Panel</span>
+                        <span>Admin Panel</span>
                       </button>
                     </>
                   )}
 
-                  <div className="h-px bg-white/8 mx-2 my-1" />
+                  <div className="h-px bg-slate-200 dark:bg-white/8 mx-2 my-1" />
 
                   <button
                     onClick={() => { handleLogout(); setDropdownOpen(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-655 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer transition-colors border-none bg-transparent text-left font-bold"
                   >
                     <LogOut size={16} className="shrink-0" />
-                    <span className="font-bold">Keluar</span>
+                    <span>Keluar</span>
                   </button>
                 </div>
               </motion.div>
@@ -1340,13 +1328,13 @@ export default function AppSidebar({ open, onClose }) {
           {/* Trigger button */}
           <button
             onClick={() => setDropdownOpen(prev => !prev)}
-            className="w-full flex items-center gap-2.5 rounded-xl hover:bg-white/[0.03] transition-colors px-3 py-2.5 select-none cursor-pointer"
+            className="w-full flex items-center gap-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.03] transition-colors px-3 py-2.5 select-none cursor-pointer border-none bg-transparent"
           >
-            <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-600 dark:text-emerald-400 flex-shrink-0 uppercase">
               {userInitials}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
+              <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight">
                 {profile?.full_name || 'User'}
               </p>
               <p className="text-[11px] text-muted-foreground truncate mt-0.5">
@@ -1363,10 +1351,10 @@ export default function AppSidebar({ open, onClose }) {
   const renderMobileSwitcher = () => {
     return (
       <Sheet open={mobileSwitcherOpen} onOpenChange={setMobileSwitcherOpen}>
-        <SheetContent side="bottom" className="bg-[#121A23] border-t border-white/[0.08] rounded-t-2xl p-4 z-[9999] shadow-2xl shadow-black/50 select-none cursor-default">
+        <SheetContent side="bottom" className="bg-white dark:bg-[#121A23] border-t border-slate-200 dark:border-white/[0.08] rounded-t-2xl p-4 z-[9999] shadow-2xl dark:shadow-black/50 select-none cursor-default">
           <SheetHeader className="text-left mb-4">
-            <SheetTitle className="text-slate-100 text-lg font-bold">Ganti Model Bisnis</SheetTitle>
-            <SheetDescription className="text-slate-400 text-xs">
+            <SheetTitle className="text-slate-900 dark:text-slate-100 text-lg font-bold">Ganti Model Bisnis</SheetTitle>
+            <SheetDescription className="text-slate-500 dark:text-slate-400 text-xs">
               Pilih bisnis Anda untuk beralih ruang kerja.
             </SheetDescription>
           </SheetHeader>
@@ -1462,24 +1450,27 @@ export default function AppSidebar({ open, onClose }) {
                       }
                     }}
                     className={`w-full flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-all text-left ${
-                      isActive ? 'bg-emerald-500/8 border border-emerald-500/20 text-white' : 'bg-white/[0.02] border border-white/[0.06] hover:bg-[#182434] hover:text-white text-slate-300'
+                      isActive ? 'bg-emerald-500/10 dark:bg-emerald-500/8 border border-emerald-500/25 dark:border-emerald-500/20 text-emerald-700 dark:text-white' : 'bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-[#182434] hover:text-slate-900 dark:hover:text-white text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     <div 
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 transition-colors"
-                      style={isActive ? { background: `rgba(16, 185, 129, 0.15)`, border: `1px solid rgba(16, 185, 129, 0.25)` } : { background: '#0D141B', border: '1px solid rgba(255,255,255,0.06)' }}
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 transition-colors ${
+                        isActive 
+                          ? 'bg-emerald-500/15 border border-emerald-500/25' 
+                          : 'bg-slate-100 dark:bg-[#0D141B] border border-slate-200 dark:border-white/5'
+                      }`}
                     >
                       {getVerticalInfo(p.tenants?.business_vertical).icon}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-extrabold text-slate-100' : 'font-semibold text-slate-300'}`}>
+                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-extrabold text-emerald-700 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                         {p.tenants?.business_name || 'My Business'}
                       </p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-slate-550 dark:text-slate-400 mt-0.5 font-medium">
                         {getVerticalInfo(p.tenants?.business_vertical).label}
                       </p>
                     </div>
-                    {isActive && <Check size={18} className="text-emerald-400 flex-shrink-0" />}
+                    {isActive && <Check size={18} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />}
                   </button>
                 )
               })}
@@ -1498,7 +1489,7 @@ export default function AppSidebar({ open, onClose }) {
             }}
             disabled={!canAddBusiness}
             className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold transition-all ${
-              canAddBusiness ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-muted-foreground cursor-not-allowed opacity-50'
+              canAddBusiness ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-muted-foreground cursor-not-allowed opacity-50'
             }`}
           >
             {canAddBusiness ? <Plus size={16} /> : <Lock size={16} />}

@@ -54,10 +54,10 @@ export function MobileFinancePeek({
     <Card className={className} onClick={onNavigate}>
       <div className="flex justify-between items-baseline mb-4">
         <div>
-          <div className="text-[11px] text-[#8DA2B5] font-bold tracking-[0.12em] uppercase mb-1.5">
+          <div className="text-[11px] text-slate-500 dark:text-[#8DA2B5] font-bold tracking-[0.12em] uppercase mb-1.5">
             Estimasi laba bersih
           </div>
-          <div className={`text-[28px] font-black leading-none tracking-tight tabular-nums ${profitOk ? 'text-emerald-400' : 'text-red-400'}`}>
+          <div className={`text-[28px] font-black leading-none tracking-tight tabular-nums ${profitOk ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
             {profitOk ? '' : '-'}{fmtRp(profit)}
           </div>
         </div>
@@ -71,17 +71,17 @@ export function MobileFinancePeek({
 
       <div className="flex justify-between mt-3.5 text-[12px]">
         <div>
-          <div className="text-[#8DA2B5] mb-0.5 font-medium">Total biaya</div>
-          <div className="text-white font-bold tabular-nums">{fmtRp(cost)}</div>
+          <div className="text-slate-500 dark:text-[#8DA2B5] mb-0.5 font-medium">Total biaya</div>
+          <div className="text-slate-900 dark:text-white font-bold tabular-nums">{fmtRp(cost)}</div>
         </div>
         {onNavigate && (
-          <div className="flex items-center gap-1 text-emerald-400 font-bold text-[12px]">
+          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[12px]">
             Detail <TrendingUp size={12} />
           </div>
         )}
         <div className="text-right">
-          <div className="text-[#8DA2B5] mb-0.5 font-medium">Proyeksi omzet</div>
-          <div className="text-white font-bold tabular-nums">{fmtRp(revenue)}</div>
+          <div className="text-slate-500 dark:text-[#8DA2B5] mb-0.5 font-medium">Proyeksi omzet</div>
+          <div className="text-slate-900 dark:text-white font-bold tabular-nums">{fmtRp(revenue)}</div>
         </div>
       </div>
     </Card>
@@ -93,7 +93,7 @@ function FinanceBar({ cost, revenue }) {
   const costPct = total > 0 ? ((cost || 0) / total) * 100 : 0
   
   return (
-    <div className="flex h-2.5 rounded-full overflow-hidden bg-white/10 w-full">
+    <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10 w-full">
       <div 
         className="bg-red-500/70 transition-all duration-700" 
         style={{ width: `${costPct}%` }} 

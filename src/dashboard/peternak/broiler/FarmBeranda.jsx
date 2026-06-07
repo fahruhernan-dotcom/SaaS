@@ -14,7 +14,6 @@ import {
   calcCurrentAge,
 } from '@/lib/hooks/usePeternakData'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { isSuperadmin } from '@/lib/auth'
 import { isOwner } from '@/lib/auth/business-roles'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 

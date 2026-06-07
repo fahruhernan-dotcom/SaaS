@@ -109,7 +109,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
   const hasFeedLogs = feedLogsMulti.length > 0
   const hasWeightData = weightHistoryMulti.length >= 2
   const hasFinancialData = feedLogsMulti.length > 0 || opCostsMulti.length > 0 || salesMulti.length > 0
-  const isTrueEmptyState = !hasActiveBatches && !hasAnimals && !hasFinancialData && !hasWeightData
+  const isTrueEmptyState = !hasActiveBatches && !hasAnimals && !hasFeedLogs && !hasWeightData
   
   const hasKandangData = activeBatches.some(b => b.kandang_id || b.kandang_name)
   const hasDailyTasks = todayTasks.length > 0
@@ -122,13 +122,13 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
     const canManageTasks = !isStarter && ['owner', 'manajer'].includes(profile?.role)
 
     return (
-      <div className="bg-white/[0.03] border border-white/[0.03] rounded-3xl p-5 text-center relative overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.03] rounded-3xl p-5 text-center relative overflow-hidden shadow-sm">
         <div className="relative z-10 flex flex-col items-center">
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-3">
-            <ClipboardList size={20} className="text-amber-400" />
+            <ClipboardList size={20} className="text-amber-500 dark:text-amber-400" />
           </div>
-          <h4 className="text-xs font-bold text-white mb-1 font-['Sora']">Belum Ada Tugas Hari Ini</h4>
-          <p className="text-[10px] text-slate-400 mb-4 max-w-[280px]">
+          <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Tugas Hari Ini</h4>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-4 max-w-[280px]">
             Semua rutinitas harian aman atau belum diatur.
           </p>
           <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
             {canManageTasks && (
               <button
                 onClick={() => navigate(`${BASE}/task_settings`)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-green-500/10 hover:bg-green-500/15 border border-green-500/10 text-green-400 text-[10px] font-black rounded-xl transition-all active:scale-95 whitespace-nowrap cursor-pointer uppercase tracking-wider"
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 dark:bg-green-500/10 hover:bg-emerald-100 dark:hover:bg-green-500/15 border border-emerald-200 dark:border-green-500/10 text-emerald-700 dark:text-green-400 text-[10px] font-black rounded-xl transition-all active:scale-95 whitespace-nowrap cursor-pointer uppercase tracking-wider"
               >
                 <Settings2 size={11} />
                 Pengaturan Tugas
@@ -157,12 +157,12 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
   const _renderEmptyGrowthChart = () => {
     if (!hasActiveBatches) {
       return (
-        <div className="flex flex-col items-center justify-center text-center p-6 bg-[#06090F]/20 border border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
+        <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 dark:bg-[#06090F]/20 border border-slate-200 dark:border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
           <div className="w-12 h-12 rounded-2xl bg-green-500/5 flex items-center justify-center mb-3 shadow-lg">
-            <Scale size={24} className="text-green-400 opacity-40" />
+            <Scale size={24} className="text-green-500 dark:text-green-400 opacity-45" />
           </div>
-          <h4 className="text-xs font-bold text-white mb-1 font-['Sora']">Belum Ada Kelompok (Batch)</h4>
-          <p className="text-[10px] text-slate-400 mb-5 max-w-[260px]">
+          <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Kelompok (Batch)</h4>
+          <p className="text-[10px] text-slate-550 dark:text-slate-400 mb-5 max-w-[260px]">
             Buat kelompok penggemukan terlebih dahulu untuk mulai merekam data berat badan.
           </p>
           <button
@@ -178,12 +178,12 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
 
     if (allActiveAnimals.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center text-center p-6 bg-[#06090F]/20 border border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
+        <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 dark:bg-[#06090F]/20 border border-slate-200 dark:border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
           <div className="w-12 h-12 rounded-2xl bg-green-500/5 flex items-center justify-center mb-3 shadow-lg">
-            <Scale size={24} className="text-green-400 opacity-60" />
+            <Scale size={24} className="text-green-550 dark:text-green-400 opacity-60" />
           </div>
-          <h4 className="text-xs font-bold text-white mb-1 font-['Sora']">Belum Ada Data {animalLabel}</h4>
-          <p className="text-[10px] text-slate-400 mb-5 max-w-[260px]">
+          <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Data {animalLabel}</h4>
+          <p className="text-[10px] text-slate-550 dark:text-slate-400 mb-5 max-w-[260px]">
             Tambahkan data {animalLabel.toLowerCase()} ke dalam kelompok Anda agar grafik berat dapat ditampilkan.
           </p>
           <button
@@ -198,12 +198,12 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center text-center p-6 bg-[#06090F]/20 border border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
+      <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 dark:bg-[#06090F]/20 border border-slate-200 dark:border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
         <div className="w-12 h-12 rounded-2xl bg-green-500/5 flex items-center justify-center mb-3 shadow-lg">
-          <Scale size={24} className="text-green-400" />
+          <Scale size={24} className="text-green-500 dark:text-green-400" />
         </div>
-        <h4 className="text-xs font-bold text-white mb-1 font-['Sora']">Belum Ada Data Timbangan</h4>
-        <p className="text-[10px] text-slate-400 mb-5 max-w-[260px]">
+        <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Data Timbangan</h4>
+        <p className="text-[10px] text-slate-550 dark:text-slate-400 mb-5 max-w-[260px]">
           Data bobot badan belum terekam. Lakukan penimbangan berkala untuk memantau kenaikan berat harian (ADG).
         </p>
         <div className="flex items-center gap-2">
@@ -220,17 +220,17 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
   }
 
   const renderCompletedChecklistProgress = () => (
-    <div className="bg-[#0C1319]/40 border border-white/[0.03] rounded-2xl p-4 flex items-center justify-between gap-4 max-w-xl mx-auto shadow-xl">
+    <div className="bg-white dark:bg-[#0C1319]/40 border border-slate-200 dark:border-white/[0.03] rounded-2xl p-4 flex items-center justify-between gap-4 max-w-xl mx-auto shadow-sm dark:shadow-xl">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-green-500/10 flex items-center justify-center text-emerald-600 dark:text-green-400 shrink-0">
           <CheckCircle2 size={16} />
         </div>
         <div>
-          <p className="text-xs font-bold text-white font-['Sora']">Langkah Awal Selesai</p>
-          <p className="text-[10px] text-slate-400">Selamat! Seluruh sistem pencatatan awal Anda sudah siap digunakan.</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-white font-['Sora']">Langkah Awal Selesai</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400">Selamat! Seluruh sistem pencatatan awal Anda sudah siap digunakan.</p>
         </div>
       </div>
-      <span className="text-[9px] font-black text-green-400 bg-green-500/10 border border-green-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0">
+      <span className="text-[9px] font-black text-emerald-700 dark:text-green-400 bg-emerald-55 dark:bg-green-500/10 border border-emerald-100 dark:border-green-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0">
         100% Selesai
       </span>
     </div>
@@ -302,26 +302,26 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
       : 'Selesaikan langkah-langkah di bawah untuk memulai pemantauan penuh.'
 
     return (
-      <div className="bg-[#0C1319]/80 backdrop-blur-xl border border-green-500/10 rounded-3xl p-8 md:p-10 lg:p-12 shadow-2xl relative overflow-hidden max-w-5xl mx-auto">
+      <div className="bg-white dark:bg-[#0C1319]/80 backdrop-blur-xl border border-slate-200 dark:border-green-500/10 rounded-3xl p-8 md:p-10 lg:p-12 shadow-sm dark:shadow-2xl relative overflow-hidden max-w-5xl mx-auto">
         <div className="absolute top-0 right-0 w-48 h-48 bg-green-500/5 blur-3xl pointer-events-none" />
         
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <Sparkles size={22} className="text-green-400 animate-pulse" />
-                <h3 className="font-['Sora'] font-black text-lg sm:text-xl md:text-2xl lg:text-3xl text-white tracking-tight">{title}</h3>
+                <Sparkles size={22} className="text-emerald-600 dark:text-green-400 animate-pulse" />
+                <h3 className="font-['Sora'] font-black text-lg sm:text-xl md:text-2xl lg:text-3xl text-slate-900 dark:text-white tracking-tight">{title}</h3>
               </div>
-              <p className="text-xs sm:text-sm md:text-base text-slate-400">{subtitle}</p>
+              <p className="text-xs sm:text-sm md:text-base text-slate-500 dark:text-slate-400">{subtitle}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-black text-green-400 bg-green-500/10 border border-green-500/20 px-5 py-2 rounded-full uppercase tracking-wider">
+              <span className="text-xs sm:text-sm font-black text-emerald-700 dark:text-green-400 bg-emerald-50 dark:bg-green-500/10 border border-emerald-100 dark:border-green-500/20 px-5 py-2 rounded-full uppercase tracking-wider">
                 {completedCount} / 4 Selesai ({progressPercent}%)
               </span>
             </div>
           </div>
 
-          <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden mb-6">
+          <div className="w-full h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden mb-6">
             <div 
               className="h-full bg-green-500 transition-all duration-500" 
               style={{ width: `${progressPercent}%` }}
@@ -329,14 +329,14 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
           </div>
 
           {/* Mode Pemula Banner */}
-          <div className="flex items-start gap-4 bg-green-500/5 rounded-2xl p-5 mb-6">
-            <Sparkles size={20} className="text-green-400 shrink-0 mt-0.5 animate-pulse" />
-            <div className="text-sm text-green-300/90 leading-normal">
+          <div className="flex items-start gap-4 bg-emerald-50/50 dark:bg-green-500/5 rounded-2xl p-5 mb-6">
+            <Sparkles size={20} className="text-emerald-600 dark:text-green-400 shrink-0 mt-0.5 animate-pulse" />
+            <div className="text-sm text-emerald-800 dark:text-green-300/90 leading-normal">
               <p className="font-bold text-base">Mode Pemula Aktif</p>
               {isTrueEmptyState ? (
-                <p className="mt-1.5 text-slate-400 text-sm leading-relaxed">Tidak perlu isi semua sekaligus. Mulai dari buat batch dulu.</p>
+                <p className="mt-1.5 text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Tidak perlu isi semua sekaligus. Mulai dari buat batch dulu.</p>
               ) : (
-                <p className="mt-1.5 text-slate-400 text-sm leading-relaxed">Lakukan pengisian data langkah demi langkah untuk mengaktifkan grafik dan analisis performa ternak Anda.</p>
+                <p className="mt-1.5 text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Lakukan pengisian data langkah demi langkah untuk mengaktifkan grafik dan analisis performa ternak Anda.</p>
               )}
             </div>
           </div>
@@ -353,10 +353,10 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                   className={cn(
                     "relative p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[180px]",
                     isCompleted 
-                      ? "bg-white/[0.02] border-white/[0.03] opacity-60"
+                      ? "bg-slate-55 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.03] opacity-60"
                       : isActive
-                        ? "bg-white/[0.04] border-white/[0.08] shadow-lg"
-                        : "bg-white/[0.01] border-white/[0.03] opacity-35 select-none"
+                        ? "bg-white dark:bg-white/[0.04] border-slate-300 dark:border-white/[0.08] shadow-md dark:shadow-lg"
+                        : "bg-slate-55/50 dark:bg-white/[0.01] border-slate-100 dark:border-white/[0.03] opacity-35 select-none"
                   )}
                 >
                   <div>
@@ -364,21 +364,21 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                       <div className={cn(
                         "w-9 h-9 rounded-full flex items-center justify-center text-sm font-black border shrink-0",
                         isCompleted 
-                          ? "bg-green-500/10 border-green-500/20 text-green-400"
+                          ? "bg-emerald-50 dark:bg-green-500/10 border-emerald-100 dark:border-green-500/20 text-emerald-600 dark:text-green-400"
                           : isActive
-                            ? "bg-green-500/15 border-green-500/25 text-green-400"
-                            : "bg-white/5 border-white/[0.05] text-slate-500"
+                            ? "bg-emerald-100/50 dark:bg-green-500/15 border-emerald-200 dark:border-green-500/25 text-emerald-700 dark:text-green-400"
+                            : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/[0.05] text-slate-400 dark:text-slate-500"
                       )}>
                         {isCompleted ? <Check size={16} className="stroke-[3px]" /> : idx + 1}
                       </div>
                       <span className={cn(
                         "text-sm md:text-base lg:text-lg font-bold font-['Sora'] leading-tight",
-                        isCompleted ? "text-slate-400 line-through" : "text-white"
+                        isCompleted ? "text-slate-400 line-through" : "text-slate-900 dark:text-white"
                       )}>
                         {step.label}
                       </span>
                     </div>
-                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed mt-2">
+                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
                       {step.description}
                     </p>
                   </div>
@@ -398,30 +398,30 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                   className={cn(
                     "flex items-start gap-5 p-5 rounded-2xl border transition-all",
                     isCompleted 
-                      ? "bg-white/[0.02] border-white/[0.03] opacity-60"
+                      ? "bg-slate-55 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.03] opacity-60"
                       : isActive
-                        ? "bg-white/[0.03] border-white/[0.05] shadow-lg"
-                        : "bg-white/[0.01] border-white/[0.03] opacity-30 select-none"
+                        ? "bg-white dark:bg-white/[0.03] border-slate-300 dark:border-white/[0.05] shadow-md dark:shadow-lg"
+                        : "bg-slate-55/50 dark:bg-white/[0.01] border-slate-100 dark:border-white/[0.03] opacity-30 select-none"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border shrink-0 mt-0.5",
                     isCompleted 
-                      ? "bg-green-500/10 border-green-500/20 text-green-400"
+                      ? "bg-emerald-50 dark:bg-green-500/10 border-emerald-100 dark:border-green-500/20 text-emerald-600 dark:text-green-400"
                       : isActive
-                        ? "bg-green-500/15 border-green-500/25 text-green-400"
-                        : "bg-white/5 border-white/[0.05] text-slate-600"
+                        ? "bg-emerald-100/50 dark:bg-green-500/15 border-emerald-200 dark:border-green-500/25 text-emerald-700 dark:text-green-400"
+                        : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/[0.05] text-slate-400 dark:text-slate-600"
                   )}>
                     {isCompleted ? <Check size={14} className="stroke-[3px]" /> : idx + 1}
                   </div>
                   <div className="flex-1">
                     <span className={cn(
                       "text-base font-bold font-['Sora'] block leading-none",
-                      isCompleted ? "text-slate-400 line-through" : "text-white"
+                      isCompleted ? "text-slate-400 line-through" : "text-slate-900 dark:text-white"
                     )}>
                       {step.label}
                     </span>
-                    <p className="text-sm text-slate-400 mt-2.5 leading-relaxed">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-2.5 leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -445,6 +445,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
         </div>
       </div>
     )
+
   }
 
   const chartData = useMemo(() => {
@@ -599,7 +600,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="text-slate-100 pb-28">
+    <div className="text-slate-900 dark:text-slate-100 pb-28">
 
       {/* ── HEADER & MOBILE LAYOUT ─────────────────────────────────────────────── */}
       {isMobile ? (
@@ -794,18 +795,18 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
             className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 group-hover/header:scale-110 transition-transform duration-[10s] ease-linear"
             style={{ backgroundImage: 'url("/ui-pasture.png")' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#06090F] via-[#06090F]/60 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#06090F] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAFA] via-[#FAFAFA]/60 to-transparent dark:from-[#06090F] dark:via-[#06090F]/60 dark:to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAFA] via-transparent to-transparent dark:from-[#06090F] dark:via-transparent dark:to-transparent pointer-events-none" />
           <div className="relative z-10">
-            <p className="text-[10px] text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">{businessLabel}</p>
+            <p className="text-[10px] text-emerald-700 dark:text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">{businessLabel}</p>
             <div className="flex items-center justify-between">
-              <h1 className="font-['Sora'] font-black text-2xl text-white" suppressHydrationWarning>
-                Selamat {getGreeting()}, <span className="text-green-400/90">{profile?.full_name?.split(' ')[0] ?? 'Peternak'}</span> 👋
+              <h1 className="font-['Sora'] font-black text-2xl text-slate-900 dark:text-white" suppressHydrationWarning>
+                Selamat {getGreeting()}, <span className="text-emerald-700 dark:text-green-400/90">{profile?.full_name?.split(' ')[0] ?? 'Peternak'}</span> 👋
               </h1>
               {hasActiveBatches && (
                 <button
                   onClick={() => navigate(`${BASE}/batch`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-xl text-[11px] font-bold text-green-400 transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-green-500/10 hover:bg-emerald-100 dark:hover:bg-green-500/20 border border-emerald-200 dark:border-green-500/20 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-green-400 transition-all active:scale-95 cursor-pointer"
                 >
                   <Plus size={12} />
                   Batch Baru
@@ -839,7 +840,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
               value={kpi.totalEkor}
               sub={`${kpi.activeBatchCount} Kelompok (Batch) Aktif`}
               icon={Users}
-              color="text-white"
+              color="text-slate-900 dark:text-white"
               glow="green"
             />
           </div>
@@ -850,7 +851,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                 value={kpi.avgADG ? `${kpi.avgADG} g` : '—'}
                 sub={kpi.avgADG ? (kpi.avgADG >= adgGood ? '🔥 Sangat Baik' : kpi.avgADG >= adgOk ? '⚡ Stabil' : '⚠ Perlu Evaluasi') : 'Rata-rata kenaikan berat per hari'}
                 icon={TrendingUp}
-                color={kpi.avgADG >= adgGood ? 'text-green-400' : kpi.avgADG >= adgOk ? 'text-amber-400' : kpi.avgADG ? 'text-red-400' : 'text-slate-500'}
+                color={kpi.avgADG >= adgGood ? 'text-emerald-600 dark:text-green-400' : kpi.avgADG >= adgOk ? 'text-amber-600 dark:text-amber-400' : kpi.avgADG ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}
                 glow={kpi.avgADG >= adgGood ? 'green' : kpi.avgADG >= adgOk ? 'amber' : kpi.avgADG ? 'red' : undefined}
               />
             </div>
@@ -861,7 +862,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
               value={kpi.harvestSoonCount > 0 ? `${kpi.harvestSoonCount} ekor` : '—'}
               sub={kpi.harvestSoonCount > 0 ? 'Siap panen dalam 30 hari' : 'Belum ada yang mendekati panen'}
               icon={Calendar}
-              color={kpi.harvestSoonCount > 0 ? 'text-green-400' : 'text-slate-500'}
+              color={kpi.harvestSoonCount > 0 ? 'text-emerald-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}
               glow={kpi.harvestSoonCount > 0 ? 'green' : undefined}
             />
           </div>
@@ -871,7 +872,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
               value={kpi.totalEkor === 0 ? '—' : `${kpi.mortalitasPct}%`}
               sub={kpi.totalEkor === 0 ? 'Belum ada data ternak' : (parseFloat(kpi.mortalitasPct) > mortalityThreshold ? `🚨 Sangat Tinggi (Batas ${mortalityThreshold}%)` : parseFloat(kpi.mortalitasPct) > 0 ? '⚠ Perlu Dipantau' : '✓ Aman')}
               icon={Activity}
-              color={kpi.totalEkor === 0 ? 'text-slate-500' : (parseFloat(kpi.mortalitasPct) > mortalityThreshold ? 'text-red-400' : parseFloat(kpi.mortalitasPct) > 0 ? 'text-amber-400' : 'text-green-400')}
+              color={kpi.totalEkor === 0 ? 'text-slate-400 dark:text-slate-500' : (parseFloat(kpi.mortalitasPct) > mortalityThreshold ? 'text-red-650 dark:text-red-400' : parseFloat(kpi.mortalitasPct) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-green-400')}
               glow={kpi.totalEkor === 0 ? undefined : (parseFloat(kpi.mortalitasPct) > mortalityThreshold ? 'red' : parseFloat(kpi.mortalitasPct) > 0 ? 'amber' : 'green')}
             />
           </div>
@@ -897,22 +898,22 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
             <div className="space-y-6">
               {/* Batch Aktif */}
               {hasActiveBatches && (
-                <section className="bg-white/[0.02] border border-white/[0.03] rounded-[2.5rem] p-5 sm:p-6 relative overflow-hidden shadow-2xl">
+                <section className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.03] rounded-[2.5rem] p-5 sm:p-6 relative overflow-hidden shadow-sm dark:shadow-2xl">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 blur-3xl pointer-events-none" />
 
                   <div className="flex items-center justify-between mb-5 relative z-10">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        <h2 className="font-['Sora'] font-black text-base text-white tracking-tight">Batch Aktif</h2>
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <h2 className="font-['Sora'] font-black text-base text-slate-900 dark:text-white tracking-tight">Batch Aktif</h2>
                       </div>
                       {activeBatches.length > 0 && (
-                        <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.2em]">{activeBatches.length} Batch Berjalan</p>
+                        <p className="text-[10px] text-slate-500 dark:text-[#4B6478] font-black uppercase tracking-[0.2em]">{activeBatches.length} Batch Berjalan</p>
                       )}
                     </div>
                     <button
                       onClick={() => navigate(`${BASE}/batch`)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-[#0C1319] hover:bg-[#111C24] border border-white/5 text-[#94A3B8] hover:text-white rounded-2xl text-[10px] font-black transition-all active:scale-95 uppercase tracking-widest cursor-pointer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-[#0C1319] hover:bg-slate-200 dark:hover:bg-[#111C24] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white rounded-2xl text-[10px] font-black transition-all active:scale-95 uppercase tracking-widest cursor-pointer"
                     >
                       Lihat semua <ChevronRight size={13} />
                     </button>
@@ -920,8 +921,8 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
 
                   <div className="space-y-4 relative z-10">
                     {activeBatches.length === 0 ? (
-                      <div className="py-8 text-center border border-white/[0.03] rounded-2xl bg-white/[0.01]">
-                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-3">Belum ada batch aktif</p>
+                      <div className="py-8 text-center border border-slate-200 dark:border-white/[0.03] rounded-2xl bg-slate-50/50 dark:bg-white/[0.01]">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-[#4B6478] uppercase tracking-widest mb-3">Belum ada batch aktif</p>
                         <button
                           onClick={() => navigate(`${BASE}/batch`)}
                           className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-[10px] font-black rounded-xl transition-all active:scale-95 cursor-pointer uppercase tracking-wider shadow-sm shadow-green-500/10"
@@ -953,37 +954,37 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                 <section>
                   {alerts.length > 0 ? (
                     <div className="space-y-2" suppressHydrationWarning>
-                      <h2 className="font-['Sora'] font-bold text-xs text-[#4B6478] mb-2 uppercase tracking-widest pl-1">Perhatian Khusus</h2>
+                      <h2 className="font-['Sora'] font-bold text-xs text-slate-500 dark:text-[#4B6478] mb-2 uppercase tracking-widest pl-1">Perhatian Khusus</h2>
                       {alerts.map((a, i) => a.pendingTasks ? (
                         <div
                           key={i}
-                          className="w-full rounded-2xl border bg-amber-500/5 border-amber-500/20 overflow-hidden"
+                          className="w-full rounded-2xl border bg-amber-5/60 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20 overflow-hidden"
                         >
                           {/* Header row */}
                           <button
                             onClick={a.action}
-                            className="w-full text-left flex items-start justify-between gap-3 px-4 py-3 hover:bg-amber-500/10 transition"
+                            className="w-full text-left flex items-start justify-between gap-3 px-4 py-3 hover:bg-amber-100/55 dark:hover:bg-amber-500/10 transition"
                           >
                             <div className="flex items-start gap-2.5">
-                              <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-400" />
-                              <span className="text-xs font-bold font-['Sora'] leading-tight text-amber-200">{a.msg}</span>
+                              <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                              <span className="text-xs font-bold font-['Sora'] leading-tight text-amber-800 dark:text-amber-200">{a.msg}</span>
                             </div>
                             <ChevronRight size={14} className="opacity-40 shrink-0 mt-0.5" />
                           </button>
 
                           {/* Pending task list */}
-                          <div className="border-t border-amber-500/10 px-4 pb-3 pt-2 space-y-1.5">
+                          <div className="border-t border-amber-200 dark:border-amber-500/10 px-4 pb-3 pt-2 space-y-1.5">
                             {a.pendingTasks.map((t, ti) => {
                               const title = t.title || t.template?.title || 'Tugas'
                               const assignee = t.worker?.full_name || t.assigned_profile?.full_name
                               return (
                                 <div key={ti} className="flex items-center gap-2.5">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400/60 shrink-0" />
+                                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60 shrink-0" />
                                   <div className="flex-1 min-w-0">
-                                    <span className="text-[11px] font-semibold text-white/80 leading-tight truncate block">{title}</span>
+                                    <span className="text-[11px] font-semibold text-slate-700 dark:text-white/80 leading-tight truncate block">{title}</span>
                                   </div>
                                   {assignee && (
-                                    <span className="text-[10px] text-[#4B6478] font-medium shrink-0">{assignee}</span>
+                                    <span className="text-[10px] text-slate-500 dark:text-[#4B6478] font-medium shrink-0">{assignee}</span>
                                   )}
                                 </div>
                               )
@@ -994,27 +995,27 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                         <button
                           key={i}
                           onClick={a.action}
-                          className={`w-full text-left flex items-start justify-between gap-3 px-4 py-3 rounded-2xl transition hover:brightness-110 border cursor-pointer ${
+                          className={`w-full text-left flex items-start justify-between gap-3 px-4 py-3 rounded-2xl transition border cursor-pointer ${
                             a.type === 'danger'
-                              ? 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10'
-                              : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10'
+                              ? 'bg-red-50/60 dark:bg-red-500/5 border-red-200 dark:border-red-500/20 hover:bg-red-100/50 dark:hover:bg-red-500/10 text-red-800 dark:text-red-200'
+                              : 'bg-amber-50/60 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20 hover:bg-amber-100/50 dark:hover:bg-amber-500/10 text-amber-800 dark:text-amber-200'
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
-                            <AlertTriangle size={15} className={`shrink-0 mt-0.5 ${a.type === 'danger' ? 'text-red-400' : 'text-amber-400'}`} />
-                            <span className={`text-xs font-bold font-['Sora'] leading-tight ${a.type === 'danger' ? 'text-red-200' : 'text-amber-200'}`}>{a.msg}</span>
+                            <AlertTriangle size={15} className={`shrink-0 mt-0.5 ${a.type === 'danger' ? 'text-red-650' : 'text-amber-600'}`} />
+                            <span className="text-xs font-bold font-['Sora'] leading-tight">{a.msg}</span>
                           </div>
                           <ChevronRight size={14} className="opacity-40 shrink-0 mt-0.5" />
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="h-[120px] bg-green-500/[0.02] border border-green-500/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center">
-                      <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center mb-3">
-                        <CheckCircle2 size={20} className="text-green-500" />
+                    <div className="h-[120px] bg-emerald-50/30 dark:bg-green-500/[0.02] border border-emerald-100 dark:border-green-500/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center shadow-sm">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100/80 dark:bg-green-500/10 flex items-center justify-center mb-3">
+                        <CheckCircle2 size={20} className="text-emerald-600 dark:text-green-500" />
                       </div>
-                      <p className="text-xs font-bold text-green-400 font-['Sora']">Seluruh Kondisi Aman</p>
-                      <p className="text-[10px] text-[#4B6478] mt-1">Tidak ada peringatan kritis saat ini</p>
+                      <p className="text-xs font-bold text-emerald-800 dark:text-green-400 font-['Sora']">Seluruh Kondisi Aman</p>
+                      <p className="text-[10px] text-slate-500 dark:text-[#4B6478] mt-1">Tidak ada peringatan kritis saat ini</p>
                     </div>
                   )}
                 </section>
@@ -1028,14 +1029,14 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                 {/* P&L Projections */}
                 {hasFinancialData && (
                   <section>
-                    <div className="bg-white/[0.03] border border-white/[0.03] rounded-3xl p-4 sm:p-5">
+                    <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.03] rounded-3xl p-4 sm:p-5 shadow-sm">
                       <div className="flex items-center gap-2 mb-4">
-                        <div className="p-1.5 rounded-lg bg-green-500/10">
-                          <Wallet size={14} className="text-green-400" />
+                        <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-green-500/10">
+                          <Wallet size={14} className="text-emerald-600 dark:text-green-400" />
                         </div>
                         <div>
-                          <h2 className="font-['Sora'] font-bold text-sm text-white">Estimasi Laba-Rugi (P&L)</h2>
-                          <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">Pendapatan & Profit</p>
+                          <h2 className="font-['Sora'] font-bold text-sm text-slate-900 dark:text-white">Estimasi Laba-Rugi (P&L)</h2>
+                          <p className="text-[10px] text-slate-500 dark:text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">Pendapatan & Profit</p>
                         </div>
                       </div>
 
@@ -1052,36 +1053,36 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                 {/* ADG Chart */}
                 {hasWeightData && (
                   <section>
-                    <div className="bg-white/[0.03] border border-white/[0.03] rounded-3xl p-4 sm:p-5">
+                    <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.03] rounded-3xl p-4 sm:p-5 shadow-sm">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                         <div>
-                          <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
-                            <div className="p-1.5 rounded-lg bg-green-500/10">
-                              <BarChart2 size={14} className="text-green-400" />
+                          <h2 className="font-['Sora'] font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-green-500/10">
+                              <BarChart2 size={14} className="text-emerald-600 dark:text-green-400" />
                             </div>
                             Grafik Pertumbuhan
                           </h2>
-                          <p className="text-[10px] text-[#4B6478] mt-1.5 uppercase tracking-wider font-bold pl-8">Bobot Badan Individual (kg)</p>
+                          <p className="text-[10px] text-slate-500 dark:text-[#4B6478] mt-1.5 uppercase tracking-wider font-bold pl-8">Bobot Badan Individual (kg)</p>
                         </div>
 
                         {activeBatches.length > 0 && (
                           <div className="relative">
                             <button
                               onClick={() => setBatchOpen(!batchOpen)}
-                              className="flex items-center gap-3 bg-[#0C1319] border border-white/[0.05] rounded-2xl px-4 py-2.5 min-w-[180px] transition-all hover:border-green-500/30 group cursor-pointer"
+                              className="flex items-center gap-3 bg-slate-100 dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.05] rounded-2xl px-4 py-2.5 min-w-[180px] transition-all hover:border-emerald-500/30 dark:hover:border-green-500/30 group cursor-pointer"
                             >
-                              <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Wheat size={16} className="text-green-400" />
+                              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Wheat size={16} className="text-emerald-600 dark:text-green-400" />
                               </div>
                               <div className="flex-1 text-left">
-                                <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">
+                                <p className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-wider leading-none mb-1">
                                   {selectedBatchId === 'all' ? '🌾 SEMUA BATCH' : activeBatches.find(b => b.id === selectedBatchId)?.batch_code ?? 'Pilih Batch'}
                                 </p>
-                                <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">
+                                <p className="text-[9px] font-bold text-slate-500 dark:text-[#4B6478] uppercase tracking-widest leading-none">
                                   {selectedBatchId === 'all' ? `${animals.length} EKOR` : `${activeBatches.find(b => b.id === selectedBatchId)?.total_animals ?? 0} EKOR`}
                                 </p>
                               </div>
-                              <ChevronDown size={14} className={cn('text-[#4B6478] transition-transform duration-300', batchOpen && 'rotate-180')} />
+                              <ChevronDown size={14} className={cn('text-slate-400 dark:text-[#4B6478] transition-transform duration-300', batchOpen && 'rotate-180')} />
                             </button>
 
                             <AnimatePresence>
@@ -1092,7 +1093,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 top-full mt-2 w-full min-w-[220px] bg-[#0C1319]/90 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-1.5 shadow-2xl z-[101] overflow-hidden"
+                                    className="absolute right-0 top-full mt-2 w-full min-w-[220px] bg-white/95 dark:bg-[#0C1319]/90 backdrop-blur-xl border border-slate-200 dark:border-white/[0.06] rounded-2xl p-1.5 shadow-2xl z-[101] overflow-hidden"
                                   >
                                     <button
                                       onClick={() => {
@@ -1102,20 +1103,20 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                                       }}
                                       className={cn(
                                         'w-full flex items-center justify-between p-3 rounded-xl transition-all group/opt cursor-pointer',
-                                        selectedBatchId === 'all' ? 'bg-green-500/10 border border-green-500/10' : 'hover:bg-white/5 border border-transparent'
+                                        selectedBatchId === 'all' ? 'bg-emerald-50 dark:bg-green-500/10 border border-emerald-200 dark:border-green-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'
                                       )}
                                     >
                                       <div className="flex items-center gap-3">
                                         <span className="text-sm">🌾</span>
                                         <div className="text-left">
-                                          <p className={cn('text-[11px] font-black uppercase tracking-wider leading-none mb-1', selectedBatchId === 'all' ? 'text-green-400' : 'text-white')}>SEMUA BATCH</p>
-                                          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">Agregat Data</p>
+                                          <p className={cn('text-[11px] font-black uppercase tracking-wider leading-none mb-1', selectedBatchId === 'all' ? 'text-emerald-700 dark:text-green-400' : 'text-slate-800 dark:text-white')}>SEMUA BATCH</p>
+                                          <p className="text-[9px] font-bold text-slate-500 dark:text-[#4B6478] uppercase tracking-widest leading-none">Agregat Data</p>
                                         </div>
                                       </div>
-                                      {selectedBatchId === 'all' && <CheckCircle2 size={12} className="text-green-400" />}
+                                      {selectedBatchId === 'all' && <CheckCircle2 size={12} className="text-emerald-600 dark:text-green-400" />}
                                     </button>
 
-                                    <div className="h-px bg-white/[0.03] my-1" />
+                                    <div className="h-px bg-slate-200 dark:bg-white/[0.03] my-1" />
 
                                     <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
                                       {activeBatches.map(b => {
@@ -1130,17 +1131,17 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                                             }}
                                             className={cn(
                                               'w-full flex items-center justify-between p-3 rounded-xl transition-all group/opt mt-1 cursor-pointer',
-                                              isSel ? 'bg-green-500/10 border border-green-500/10' : 'hover:bg-white/5 border border-transparent'
+                                              isSel ? 'bg-emerald-50 dark:bg-green-500/10 border border-emerald-200 dark:border-green-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'
                                             )}
                                           >
                                             <div className="flex items-center gap-3">
                                               <span className="text-sm">{animalEmoji}</span>
                                               <div className="text-left">
-                                                <p className={cn('text-[11px] font-black uppercase tracking-wider leading-none mb-1', isSel ? 'text-green-400' : 'text-white')}>{b.batch_code}</p>
-                                                <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">{b.kandang_name}</p>
+                                                <p className={cn('text-[11px] font-black uppercase tracking-wider leading-none mb-1', isSel ? 'text-emerald-700 dark:text-green-400' : 'text-slate-800 dark:text-white')}>{b.batch_code}</p>
+                                                <p className="text-[9px] font-bold text-slate-500 dark:text-[#4B6478] uppercase tracking-widest leading-none">{b.kandang_name}</p>
                                               </div>
                                             </div>
-                                            {isSel && <CheckCircle2 size={12} className="text-green-400" />}
+                                            {isSel && <CheckCircle2 size={12} className="text-emerald-600 dark:text-green-400" />}
                                           </button>
                                         )
                                       })}
@@ -1167,7 +1168,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                                 className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1.5 shrink-0 cursor-pointer ${
                                   isActive
                                     ? 'text-white border-transparent'
-                                    : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                                    : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
                                 }`}
                                 style={isActive ? { backgroundColor: color } : {}}
                               >
@@ -1179,7 +1180,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                           {activeAnimalIds.size > 0 && (
                             <button
                               onClick={() => setActiveAnimalIds(new Set())}
-                              className="px-2.5 py-1 rounded-full text-[10px] font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                              className="px-2.5 py-1 rounded-full text-[10px] font-bold border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all flex items-center gap-1 shrink-0 cursor-pointer"
                             >
                               <RefreshCw size={10} />
                               Reset
@@ -1187,30 +1188,30 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                           )}
                         </>
                       ) : (
-                        <p className="text-[11px] text-slate-400">Tidak ada ternak di batch ini</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">Tidak ada ternak di batch ini</p>
                       )}
                     </div>
 
                     {/* Chart Area */}
                     <div className="h-[260px] sm:h-[300px] w-full relative">
                       {activeAnimalIds.size === 0 ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] border border-white/[0.02] rounded-2xl">
-                          <MousePointer2 size={32} className="text-white/10 mb-3" />
-                          <p className="text-xs font-bold text-white">Pilih ekor di atas</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Bandingkan pertumbuhan antar {animalLabel.toLowerCase()} dalam satu grafik</p>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/[0.02] rounded-2xl">
+                          <MousePointer2 size={32} className="text-slate-300 dark:text-white/10 mb-3" />
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">Pilih ekor di atas</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Bandingkan pertumbuhan antar {animalLabel.toLowerCase()} dalam satu grafik</p>
                         </div>
                       ) : chartData.length === 0 ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
-                          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
-                            <Scale size={24} className="text-slate-400" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-50 dark:bg-white/[0.01] rounded-2xl">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-3">
+                            <Scale size={24} className="text-slate-500 dark:text-slate-400" />
                           </div>
-                          <p className="text-xs font-bold text-white font-['Sora']">Belum ada data timbang</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Segera catat timbangan untuk melihat grafik</p>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white font-['Sora']">Belum ada data timbang</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Segera catat timbangan untuk melihat grafik</p>
                         </div>
                       ) : (
                         <ResponsiveContainer width="100%" height={260}>
                           <LineChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-sub-val)" vertical={false} />
                             <XAxis dataKey="date" hide />
                             <YAxis
                               domain={['dataMin - 2', 'dataMax + 2']}
@@ -1219,12 +1220,12 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                               tickLine={false}
                             />
                             <Tooltip
-                              contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
-                              itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                              contentStyle={{ backgroundColor: 'var(--bg-1-val)', border: '1px solid var(--border-def-val)', borderRadius: '12px', fontSize: '11px' }}
+                              itemStyle={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-primary-val)' }}
                               labelFormatter={(val) => format(new Date(val), 'd MMMM yyyy', { locale: id })}
-                              labelStyle={{ marginBottom: '4px', color: '#94A3B8' }}
+                              labelStyle={{ marginBottom: '4px', color: 'var(--text-secondary-val)' }}
                             />
-                            <ReferenceLine y={15} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />
+                            <ReferenceLine y={15} stroke="var(--border-strong-val)" strokeDasharray="3 3" />
                             {[...activeAnimalIds].map(animalId => {
                               const animal = animals.find(a => a.id === animalId)
                               return (
@@ -1257,27 +1258,27 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
       {/* Desktop: Denah Kandang Terpadu */}
       {!isMobile && KandangMiniMap && hasAnimals && activeBatches.length > 0 && (
         <section className="px-4 mt-6">
-          <div className="bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem] p-5 sm:p-6 relative overflow-hidden shadow-2xl backdrop-blur-sm">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.05] rounded-[2.5rem] p-5 sm:p-6 relative overflow-hidden shadow-2xl backdrop-blur-sm">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(34,197,94,0.05),transparent_70%)] pointer-events-none" />
             <div className="flex items-center justify-between mb-5 relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shadow-lg shadow-green-500/5">
-                  <LayoutGrid size={18} className="text-green-400" />
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-green-500/10 border border-emerald-100 dark:border-green-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/5 dark:shadow-green-500/5">
+                  <LayoutGrid size={18} className="text-emerald-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h2 className="font-['Sora'] font-black text-base text-white tracking-tight">Denah Kandang Terpadu</h2>
-                  <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.2em] mt-0.5">Monitoring Lokasi Ternak Real-time</p>
+                  <h2 className="font-['Sora'] font-black text-base text-slate-900 dark:text-white tracking-tight">Denah Kandang Terpadu</h2>
+                  <p className="text-[10px] text-slate-500 dark:text-[#4B6478] font-black uppercase tracking-[0.2em] mt-0.5">Monitoring Lokasi Ternak Real-time</p>
                 </div>
               </div>
             </div>
 
             {!hasKandangData ? (
-              <div className="relative z-10 flex flex-col items-center justify-center text-center p-8 bg-black/20 rounded-3xl border border-white/[0.04] min-h-[250px]">
-                <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-3">
-                  <LayoutGrid size={24} className="text-green-400" />
+              <div className="relative z-10 flex flex-col items-center justify-center text-center p-8 bg-slate-50 dark:bg-black/20 rounded-3xl border border-slate-200 dark:border-white/[0.04] min-h-[250px]">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-green-500/10 border border-emerald-100 dark:border-green-500/20 flex items-center justify-center mb-3">
+                  <LayoutGrid size={24} className="text-emerald-600 dark:text-green-400" />
                 </div>
-                <h4 className="text-xs font-bold text-white mb-1 font-['Sora']">Kandang Belum Diatur</h4>
-                <p className="text-[10px] text-slate-400 mb-5 max-w-sm">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Kandang Belum Diatur</h4>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-5 max-w-sm">
                   Atur denah kandang Anda terlebih dahulu untuk memonitor lokasi ternak secara real-time.
                 </p>
                 <button
@@ -1289,7 +1290,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                 </button>
               </div>
             ) : (
-              <div className="relative z-10 rounded-3xl overflow-hidden border border-white/[0.04] bg-black/20">
+              <div className="relative z-10 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/[0.04] bg-slate-50 dark:bg-black/20">
                 <KandangMiniMap batchIds={activeBatches.map(b => b.id)} className="min-h-[350px] lg:min-h-[450px] border-none bg-transparent" />
               </div>
             )}
@@ -1302,18 +1303,18 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
         <section className="px-4 mt-4 mb-2">
           <button
             onClick={() => navigate(`${BASE}/laporan`)}
-            className="w-full flex items-center justify-between px-5 py-4 bg-[#0C1319] hover:bg-[#111C24] border border-white/5 hover:border-white/10 rounded-2xl transition-all group cursor-pointer"
+            className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-[#0C1319] hover:bg-slate-50 dark:hover:bg-[#111C24] border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 rounded-2xl transition-all group cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Wheat size={14} className="text-green-400" />
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-green-500/10 flex items-center justify-center">
+                <Wheat size={14} className="text-emerald-600 dark:text-green-400" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-bold text-white font-['Sora']">{kpi.closedCount} Batch Selesai</p>
-                <p className="text-[10px] text-[#4B6478] font-bold">Lihat laporan &amp; KPI historis →</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white font-['Sora']">{kpi.closedCount} Batch Selesai</p>
+                <p className="text-[10px] text-slate-500 dark:text-[#4B6478] font-bold">Lihat laporan &amp; KPI historis →</p>
               </div>
             </div>
-            <ChevronRight size={15} className="text-[#4B6478] group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
+            <ChevronRight size={15} className="text-slate-400 dark:text-[#4B6478] group-hover:text-emerald-600 dark:group-hover:text-green-400 group-hover:translate-x-1 transition-all" />
           </button>
         </section>
       )}

@@ -5,13 +5,13 @@ import { motion } from 'framer-motion'
 export function SectionHeader({ label, action, onAction, className = '' }) {
   return (
     <div className={`flex items-baseline justify-between px-5 mb-3 ${className}`}>
-      <h2 className="m-0 text-[13px] font-semibold tracking-wide uppercase text-[#94A3B8]">
+      <h2 className="m-0 text-[13px] font-semibold tracking-wide uppercase text-slate-500 dark:text-[#94A3B8]">
         {label}
       </h2>
       {action && (
         <button 
           onClick={onAction} 
-          className="bg-transparent border-none p-0 text-emerald-500 text-[14px] font-semibold cursor-pointer active:opacity-70 transition-opacity"
+          className="bg-transparent border-none p-0 text-emerald-600 dark:text-emerald-400 text-[14px] font-semibold cursor-pointer active:opacity-70 transition-opacity"
         >
           {action}
         </button>
@@ -25,7 +25,7 @@ export function Card({ children, className = '', onClick, padded = true }) {
   return (
     <div 
       onClick={onClick} 
-      className={`bg-[#0A0E0C] border border-white/[0.03] rounded-[20px] shadow-sm ${padded ? 'p-5' : 'p-0'} ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}
+      className={`bg-white dark:bg-[#0A0E0C] border border-slate-200 dark:border-white/[0.03] rounded-[20px] shadow-sm dark:shadow-black/20 ${padded ? 'p-5' : 'p-0'} ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}
     >
       {children}
     </div>
@@ -35,11 +35,11 @@ export function Card({ children, className = '', onClick, padded = true }) {
 // ─── Pill / Status Chip ──────────────────────────────────────────────────────
 export function Pill({ tone = 'neutral', children, size = 'sm', className = '' }) {
   const tones = {
-    neutral: 'bg-white/10 text-[#94A3B8]',
-    accent:  'bg-emerald-500/10 text-emerald-500',
-    danger:  'bg-red-500/10 text-red-500',
-    warn:    'bg-amber-500/10 text-amber-500',
-    ok:      'bg-emerald-500/10 text-emerald-500',
+    neutral: 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-[#94A3B8]',
+    accent:  'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-100/30 dark:border-transparent',
+    danger:  'bg-red-550/5 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-100/30 dark:border-transparent',
+    warn:    'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-100/30 dark:border-transparent',
+    ok:      'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-100/30 dark:border-transparent',
   }
   
   const bgFg = tones[tone] || tones.neutral
@@ -69,7 +69,7 @@ export function Pressable({ children, onPress, className = '' }) {
 }
 
 // ─── Big Number Display ──────────────────────────────────────────────────────
-export function BigNumber({ value, unit, sub, colorClass = 'text-white', className = '' }) {
+export function BigNumber({ value, unit, sub, colorClass = 'text-slate-900 dark:text-white', className = '' }) {
   return (
     <div className={className}>
       <div className="flex items-baseline gap-1">
@@ -77,11 +77,11 @@ export function BigNumber({ value, unit, sub, colorClass = 'text-white', classNa
           {value}
         </span>
         {unit && (
-          <span className="text-[14px] font-medium text-[#94A3B8]">{unit}</span>
+          <span className="text-[14px] font-medium text-slate-500 dark:text-[#94A3B8]">{unit}</span>
         )}
       </div>
       {sub && (
-        <div className="mt-1.5 text-[13px] text-[#94A3B8] font-medium">{sub}</div>
+        <div className="mt-1.5 text-[13px] text-slate-500 dark:text-[#94A3B8] font-medium">{sub}</div>
       )}
     </div>
   )
@@ -98,7 +98,7 @@ export function ProgressBar({ value, max = 100, tone = 'accent', className = '' 
   const fillColor = fillColors[tone] || fillColors.accent
 
   return (
-    <div className={`h-1.5 rounded-full bg-white/10 overflow-hidden ${className}`}>
+    <div className={`h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden ${className}`}>
       <div 
         className={`h-full rounded-full transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${fillColor}`}
         style={{ width: `${pct}%` }} 
@@ -119,7 +119,8 @@ export function DonutRing({ value, max, size = 64, stroke = 6, color = '#10B981'
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <circle 
           cx={size/2} cy={size/2} r={r}
-          stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} fill="none" 
+          stroke="currentColor" strokeWidth={stroke} fill="none" 
+          className="text-slate-100 dark:text-white/10"
         />
         <circle 
           cx={size/2} cy={size/2} r={r}

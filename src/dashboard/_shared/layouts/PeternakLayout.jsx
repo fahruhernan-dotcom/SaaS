@@ -6,7 +6,6 @@ import DesktopSidebarLayout from './DesktopSidebarLayout'
 import AppSidebar from '../components/AppSidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
-import { useForceDarkMode } from '@/lib/hooks/useForceDarkMode'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -17,7 +16,7 @@ export default function PeternakLayout() {
   const { _profile, loading, tenant, isSuperadmin } = useAuth()
   const location = useLocation()
   useNotificationGenerator()
-  useForceDarkMode()
+  // useForceDarkMode() - Disabled to allow light mode in Peternak Dashboard
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [_rightAction, setRightAction] = useState(null)
@@ -60,7 +59,7 @@ export default function PeternakLayout() {
   // overlay is between transitions, otherwise root renders only <Toaster />.
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', padding: 24, color: '#F1F5F9', background: '#06090F' }}>
+      <div className="bg-[#FAFAFA] dark:bg-[#06090F] text-slate-900 dark:text-[#F1F5F9]" style={{ minHeight: '100vh', padding: 24 }}>
         Memuat dashboard...
       </div>
     )
@@ -72,8 +71,8 @@ export default function PeternakLayout() {
         <div 
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          className="bg-[#FAFAFA] dark:bg-[#06090F]"
           style={{
-          background: '#06090F',
           minHeight: '100vh',
           maxWidth: '480px',
           margin: '0 auto',

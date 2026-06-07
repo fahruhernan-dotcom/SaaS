@@ -18,7 +18,7 @@ function DonutRing({ value, max, size = 64, stroke = 6, color = '#22C55E', child
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         <circle
           cx={size / 2} cy={size / 2} r={r}
-          stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} fill="none"
+          stroke="var(--border-sub-val)" strokeWidth={stroke} fill="none"
         />
         <circle
           cx={size / 2} cy={size / 2} r={r}
@@ -51,10 +51,10 @@ export function MobileTaskProgress({
 
   // Status for mini strip colors
   const getStripColor = (status) => {
-    if (status === 'selesai') return 'bg-emerald-400'
-    if (status === 'in_progress' || status === 'doing') return 'bg-amber-400'
-    if (status === 'terlambat') return 'bg-red-400'
-    return 'bg-white/10'
+    if (status === 'selesai') return 'bg-emerald-500 dark:bg-emerald-400'
+    if (status === 'in_progress' || status === 'doing') return 'bg-amber-500 dark:bg-amber-400'
+    if (status === 'terlambat') return 'bg-red-500 dark:bg-red-400'
+    return 'bg-slate-200 dark:bg-white/10'
   }
 
   if (total === 0) return null
@@ -65,29 +65,29 @@ export function MobileTaskProgress({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.1 }}
       onClick={onNavigate}
-      className="bg-white/[0.03] border border-white/[0.03] rounded-[1.25rem] p-4 shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
+      className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.03] rounded-[1.25rem] p-4 shadow-sm dark:shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
     >
       <div className="flex items-center gap-4">
         {/* Donut ring */}
         <DonutRing value={done} max={total} size={64} stroke={6} color="#22C55E">
           <div className="text-center leading-none">
-            <div className="text-[15px] font-black text-white tabular-nums">{done}/{total}</div>
-            <div className="text-[8px] text-[#8DA2B5] font-bold mt-0.5">selesai</div>
+            <div className="text-[15px] font-black text-slate-900 dark:text-white tabular-nums">{done}/{total}</div>
+            <div className="text-[8px] text-slate-500 dark:text-[#8DA2B5] font-bold mt-0.5">selesai</div>
           </div>
         </DonutRing>
 
         {/* Text area */}
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-bold text-white tracking-tight mb-1">
+          <p className="text-[15px] font-bold text-slate-900 dark:text-white tracking-tight mb-1">
             {doing > 0 ? `${doing} sedang berjalan` : done === total ? 'Semua selesai ✓' : 'Tepat jadwal'}
           </p>
-          <p className="text-[12px] text-[#8DA2B5] truncate">
-            Berikutnya: <span className="text-white/80 font-semibold">{nextLabel}</span>
+          <p className="text-[12px] text-slate-500 dark:text-[#8DA2B5] truncate">
+            Berikutnya: <span className="text-slate-700 dark:text-white/80 font-semibold">{nextLabel}</span>
             {nextTime && <> · {nextTime}</>}
           </p>
         </div>
 
-        <ChevronRight size={16} className="text-[#8DA2B5] shrink-0" />
+        <ChevronRight size={16} className="text-slate-400 dark:text-[#8DA2B5] shrink-0" />
       </div>
 
       {/* Mini task strip */}

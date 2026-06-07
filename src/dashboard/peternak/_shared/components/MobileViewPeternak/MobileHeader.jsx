@@ -49,19 +49,19 @@ export function MobileHeader({ title, onMenuClick, onProfileClick, rightElement,
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06090F] via-[#06090F]/70 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06090F] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAFA] via-[#FAFAFA]/70 to-transparent dark:from-[#06090F] dark:via-[#06090F]/70 dark:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAFA] via-transparent to-transparent dark:from-[#06090F] dark:via-transparent dark:to-transparent" />
 
         <div className="relative px-5 pt-12 pb-3.5 flex items-center justify-between">
           <div>
             {businessLabel && (
-              <p className="text-[10px] text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">
+              <p className="text-[10px] text-emerald-700/80 dark:text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">
                 {businessLabel}
               </p>
             )}
-            <h1 className="font-['Sora'] font-black text-[22px] text-white tracking-tight leading-tight" suppressHydrationWarning>
+            <h1 className="font-['Sora'] font-black text-[22px] text-slate-900 dark:text-white tracking-tight leading-tight" suppressHydrationWarning>
               Selamat {getGreeting()},{' '}
-              <span className="text-green-400/90">{firstName}</span> 👋
+              <span className="text-emerald-600 dark:text-green-400/90">{firstName}</span> 👋
             </h1>
           </div>
           <div className="flex items-center gap-2">{rightButtons}</div>
@@ -71,15 +71,15 @@ export function MobileHeader({ title, onMenuClick, onProfileClick, rightElement,
   }
 
   return (
-    <header className="px-5 pt-8 pb-4 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-white/5 min-h-[64px]">
+    <header className="px-5 pt-8 pb-4 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-slate-200 dark:border-white/5 min-h-[64px]">
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <button
           onClick={onMenuClick || (() => window.dispatchEvent(new CustomEvent('open-mobile-sidebar')))}
-          className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-[#94A3B8] active:scale-95 transition-transform"
         >
           <Menu size={20} />
         </button>
-        <h1 className="text-[17px] font-bold text-white tracking-tight truncate">
+        <h1 className="text-[17px] font-bold text-slate-900 dark:text-white tracking-tight truncate">
           {title}
         </h1>
       </div>

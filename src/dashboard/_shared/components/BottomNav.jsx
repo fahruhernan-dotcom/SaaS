@@ -91,7 +91,7 @@ function NavItem({ tab, active, color, onClick }) {
       >
         <Icon
           size={20}
-          color={active ? color : '#4B6478'}
+          color={active ? color : 'var(--text-muted-val)'}
           strokeWidth={active ? 2.5 : 1.8}
           style={{ transition: 'color 0.2s ease' }}
         />
@@ -165,7 +165,7 @@ function PeternakNavItem({ tab, active, color, onClick }) {
           width: 44, height: 44, // Fitts's Law touch target size
         }}
       >
-        <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} />
+        <Icon size={20} color={active ? color : 'var(--text-muted-val)'} strokeWidth={active ? 2.5 : 2} />
       </motion.div>
     </motion.button>
   )
@@ -199,7 +199,7 @@ function BrokerNavItem({ tab, active, color, onClick }) {
           width: 44, height: 44, // Fitts's Law touch target standardized to 44px
         }}
       >
-        <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} />
+        <Icon size={20} color={active ? color : 'var(--text-muted-val)'} strokeWidth={active ? 2.5 : 2} />
       </motion.div>
     </motion.button>
   )
@@ -322,22 +322,7 @@ function PeternakSpeedDial({ color, open, onToggle, items }) {
                   transition={{ duration: 0.18, delay: i * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
                   onClick={item.onClick}
                   whileTap={{ scale: 0.93 }}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    minHeight: '56px',
-                    padding: '10px 20px 10px 16px',
-                    borderRadius: '16px',
-                    background: 'rgba(10,15,22,0.95)',
-                    border: `1px solid ${color}40`,
-                    cursor: 'pointer',
-                    WebkitTapHighlightColor: 'transparent',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-                    width: 'fit-content',
-                    maxWidth: '240px',
-                  }}
+                  className="inline-flex items-center gap-3 min-h-[56px] px-5 py-2.5 rounded-2xl bg-white dark:bg-[#0A0F16]/95 border border-slate-200 dark:border-emerald-500/30 cursor-pointer shadow-md dark:shadow-xl w-auto max-w-[240px] whitespace-nowrap text-slate-800 dark:text-slate-100"
                 >
                   <div style={{
                     width: 36,
@@ -352,7 +337,7 @@ function PeternakSpeedDial({ color, open, onToggle, items }) {
                   }}>
                     <item.icon size={16} color={color} strokeWidth={2.5} />
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.01em' }}>
+                  <span className="text-[13px] font-extrabold text-slate-800 dark:text-[#F1F5F9] tracking-tight">
                     {t(item.label, item.label)}
                   </span>
                 </motion.button>
@@ -672,46 +657,10 @@ export default function BottomNav() {
       </AnimatePresence>
 
       <nav
-        style={useFloatingDock ? {
-          // Floating dock pill
-          position: 'fixed',
-          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'fit-content',
-          maxWidth: 'calc(100vw - 32px)',
-          height: 'auto',
-          background: 'rgba(10,15,22,0.92)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '22px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.60), 0 2px 8px rgba(0,0,0,0.30)',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: '2px',
-          zIndex: 3500,
-          padding: '6px 8px',
-          overflow: 'visible',
-        } : {
-          position: 'fixed',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '100%',
-          maxWidth: '480px',
-          height: '64px',
-          background: 'rgba(10,15,22,0.96)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
-          display: 'flex',
-          alignItems: 'stretch',
-          zIndex: 3500,
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          overflow: 'visible',
-        }}
+        className={useFloatingDock 
+          ? "fixed bottom-[calc(16px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-fit max-w-[calc(100vw-32px)] h-auto bg-white/90 dark:bg-[#0A0F16]/92 backdrop-blur-3xl border border-slate-200 dark:border-white/12 rounded-[22px] shadow-md dark:shadow-[0_8px_32px_rgba(0,0,0,0.60)] flex flex-row items-center gap-0.5 z-[3500] p-1.5 overflow-visible"
+          : "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[64px] bg-white/95 dark:bg-[#0A0F16]/96 backdrop-blur-3xl border-t border-slate-200 dark:border-white/5 flex items-stretch z-[3500] pb-[env(safe-area-inset-bottom,0px)] overflow-visible"
+        }
       >
         {useFloatingDock ? (
           hasFab || showDombaSpeedDial ? (

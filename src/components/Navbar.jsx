@@ -21,7 +21,7 @@ const DropdownItem = ({ to, icon: Icon, title, desc, onClick }) => {
     <Link
       to={to}
       onClick={onClick}
-      className="group/item flex items-start gap-3.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer text-left"
+      className="group/item flex items-start gap-3.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/30"
     >
       {/* Icon with Blueprint Grid */}
       <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center bg-slate-50/50 dark:bg-slate-900/30 group-hover/item:border-[var(--emerald-500)]/20 group-hover/item:bg-[var(--emerald-500)]/[0.01] transition-all duration-200">
@@ -53,7 +53,7 @@ const QuickLink = ({ to, icon: Icon, title, onClick }) => {
     <Link
       to={to}
       onClick={onClick}
-      className="group/quick flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all text-left"
+      className="group/quick flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/30"
     >
       <div className="w-7 h-7 rounded-md bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover/quick:text-[var(--emerald-500)] group-hover/quick:border-[var(--emerald-500)]/20 transition-all">
         <Icon className="w-[14px] h-[14px]" />
@@ -65,23 +65,102 @@ const QuickLink = ({ to, icon: Icon, title, onClick }) => {
   );
 };
 
+const CompactDropdownItem = ({ to, title, desc, onClick }) => {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className="group/compact-item flex flex-col p-2.5 px-3.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 focus-visible:bg-slate-50 dark:focus-visible:bg-slate-800/30"
+    >
+      <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 group-hover/compact-item:text-[var(--emerald-500)] transition-colors">
+        {title}
+      </span>
+      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+        {desc}
+      </span>
+    </Link>
+  );
+};
+
+const COMPACT_DROPDOWNS = {
+  'Harga': [
+    { to: '/harga', title: 'Paket Harga', desc: 'Lihat perbandingan paket bulanan & tahunan sesuai kebutuhan.' },
+    { to: '/harga', title: 'Bandingkan Fitur', desc: 'Bandingkan detail fitur antar paket Starter, Pro, & Business.' },
+    { to: '/harga', title: 'Akun Gratis untuk peternak kecil', desc: 'Mulai catat secara mandiri tanpa biaya berlangganan.' }
+  ],
+  'Tentang Kami': [
+    { to: '/tentang-kami', title: 'Tentang TernakOS', desc: 'Kisah perjalanan kami membangun ekosistem digital peternakan.' },
+    { to: '/tentang-kami', title: 'Untuk Siapa TernakOS', desc: 'Solusi tepat bagi peternak mandiri, broker, dan pengelola RPA.' },
+    { to: '/hubungi-kami', title: 'Hubungi Sales', desc: 'Diskusikan solusi khusus atau integrasi dengan tim kami.' }
+  ],
+  'Harga Pasar': [
+    { to: '/harga-pasar', title: 'Harga Pasar Live', desc: 'Pantau pergerakan harga ayam harian di berbagai wilayah Indonesia.' },
+    { to: '/harga-pasar', title: 'Tren Komoditas', desc: 'Analisis fluktuasi harga untuk keputusan panen yang lebih tepat.' },
+    { to: '/harga-pasar', title: 'Pantau Wilayah', desc: 'Bandingkan harga antar provinsi secara real-time.' }
+  ],
+  'TernakOS Market': [
+    { to: '/market', title: 'Sapronak', desc: 'Beli pakan, obat-obatan, dan sarana produksi berkualitas tinggi.' },
+    { to: '/market', title: 'Bibit & Pakan', desc: 'Pemesanan DOC ayam broiler dan pakan pabrikan berlisensi.' },
+    { to: '/market', title: 'Segera Hadir / Daftar Minat', desc: 'Ajukan minat pasokan atau bergabung sebagai supplier.' }
+  ]
+};
+
 const Navbar = ({ authPage = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [theme, setTheme] = useState('light');
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('ternakos_theme_mode') || 'light';
+  });
   const location = useLocation();
   const navigate = useNavigate();
 
+  const closeTimeoutRef = React.useRef(null);
+
+  const handleMouseEnter = (name) => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setActiveDropdown(name);
+  };
+
+  const handleMouseLeave = () => {
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 150);
+  };
+
+  const handleFocus = (name) => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setActiveDropdown(name);
+  };
+
+  const handleBlur = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setActiveDropdown(null);
+    }
+  };
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem('ternakos_theme_mode') || 'light';
-    setTheme(savedTheme);
-    if (savedTheme === 'dark') {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -151,8 +230,14 @@ const Navbar = ({ authPage = false }) => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="group cursor-pointer flex items-center gap-[10px]"
+              className="group cursor-pointer flex items-center gap-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 rounded-lg p-1"
               onClick={() => navigate('/')}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  navigate('/');
+                }
+              }}
             >
               <div className="relative shrink-0">
                 <div className="absolute inset-0 rounded-[10px] bg-[var(--emerald-500)]/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -181,6 +266,7 @@ const Navbar = ({ authPage = false }) => {
                     const isActive = location.pathname === link.href;
                     const isHovered = hoveredIndex === i;
                     const isFitur = link.name === 'Fitur';
+                    const isDropdownOpen = activeDropdown === link.name;
                     
                     return (
                       <motion.div
@@ -192,20 +278,21 @@ const Navbar = ({ authPage = false }) => {
                           delay: 0.15 + (i * 0.1),
                           ease: "easeOut" 
                         }}
-                        className={isFitur ? "relative" : ""}
-                        onMouseEnter={isFitur ? () => setIsDropdownOpen(true) : undefined}
-                        onMouseLeave={isFitur ? () => setIsDropdownOpen(false) : undefined}
+                        className="relative"
+                        onMouseEnter={() => handleMouseEnter(link.name)}
+                        onMouseLeave={handleMouseLeave}
+                        onBlur={handleBlur}
                       >
                         <Link
                           to={link.href}
-                          className="nav-link-item"
+                          className="nav-link-item focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800/50 rounded-lg"
                           style={{
                             position: 'relative',
                             padding: '8px 20px',
                             fontSize: '14px',
                             fontWeight: isActive ? 600 : 500,
                             fontFamily: "'DM Sans', sans-serif",
-                            color: isActive || isHovered || (isFitur && isDropdownOpen) ? 'var(--text-primary-val)' : 'var(--text-secondary-val)',
+                            color: isActive || isHovered || isDropdownOpen ? 'var(--text-primary-val)' : 'var(--text-secondary-val)',
                             textDecoration: 'none',
                             transition: 'all 0.2s ease',
                             letterSpacing: '0.01em',
@@ -215,10 +302,11 @@ const Navbar = ({ authPage = false }) => {
                           }}
                           onMouseEnter={() => setHoveredIndex(i)}
                           onMouseLeave={() => setHoveredIndex(null)}
+                          onFocus={() => handleFocus(link.name)}
                         >
                           {/* Spotlight background saat hover */}
                           <AnimatePresence>
-                            {(isHovered || (isFitur && isDropdownOpen)) && (
+                            {(isHovered || isDropdownOpen) && (
                               <motion.div
                                 layoutId="nav-spotlight"
                                 style={{
@@ -244,14 +332,12 @@ const Navbar = ({ authPage = false }) => {
                           <span style={{ position: 'relative', zIndex: 1 }}>
                             {link.name}
                           </span>
-
-                          {isFitur && (
-                            <ChevronDown 
-                              size={12} 
-                              className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-[var(--emerald-500)]' : 'text-text-secondary'}`} 
-                              style={{ position: 'relative', zIndex: 1 }}
-                            />
-                          )}
+ 
+                          <ChevronDown 
+                            size={12} 
+                            className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-[var(--emerald-500)]' : 'text-text-secondary'}`} 
+                            style={{ position: 'relative', zIndex: 1 }}
+                          />
       
                            {/* Underline emerald tipis saat hover atau aktif */}
                           <motion.div
@@ -269,149 +355,177 @@ const Navbar = ({ authPage = false }) => {
                             }}
                             initial={{ scaleX: 0, opacity: 0 }}
                             animate={{
-                              scaleX: isActive || isHovered || (isFitur && isDropdownOpen) ? 1 : 0,
-                              opacity: isActive ? 1 : (isHovered || (isFitur && isDropdownOpen) ? 0.7 : 0),
+                              scaleX: isActive || isHovered || isDropdownOpen ? 1 : 0,
+                              opacity: isActive ? 1 : (isHovered || isDropdownOpen ? 0.7 : 0),
                             }}
                             transition={{ duration: 0.2, ease: 'easeOut' }}
                           />
                         </Link>
-
+ 
                         {/* Dropdown Menu Portal */}
-                        {isFitur && (
-                          <AnimatePresence>
-                            {isDropdownOpen && (
-                              <motion.div
-                                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                                transition={{ duration: 0.18, ease: "easeOut" }}
-                                className="absolute top-[38px] left-[-120px] w-[760px] bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-xl flex z-[150] overflow-hidden"
-                              >
-                                {/* Left Area (Features Grid) */}
-                                <div className="flex-1 p-6 grid grid-cols-2 gap-x-8 gap-y-6">
-                                  
-                                  {/* Column 1: Platform Operasional */}
-                                  <div className="flex flex-col gap-3">
-                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
-                                      Platform Operasional
-                                    </span>
-                                    <div className="flex flex-col gap-1">
-                                      <DropdownItem
-                                        to="/fitur?section=catatan"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={BookOpen}
-                                        title="Catatan Harian"
-                                        desc="Input FCR, mortalitas, & bobot harian kandang."
-                                      />
-                                      <DropdownItem
-                                        to="/fitur?section=keuangan"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={Wallet}
-                                        title="Rekap Keuangan"
-                                        desc="Kelola HPP, kas/bank, & uang jalan sopir."
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Column 2: Integrasi & RPA */}
-                                  <div className="flex flex-col gap-3">
-                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
-                                      Integrasi & RPA
-                                    </span>
-                                    <div className="flex flex-col gap-1">
-                                      <DropdownItem
-                                        to="/fitur?section=rpa"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={FileCheck}
-                                        title="Penagihan RPA"
-                                        desc="Invoice digital & monitoring piutang RPA."
-                                      />
-                                      <DropdownItem
-                                        to="/fitur?section=stok"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={Box}
-                                        title="Stok & Gudang"
-                                        desc="Kontrol pakan, obat, & yield karkas."
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Column 3: Ekosistem (spanning full width) */}
-                                  <div className="col-span-2 border-t border-slate-100 dark:border-slate-800/60 pt-4 flex flex-col gap-3">
-                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
-                                      Ekosistem
-                                    </span>
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <DropdownItem
-                                        to="/harga-pasar"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={LineChart}
-                                        title="Harga Pasar Live"
-                                        desc="Pantau update harga komoditas nasional live."
-                                      />
-                                      <DropdownItem
-                                        to="/market"
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={ShoppingBag}
-                                        title="TernakOS Market"
-                                        desc="Toko penyediaan sapronak, bibit & pakan."
-                                      />
-                                    </div>
-                                  </div>
-
-                                </div>
-
-                                {/* Right Area (Get Started / Mulai Cepat) */}
-                                <div 
-                                  className="w-[260px] bg-slate-50/50 dark:bg-slate-900/20 border-l border-slate-100 dark:border-slate-800/60 p-6 flex flex-col justify-between"
+                        <AnimatePresence>
+                          {isDropdownOpen && (
+                            <>
+                              {isFitur ? (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                                  transition={{ duration: 0.18, ease: "easeOut" }}
+                                  className="absolute top-[38px] left-[-120px] w-[760px] bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-xl flex z-[150] overflow-hidden"
                                 >
-                                  <div className="flex flex-col gap-4">
-                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-1">
-                                      Mulai Cepat
-                                    </span>
+                                  {/* Invisible Bridge to prevent mouse gap */}
+                                  <div className="absolute top-[-16px] left-0 right-0 h-[16px] bg-transparent" />
+                                  
+                                  {/* Left Area (Features Grid) */}
+                                  <div className="flex-1 p-6 grid grid-cols-2 gap-x-8 gap-y-6">
                                     
-                                    <div className="flex flex-col gap-1">
-                                      <QuickLink 
-                                        to="/tentang-kami" 
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={Compass} 
-                                        title="Tentang TernakOS" 
-                                      />
-                                      <QuickLink 
-                                        to="/hubungi-kami" 
-                                        onClick={() => setIsDropdownOpen(false)}
-                                        icon={PhoneCall} 
-                                        title="Hubungi Sales" 
-                                      />
-                                    </div>
-                                  </div>
-
-                                   {/* Bottom banner card */}
-                                  <div 
-                                    className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-2xl flex flex-col gap-2 mt-4 cursor-pointer hover:border-[var(--emerald-500)]/20 transition-colors group/banner"
-                                    onClick={() => {
-                                      setIsDropdownOpen(false);
-                                      navigate('/register');
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded bg-[var(--emerald-500)]/10 flex items-center justify-center text-[var(--emerald-500)]">
-                                        <PlayCircle size={14} />
-                                      </div>
-                                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover/banner:text-[var(--emerald-500)] transition-colors">
-                                        Coba Demo
+                                    {/* Column 1: Platform Operasional */}
+                                    <div className="flex flex-col gap-3">
+                                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
+                                        Platform Operasional
                                       </span>
+                                      <div className="flex flex-col gap-1">
+                                        <DropdownItem
+                                          to="/fitur?section=catatan"
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={BookOpen}
+                                          title="Catatan Harian"
+                                          desc="Input FCR, mortalitas, & bobot harian kandang."
+                                        />
+                                        <DropdownItem
+                                          to="/fitur?section=keuangan"
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={Wallet}
+                                          title="Rekap Keuangan"
+                                          desc="Kelola HPP, kas/bank, & uang jalan sopir."
+                                        />
+                                      </div>
                                     </div>
-                                    <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                      Rasakan kemudahan mencatat & memantau profit peternakan Anda sekarang.
-                                    </p>
+ 
+                                    {/* Column 2: Integrasi & RPA */}
+                                    <div className="flex flex-col gap-3">
+                                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
+                                        Integrasi & RPA
+                                      </span>
+                                      <div className="flex flex-col gap-1">
+                                        <DropdownItem
+                                          to="/fitur?section=rpa"
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={FileCheck}
+                                          title="Penagihan RPA"
+                                          desc="Invoice digital & monitoring piutang RPA."
+                                        />
+                                        <DropdownItem
+                                          to="/fitur?section=stok"
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={Box}
+                                          title="Stok & Gudang"
+                                          desc="Kontrol pakan, obat, & yield karkas."
+                                        />
+                                      </div>
+                                    </div>
+ 
+                                    {/* Column 3: Ekosistem (spanning full width) */}
+                                    <div className="col-span-2 border-t border-slate-100 dark:border-slate-800/60 pt-4 flex flex-col gap-3">
+                                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-2">
+                                        Ekosistem
+                                      </span>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <DropdownItem
+                                          to="/harga-pasar"
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={LineChart}
+                                          title="Harga Pasar Live"
+                                          desc="Pantau update harga komoditas nasional live."
+                                        />
+                                        <DropdownItem
+                                          to="/market"
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={ShoppingBag}
+                                          title="TernakOS Market"
+                                          desc="Toko penyediaan sapronak, bibit & pakan."
+                                        />
+                                      </div>
+                                    </div>
+ 
                                   </div>
-                                </div>
-
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        )}
+ 
+                                  {/* Right Area (Get Started / Mulai Cepat) */}
+                                  <div 
+                                    className="w-[260px] bg-slate-50/50 dark:bg-slate-900/20 border-l border-slate-100 dark:border-slate-800/60 p-6 flex flex-col justify-between"
+                                  >
+                                    <div className="flex flex-col gap-4">
+                                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pl-1">
+                                        Mulai Cepat
+                                      </span>
+                                      
+                                      <div className="flex flex-col gap-1">
+                                        <QuickLink 
+                                          to="/tentang-kami" 
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={Compass} 
+                                          title="Tentang TernakOS" 
+                                        />
+                                        <QuickLink 
+                                          to="/hubungi-kami" 
+                                          onClick={() => setActiveDropdown(null)}
+                                          icon={PhoneCall} 
+                                          title="Hubungi Sales" 
+                                        />
+                                      </div>
+                                    </div>
+ 
+                                    {/* Bottom banner card */}
+                                    <div 
+                                      className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-2xl flex flex-col gap-2 mt-4 cursor-pointer hover:border-[var(--emerald-500)]/20 transition-colors group/banner"
+                                      onClick={() => {
+                                        setActiveDropdown(null);
+                                        navigate('/register');
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded bg-[var(--emerald-500)]/10 flex items-center justify-center text-[var(--emerald-500)]">
+                                          <PlayCircle size={14} />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover/banner:text-[var(--emerald-500)] transition-colors">
+                                          Coba Demo
+                                        </span>
+                                      </div>
+                                      <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        Rasakan kemudahan mencatat & memantau profit peternakan Anda sekarang.
+                                      </p>
+                                    </div>
+                                  </div>
+ 
+                                </motion.div>
+                              ) : (
+                                COMPACT_DROPDOWNS[link.name] && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.98, x: '-50%' }}
+                                    animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
+                                    exit={{ opacity: 0, y: 8, scale: 0.98, x: '-50%' }}
+                                    transition={{ duration: 0.18, ease: "easeOut" }}
+                                    className="absolute top-[38px] left-1/2 w-[300px] bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xl p-3 flex flex-col gap-1 z-[150]"
+                                  >
+                                    {/* Invisible Bridge to prevent mouse gap */}
+                                    <div className="absolute top-[-16px] left-0 right-0 h-[16px] bg-transparent" />
+                                    
+                                    {COMPACT_DROPDOWNS[link.name].map((item, idx) => (
+                                      <CompactDropdownItem
+                                        key={idx}
+                                        to={item.to}
+                                        title={item.title}
+                                        desc={item.desc}
+                                        onClick={() => setActiveDropdown(null)}
+                                      />
+                                    ))}
+                                  </motion.div>
+                                )
+                              )}
+                            </>
+                          )}
+                        </AnimatePresence>
                       </motion.div>
                     )
                   })}
@@ -431,7 +545,7 @@ const Navbar = ({ authPage = false }) => {
                 {/* Theme Toggle Button */}
                 <motion.button
                   onClick={toggleTheme}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 shrink-0"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label="Toggle Theme"
@@ -443,6 +557,7 @@ const Navbar = ({ authPage = false }) => {
                 {authPage ? (
                   <motion.a
                     href="/"
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40"
                     style={{
                       height: '36px',
                       display: 'flex',
@@ -473,7 +588,7 @@ const Navbar = ({ authPage = false }) => {
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <motion.button
                       onClick={() => navigate('/login')}
-                      className="nav-action-btn"
+                      className="nav-action-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.5, delay: 0.5 }}
@@ -505,7 +620,7 @@ const Navbar = ({ authPage = false }) => {
      
                     <motion.button
                       onClick={() => navigate('/register')}
-                      className="nav-action-btn"
+                      className="nav-action-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40"
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.6 } }}
                       style={{
@@ -558,7 +673,7 @@ const Navbar = ({ authPage = false }) => {
                   {/* Compact Mobile Theme Toggle (Fitts's Law compliant: 40px touch target) */}
                   <motion.button
                     onClick={toggleTheme}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 shrink-0"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label="Toggle Theme"
@@ -569,7 +684,7 @@ const Navbar = ({ authPage = false }) => {
 
                   {/* Hamburger menu trigger (Fitts's Law compliant: 40px touch target) */}
                   <button 
-                    className="text-tx-2 p-2 flex flex-col justify-center items-center gap-1.5 w-10 h-10 focus:outline-none z-[110] relative rounded-xl hover:bg-bg-3/20 transition-all"
+                    className="text-tx-2 p-2 flex flex-col justify-center items-center gap-1.5 w-10 h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 z-[110] relative rounded-xl hover:bg-bg-3/20 transition-all"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   >
                     <motion.div animate={{ rotate: isMobileMenuOpen ? 45 : 0, y: isMobileMenuOpen ? 8 : 0 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-transform"></motion.div>
@@ -584,7 +699,7 @@ const Navbar = ({ authPage = false }) => {
                 <div className="flex md:hidden items-center gap-3">
                   <motion.button
                     onClick={toggleTheme}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--emerald-500)]/40 shrink-0"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label="Toggle Theme"

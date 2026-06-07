@@ -7,7 +7,6 @@ import {
 } from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { isSuperadmin } from '@/lib/auth'
 import { isOwner } from '@/lib/auth/business-roles'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useQueryClient } from '@tanstack/react-query'
