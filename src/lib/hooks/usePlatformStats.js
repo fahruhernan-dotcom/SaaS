@@ -18,7 +18,7 @@
  *   active_businesses       → Bisnis Aktif (hanya angka, format manual jika perlu)
  */
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 /** Default kosong — loading state menampilkan '—' bukan '0+' yang palsu */
@@ -41,63 +41,39 @@ const DEFAULT_STATS = {
 };
 
 export function usePlatformStats() {
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadStats() {
-      setLoading(true);
-
-      const { data, error: rpcError } = await supabase.rpc('get_landing_stats');
-
-      if (!mounted) return;
-
-      if (rpcError) {
-        console.error('[usePlatformStats] RPC error:', rpcError);
-        setError(rpcError);
-        setLoading(false);
-        return;
-      }
-
-      // RPC bisa return array atau object tunggal
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['platform-landing-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_landing_stats');
+      if (error) throw error;
       const latest = Array.isArray(data) ? data[0] : data;
-
-      if (!latest) {
-        setLoading(false);
-        return;
-      }
-
-      setStats({
+      if (!latest) return DEFAULT_STATS;
+      return {
         active_businesses: latest.active_businesses ?? 0,
         active_users: latest.active_users ?? 0,
         total_transactions: latest.total_transactions ?? 0,
         transaction_volume: latest.transaction_volume ?? 0,
         market_listings: latest.market_listings ?? 0,
-        // Pre-formatted: admin override atau real data (sudah diformat di DB)
         active_users_text: latest.active_users_text ?? '—',
         total_transactions_text: latest.total_transactions_text ?? '—',
         transaction_volume_text: latest.transaction_volume_text ?? '—',
-        // Raw admin config values
         stats_users_config: latest.stats_users_config ?? '',
         stats_transactions_config: latest.stats_transactions_config ?? '',
         stats_value_config: latest.stats_value_config ?? '',
         updated_at: latest.updated_at ?? null,
-      });
+      };
+    },
+    staleTime: 1000 * 60 * 15, // platform stats — cached for 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
 
-      setLoading(false);
-    }
-
-    loadStats();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return { stats, loading, error };
+  return {
+    stats: data ?? DEFAULT_STATS,
+    loading: isLoading,
+    error: error || null,
+  };
 }
 
 // ─── Formatters (masih dipakai untuk non-stats-bar display) ──────────────────

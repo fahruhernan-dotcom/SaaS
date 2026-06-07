@@ -364,10 +364,14 @@ export const useUpsertPaymentSetting = () => {
 
 export const usePricingConfig = () => useQuery({
   queryKey: ['pricing-plans'],
+  staleTime: 1000 * 60 * 30, // static pricing — cached for 30 minutes
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  refetchOnMount: false,
   queryFn: async () => {
     const { data, error } = await supabase
       .from('pricing_plans')
-      .select('*')
+      .select('id, role, plan, price, original_price')
       .order('role')
       .order('plan')
     if (error) throw error
@@ -495,11 +499,14 @@ export const useDeleteDiscountCode = () => {
 
 export const usePlanConfigs = () => useQuery({
   queryKey: ['plan-configs'],
-  staleTime: 60_000,
+  staleTime: 1000 * 60 * 30, // static configs — cached for 30 minutes
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+  refetchOnMount: false,
   queryFn: async () => {
     const { data, error } = await supabase
       .from('plan_configs')
-      .select('*')
+      .select('config_key, config_value')
     if (error) throw error
     // Transform array → object keyed by config_key
     return data.reduce((acc, row) => {

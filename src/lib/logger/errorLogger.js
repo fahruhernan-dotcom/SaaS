@@ -33,6 +33,28 @@ let _tableCheckDone = false
 let _preAuthRpcUnavailable = false
 let _preAuthRpcWarned = false
 
+// ── Re-entry guards to prevent infinite logging loops ──────────────────────────
+let _isLoggingSystemError = false
+let _isSendingPreAuthLog = false
+
+// ── Pre-auth deduplication cache ──────────────────────────────────────────────
+const _recentPreAuthErrors = new Map()
+function isPreAuthDeduplicated(signature) {
+  const now = Date.now()
+  const lastTime = _recentPreAuthErrors.get(signature)
+  if (lastTime && now - lastTime < 60_000) {
+    return true // Deduplicated / Throttled (1 log per 60s max per error signature)
+  }
+  _recentPreAuthErrors.set(signature, now)
+  // Cleanup old entries
+  if (_recentPreAuthErrors.size > 100) {
+    for (const [k, v] of _recentPreAuthErrors.entries()) {
+      if (now - v > 60_000) _recentPreAuthErrors.delete(k)
+    }
+  }
+  return false
+}
+
 // ── Skip-warning flag — warn at most once per session ─────────────────────────
 let _noAuthWarned = false
 
@@ -90,6 +112,7 @@ function getPagePath() {
   return window.location.pathname
 }
 
+// ── User Agent (SSG-safe) ────────────────────────────────────────────────────
 function getUserAgent() {
   if (typeof window === 'undefined') return null
   return navigator.userAgent
@@ -104,74 +127,81 @@ export async function logError({
   error = null,
   metadata = {},
 } = {}) {
-  // Skip if table was confirmed unavailable this session
-  if (_tableUnavailable) return
-
-  const rawMessage = error?.message || (typeof error === 'string' ? error : null)
-  const throttleKey = `${source}:${rawMessage}:${component}`
-  if (isThrottled(throttleKey)) return
-
-  const payload = {
-    level,
-    source,
-    vertical: _ctx.vertical || null,
-    role: _ctx.role || null,
-    tenant_id: _ctx.tenantId || null,
-    user_id: _ctx.userId || null,
-    page_path: truncate(getPagePath(), 500),
-    component: truncate(component, 200),
-    action_name: truncate(actionName, 200),
-    error_code: truncate(error?.code || null, 100),
-    error_message: truncate(rawMessage, 500),
-    error_details: truncate(error?.details || null, 1000),
-    stack: truncate(error?.stack || null, 3000),
-    metadata: redact(metadata),
-    user_agent: truncate(getUserAgent(), 500),
-    app_version: 'v0.9.4',
-  }
-
-  // No authenticated user:
-  //   - For source === 'auth' (Login/Register/AuthCallback errors before session
-  //     exists), route through SECURITY DEFINER RPC so we still capture pre-auth
-  //     failures in /admin/info. RPC stamps a sentinel user_id.
-  //   - Otherwise skip (RLS would reject direct insert). Warn at most once.
-  if (!payload.user_id) {
-    if (source === 'auth' && !_preAuthRpcUnavailable) {
-      await _sendPreAuthRpc(payload)
-      return
-    }
-    if (!_noAuthWarned) {
-      console.warn('[TernakOS Logger] Skipping remote log — no authenticated user')
-      _noAuthWarned = true
-    }
-    return
-  }
+  if (_isLoggingSystemError) return
+  _isLoggingSystemError = true
 
   try {
-    const { error: insertError } = await supabase
-      .from('system_error_logs')
-      .insert(payload)
+    // Skip if table was confirmed unavailable this session
+    if (_tableUnavailable) return
 
-    if (insertError) {
-      // Detect table-not-found errors → disable remote logging for this session
-      if (
-        insertError.code === '42P01' ||
-        insertError.message?.includes('system_error_logs') ||
-        insertError.message?.includes('does not exist')
-      ) {
-        if (!_tableCheckDone) {
-          console.warn('[TernakOS Logger] system_error_logs table not found — remote logging disabled for this session. Run the migration SQL first.')
-          _tableUnavailable = true
-          _tableCheckDone = true
-        }
+    const rawMessage = error?.message || (typeof error === 'string' ? error : null)
+    const throttleKey = `${source}:${rawMessage}:${component}`
+    if (isThrottled(throttleKey)) return
+
+    const payload = {
+      level,
+      source,
+      vertical: _ctx.vertical || null,
+      role: _ctx.role || null,
+      tenant_id: _ctx.tenantId || null,
+      user_id: _ctx.userId || null,
+      page_path: truncate(getPagePath(), 500),
+      component: truncate(component, 200),
+      action_name: truncate(actionName, 200),
+      error_code: truncate(error?.code || null, 100),
+      error_message: truncate(rawMessage, 500),
+      error_details: truncate(error?.details || null, 1000),
+      stack: truncate(error?.stack || null, 3000),
+      metadata: redact(metadata),
+      user_agent: truncate(getUserAgent(), 500),
+      app_version: 'v0.9.4',
+    }
+
+    // No authenticated user:
+    //   - For source === 'auth' (Login/Register/AuthCallback errors before session
+    //     exists), route through SECURITY DEFINER RPC so we still capture pre-auth
+    //     failures in /admin/info. RPC stamps a sentinel user_id.
+    //   - Otherwise skip (RLS would reject direct insert). Warn at most once.
+    if (!payload.user_id) {
+      if (source === 'auth' && !_preAuthRpcUnavailable) {
+        await _sendPreAuthRpc(payload)
         return
       }
-      // Other insert errors — log to console only
-      console.error('[TernakOS Logger] Insert failed:', insertError.message)
+      if (!_noAuthWarned) {
+        console.warn('[TernakOS Logger] Skipping remote log — no authenticated user')
+        _noAuthWarned = true
+      }
+      return
     }
-  } catch (e) {
-    // Never propagate logger errors
-    console.error('[TernakOS Logger] Unexpected error:', e)
+
+    try {
+      const { error: insertError } = await supabase
+        .from('system_error_logs')
+        .insert(payload)
+
+      if (insertError) {
+        // Detect table-not-found errors → disable remote logging for this session
+        if (
+          insertError.code === '42P01' ||
+          insertError.message?.includes('system_error_logs') ||
+          insertError.message?.includes('does not exist')
+        ) {
+          if (!_tableCheckDone) {
+            console.warn('[TernakOS Logger] system_error_logs table not found — remote logging disabled for this session. Run the migration SQL first.')
+            _tableUnavailable = true
+            _tableCheckDone = true
+          }
+          return
+        }
+        // Other insert errors — log to console only
+        console.error('[TernakOS Logger] Insert failed:', insertError.message)
+      }
+    } catch (e) {
+      // Never propagate logger errors
+      console.error('[TernakOS Logger] Unexpected error:', e)
+    }
+  } finally {
+    _isLoggingSystemError = false
   }
 }
 
@@ -181,6 +211,12 @@ export async function logError({
 // shared by logError()'s fallback path AND the public logPreAuthError() helper.
 async function _sendPreAuthRpc(payload) {
   if (_preAuthRpcUnavailable) return
+
+  const signature = `${payload.component}:${payload.action_name}:${payload.error_code}:${payload.error_message}`
+  if (isPreAuthDeduplicated(signature)) return
+
+  if (_isSendingPreAuthLog) return
+  _isSendingPreAuthLog = true
 
   try {
     const { error: rpcError } = await supabase.rpc('log_pre_auth_error', {
@@ -209,10 +245,12 @@ async function _sendPreAuthRpc(payload) {
         _preAuthRpcUnavailable = true
         return
       }
-      console.error('[TernakOS Logger] Pre-auth RPC failed:', rpcError.message)
+      console.warn('[TernakOS Logger] Pre-auth RPC failed:', rpcError.message)
     }
   } catch (e) {
-    console.error('[TernakOS Logger] Pre-auth RPC exception:', e)
+    console.warn('[TernakOS Logger] Pre-auth RPC exception:', e.message || e)
+  } finally {
+    _isSendingPreAuthLog = false
   }
 }
 
@@ -231,6 +269,7 @@ export async function logPreAuthError({
   metadata = {},
 } = {}) {
   if (_preAuthRpcUnavailable) return
+  if (_isSendingPreAuthLog) return
 
   const rawMessage = error?.message || (typeof error === 'string' ? error : (error != null ? String(error) : null))
   const throttleKey = `auth:${rawMessage}:${component}`

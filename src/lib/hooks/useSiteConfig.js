@@ -10,8 +10,10 @@ export function useSiteConfig() {
       if (error) throw error
       return Object.fromEntries(data.map(r => [r.key, r.value]))
     },
-    staleTime: 1000 * 60 * 10,
-    refetchOnMount: false, // static config — tidak perlu refetch saat mount
+    staleTime: 1000 * 60 * 30, // static config — cached for 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   })
 }
 
