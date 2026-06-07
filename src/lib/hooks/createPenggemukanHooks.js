@@ -287,9 +287,10 @@ export function createPenggemukanHooks(prefix) {
 
   function useAnimalsByBatches(batchIds) {
     const { tenant } = useAuth()
-    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+    const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
     return useQuery({
-      queryKey: [`${K}-animals-multi`, ids],
+      queryKey: [`${K}-animals-multi`, tenant?.id, idsKey],
       queryFn: async () => {
         if (ids.length === 0) return []
         const parseW = (v) => v ? Number(String(v).replace(',', '.')) || 0 : 0
@@ -321,9 +322,10 @@ export function createPenggemukanHooks(prefix) {
 
   function useBatchWeightHistoryByBatches(batchIds) {
     const { tenant } = useAuth()
-    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+    const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
     return useQuery({
-      queryKey: [`${K}-batch-weight-history-multi`, tenant?.id, ids],
+      queryKey: [`${K}-batch-weight-history-multi`, tenant?.id, idsKey],
       queryFn: async () => {
         if (ids.length === 0) return []
         const { data, error } = await supabase
@@ -342,9 +344,10 @@ export function createPenggemukanHooks(prefix) {
 
   function useSalesByBatches(batchIds) {
     const { tenant } = useAuth()
-    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+    const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
     return useQuery({
-      queryKey: [`${K}-sales-multi`, ids],
+      queryKey: [`${K}-sales-multi`, tenant?.id, idsKey],
       queryFn: async () => {
         if (ids.length === 0) return []
         const { data, error } = await supabase
@@ -363,9 +366,10 @@ export function createPenggemukanHooks(prefix) {
 
   function useFeedLogsByBatches(batchIds) {
     const { tenant } = useAuth()
-    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+    const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
     return useQuery({
-      queryKey: [`${K}-feed-logs-multi`, ids],
+      queryKey: [`${K}-feed-logs-multi`, tenant?.id, idsKey],
       queryFn: async () => {
         if (ids.length === 0) return []
         const { data, error } = await supabase
@@ -384,9 +388,10 @@ export function createPenggemukanHooks(prefix) {
 
   function useOperationalCostsByBatches(batchIds) {
     const { tenant } = useAuth()
-    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+    const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
     return useQuery({
-      queryKey: [`${K}-operational-costs-multi`, ids],
+      queryKey: [`${K}-operational-costs-multi`, tenant?.id, idsKey],
       queryFn: async () => {
         if (ids.length === 0) return []
         const { data, error } = await supabase
@@ -405,9 +410,10 @@ export function createPenggemukanHooks(prefix) {
 
   function useHealthLogsByBatches(batchIds) {
     const { tenant } = useAuth()
-    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+    const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
     return useQuery({
-      queryKey: [`${K}-health-logs-multi`, ids],
+      queryKey: [`${K}-health-logs-multi`, tenant?.id, idsKey],
       queryFn: async () => {
         if (ids.length === 0) return []
         const { data, error } = await supabase
@@ -568,10 +574,11 @@ export function createPenggemukanHooks(prefix) {
           }
         }
       },
-      onSuccess: (_, { _batch_id }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`] })
+      onSuccess: (_, { batch_id }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Ternak berhasil ditambahkan')
       },
@@ -656,9 +663,10 @@ export function createPenggemukanHooks(prefix) {
         }
       },
       onSuccess: (_, variables) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, variables.batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         const count = variables?.animals?.length || 0
         toast.success(`Berhasil menyimpan ${count} data ternak`)
@@ -689,7 +697,7 @@ export function createPenggemukanHooks(prefix) {
         }
       },
       onSuccess: (_, { animalId, _batchId }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, _batchId] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animalId] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
@@ -714,11 +722,12 @@ export function createPenggemukanHooks(prefix) {
           throw error
         }
       },
-      onSuccess: (_, { batchId }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
+      onSuccess: (_, { animalId, _batchId }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, _batchId] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
-        qc.invalidateQueries({ queryKey: [`${K}-animal-detail`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animalId] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
       },
       onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message),
@@ -806,7 +815,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animal_id] })
         // Invalidate chart data sources so Beranda growth chart refreshes
-        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history`, tenant?.id, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history-multi`] })
         toast.success('Data timbang disimpan')
       },
@@ -953,7 +962,8 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-animals`, vars.batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, vars.animal_id] })
-        qc.invalidateQueries({ queryKey: [`${K}-batches`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
         toast.success('Log kesehatan disimpan')
       },
       onError: (err) => toast.error('Gagal simpan log kesehatan: ' + normalizeSupabaseError(err).message),
@@ -1025,7 +1035,9 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-sales-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
-        qc.invalidateQueries({ queryKey: [`${K}-batches`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Penjualan berhasil dicatat')
       },
       onError: (err) => toast.error('Gagal catat penjualan: ' + normalizeSupabaseError(err).message),
@@ -1085,7 +1097,8 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-weight-records`, animal_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
-        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animal_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history`, tenant?.id, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history-multi`] })
         toast.success('Data timbang dihapus')
       },
@@ -1146,7 +1159,9 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-sales-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
-        qc.invalidateQueries({ queryKey: [`${K}-batches`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: [`${K}-active-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Penjualan dihapus & ternak kembali aktif')
       },
       onError: (err) => toast.error('Gagal hapus penjualan: ' + normalizeSupabaseError(err).message),
@@ -1176,7 +1191,7 @@ export function createPenggemukanHooks(prefix) {
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-sales-multi`] })
-        qc.invalidateQueries({ queryKey: [`${K}-batches`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         toast.success('Data penjualan diperbarui')
       },
       onError: (err) => toast.error('Gagal perbarui data: ' + normalizeSupabaseError(err).message),

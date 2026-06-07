@@ -319,9 +319,10 @@ export function useSapiKandangs() {
 // ── useSapiAnimalsByBatches ───────────────────────────────────────────────────
 export function useSapiAnimalsByBatches(batchIds) {
   const { tenant } = useAuth()
-  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+  const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
   return useQuery({
-    queryKey: ['sapi-animals-multi', ids],
+    queryKey: ['sapi-animals-multi', tenant?.id, idsKey],
     queryFn: async () => {
       if (ids.length === 0) return []
       const { data, error } = await supabase
@@ -342,9 +343,10 @@ export function useSapiAnimalsByBatches(batchIds) {
 // ── useSapiBatchWeightHistoryByBatches ────────────────────────────────────────
 export function useSapiBatchWeightHistoryByBatches(batchIds) {
   const { tenant } = useAuth()
-  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+  const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
   return useQuery({
-    queryKey: ['sapi-weight-history-multi', ids],
+    queryKey: ['sapi-weight-history-multi', tenant?.id, idsKey],
     queryFn: async () => {
       if (ids.length === 0) return []
       const { data, error } = await supabase
@@ -364,9 +366,10 @@ export function useSapiBatchWeightHistoryByBatches(batchIds) {
 // ── useSapiFeedLogsByBatches ──────────────────────────────────────────────────
 export function useSapiFeedLogsByBatches(batchIds) {
   const { tenant } = useAuth()
-  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+  const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
   return useQuery({
-    queryKey: ['sapi-feed-logs-multi', ids],
+    queryKey: ['sapi-feed-logs-multi', tenant?.id, idsKey],
     queryFn: async () => {
       if (ids.length === 0) return []
       const { data, error } = await supabase
@@ -417,9 +420,10 @@ export function useSapiOperationalCostsByBatches(_batchIds) {
 // ── useSapiSalesByBatches ─────────────────────────────────────────────────────
 export function useSapiSalesByBatches(batchIds) {
   const { tenant } = useAuth()
-  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  const ids = React.useMemo(() => Array.isArray(batchIds) ? batchIds : [batchIds], [batchIds])
+  const idsKey = React.useMemo(() => [...new Set(ids.filter(Boolean))].sort().join(','), [ids])
   return useQuery({
-    queryKey: ['sapi-sales-multi', ids],
+    queryKey: ['sapi-sales-multi', tenant?.id, idsKey],
     queryFn: async () => {
       if (ids.length === 0) return []
       const { data, error } = await supabase
@@ -613,9 +617,11 @@ export function useUpdateSapiAnimal() {
         .eq('tenant_id', tenant.id)
       if (error) throw error
     },
-    onSuccess: (_, { batchId }) => {
-      qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
-      qc.invalidateQueries({ queryKey: ['sapi-animal-detail'] })
+    onSuccess: (_, { animalId, _batchId }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-animals', _batchId] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals-multi'] })
+      qc.invalidateQueries({ queryKey: ['sapi-animal-detail', animalId] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
       toast.success('Data ternak diperbarui')
     },
     onError: (err) => toast.error('Gagal update: ' + normalizeSupabaseError(err).message),
@@ -634,10 +640,12 @@ export function useUpdateSapiAnimalStatus() {
         .eq('tenant_id', tenant.id)
       if (error) throw error
     },
-    onSuccess: (_, { batchId }) => {
-      qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
-      qc.invalidateQueries({ queryKey: ['sapi-animal-detail'] })
+    onSuccess: (_, { animalId, _batchId }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-animals', _batchId] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals-multi'] })
+      qc.invalidateQueries({ queryKey: ['sapi-animal-detail', animalId] })
       qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['sapi-active-batches', tenant?.id] })
       qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
     },
     onError: (err) => toast.error('Gagal update status: ' + normalizeSupabaseError(err).message),
@@ -695,7 +703,10 @@ export function useAddSapiWeightRecord() {
     onSuccess: (_, { animal_id, batch_id }) => {
       qc.invalidateQueries({ queryKey: ['sapi-weight-records', animal_id] })
       qc.invalidateQueries({ queryKey: ['sapi-animals', batch_id] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals-multi'] })
       qc.invalidateQueries({ queryKey: ['sapi-animal-detail', animal_id] })
+      qc.invalidateQueries({ queryKey: ['sapi-weight-history', tenant?.id, batch_id] })
+      qc.invalidateQueries({ queryKey: ['sapi-weight-history-multi'] })
       toast.success('Data timbang disimpan')
     },
     onError: (err) => toast.error('Gagal simpan timbang: ' + normalizeSupabaseError(err).message),
@@ -798,7 +809,8 @@ export function useAddSapiHealthLog() {
       qc.invalidateQueries({ queryKey: ['sapi-health-logs', batch_id] })
       qc.invalidateQueries({ queryKey: ['sapi-animals', batch_id] })
       qc.invalidateQueries({ queryKey: ['sapi-animal-detail', animal_id] })
-      qc.invalidateQueries({ queryKey: ['sapi-batches'] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['sapi-active-batches', tenant?.id] })
       toast.success('Log kesehatan disimpan')
     },
     onError: (err) => toast.error('Gagal simpan log kesehatan: ' + normalizeSupabaseError(err).message),
@@ -863,8 +875,12 @@ export function useAddSapiSale() {
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['sapi-sales', batch_id] })
+      qc.invalidateQueries({ queryKey: ['sapi-sales-multi'] })
       qc.invalidateQueries({ queryKey: ['sapi-animals', batch_id] })
-      qc.invalidateQueries({ queryKey: ['sapi-batches'] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals-multi'] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['sapi-active-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Penjualan berhasil dicatat')
     },
     onError: (err) => toast.error('Gagal catat penjualan: ' + normalizeSupabaseError(err).message),
@@ -886,7 +902,8 @@ export function useUpdateSapiSale() {
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['sapi-sales', batch_id] })
-      qc.invalidateQueries({ queryKey: ['sapi-batches'] })
+      qc.invalidateQueries({ queryKey: ['sapi-sales-multi'] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
       toast.success('Data penjualan diperbarui')
     },
     onError: (err) => toast.error('Gagal perbarui data: ' + normalizeSupabaseError(err).message),
@@ -913,11 +930,14 @@ export function useDeleteSapiSale() {
         .eq('tenant_id', tenant.id)
       if (animalErr) throw animalErr
     },
-    onSuccess: (_, { batchId }) => {
-      qc.invalidateQueries({ queryKey: ['sapi-sales', batchId] })
-      qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
+    onSuccess: (_, { _batchId }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-sales', _batchId] })
+      qc.invalidateQueries({ queryKey: ['sapi-sales-multi'] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals', _batchId] })
       qc.invalidateQueries({ queryKey: ['sapi-animals-multi'] })
-      qc.invalidateQueries({ queryKey: ['sapi-batches'] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['sapi-active-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Penjualan dihapus & ternak kembali aktif')
     },
     onError: (err) => toast.error('Gagal hapus penjualan: ' + normalizeSupabaseError(err).message),

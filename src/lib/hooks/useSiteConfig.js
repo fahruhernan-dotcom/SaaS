@@ -11,6 +11,7 @@ export function useSiteConfig() {
       return Object.fromEntries(data.map(r => [r.key, r.value]))
     },
     staleTime: 1000 * 60 * 10,
+    refetchOnMount: false, // static config — tidak perlu refetch saat mount
   })
 }
 

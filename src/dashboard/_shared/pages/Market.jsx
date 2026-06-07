@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageCircle, Plus, Search, X, ChevronDown, ChevronUp,
@@ -823,12 +823,26 @@ export default function Market() {
   const [myListingsOpen, setMyListingsOpen] = useState(false)
   const [sheetOpen,     setSheetOpen]     = useState(false)
 
+  // Debounced values — 400ms delay prevents Supabase fetch on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [debouncedLocation, setDebouncedLocation] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedLocation(locationQuery), 400)
+    return () => clearTimeout(timer)
+  }, [locationQuery])
+
   const filters = useMemo(() => ({
     type:         typeFilter !== 'all'    ? typeFilter    : undefined,
     chicken_type: chickenFilter !== 'all' ? chickenFilter : undefined,
-    search:       search.trim()           || undefined,
-    location:     locationQuery.trim()    || undefined,
-  }), [typeFilter, chickenFilter, search, locationQuery])
+    search:       debouncedSearch.trim()           || undefined,
+    location:     debouncedLocation.trim()    || undefined,
+  }), [typeFilter, chickenFilter, debouncedSearch, debouncedLocation])
 
   const { data: listings = [], isLoading } = useMarketListings(filters)
   const { data: myListings = [] } = useMyListings()
