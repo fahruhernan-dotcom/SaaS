@@ -110,7 +110,12 @@ const Navbar = ({ authPage = false }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('ternakos_theme_mode') || 'light';
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('ternakos_theme_mode') || 'light';
+      }
+    } catch (_e) { /* ignored */ }
+    return 'light';
   });
   const location = useLocation();
   const navigate = useNavigate();
@@ -165,7 +170,11 @@ const Navbar = ({ authPage = false }) => {
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('ternakos_theme_mode', newTheme);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ternakos_theme_mode', newTheme);
+      }
+    } catch (_e) { /* ignored */ }
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
