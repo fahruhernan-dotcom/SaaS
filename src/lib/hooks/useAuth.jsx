@@ -12,6 +12,52 @@ import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 const AuthContext = createContext(null)
 
+// Throttling helper for last_seen_at updates (15 minutes per tenant ID)
+const throttleLastSeenUpdate = async (userId, tenantId) => {
+  if (!userId || !tenantId) return
+  const THROTTLE_MS = 15 * 60 * 1000 // 15 minutes
+  const key = `ternakos_last_seen_${tenantId}`
+  
+  try {
+    const lastUpdateStr = sessionStorage.getItem(key)
+    const now = Date.now()
+    if (lastUpdateStr) {
+      const lastUpdate = parseInt(lastUpdateStr, 10)
+      if (now - lastUpdate < THROTTLE_MS) {
+        return
+      }
+    }
+    
+    sessionStorage.setItem(key, now.toString())
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        updated_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString()
+      })
+      .eq('auth_user_id', userId)
+      .eq('tenant_id', tenantId)
+
+    if (error) {
+      logError({
+        level: 'error',
+        source: 'supabase',
+        component: 'AuthProvider',
+        actionName: 'throttleLastSeenUpdate',
+        error,
+        metadata: {
+          table: 'profiles',
+          operation: 'update',
+          target_tenant_id: tenantId,
+        },
+      })
+    }
+  } catch (err) {
+    console.error('[useAuth] Error in throttleLastSeenUpdate:', err)
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -128,6 +174,10 @@ export function AuthProvider({ children }) {
       role: active?.app_role || active?.role || active?.user_type || null,
       vertical: null, // resolved per-component via resolveBusinessVertical
     })
+
+    if (active?.tenant_id) {
+      throttleLastSeenUpdate(userId, active.tenant_id)
+    }
   }
 
   useEffect(() => {
@@ -154,32 +204,8 @@ export function AuthProvider({ children }) {
   const switchTenant = async (tenantId) => {
     const target = profiles.find(p => p.tenant_id === tenantId)
     if (target && user) {
-      // 1. Update database active session (only safe fields like last_seen_at)
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          updated_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString()
-        })
-        .eq('auth_user_id', user.id)
-        .eq('tenant_id', target.tenant_id)
-
-      if (error) {
-        logError({
-          level: 'error',
-          source: 'supabase',
-          component: 'AuthProvider',
-          actionName: 'switchTenant',
-          error,
-          metadata: {
-            table: 'profiles',
-            operation: 'update',
-            target_tenant_id: target?.tenant_id,
-          },
-        })
-        toast.error('Gagal sinkronisasi sesi: ' + error.message)
-        return false
-      }
+      // 1. Update database active session (only safe fields like last_seen_at) - THROTTLED
+      await throttleLastSeenUpdate(user.id, target.tenant_id)
 
       // 2. Update local state
       setProfile(target)

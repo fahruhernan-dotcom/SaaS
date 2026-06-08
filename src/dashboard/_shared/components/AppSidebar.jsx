@@ -172,21 +172,6 @@ export default function AppSidebar({ open, onClose }) {
     }
   }, [profile])
 
-  useEffect(() => {
-    async function fetchProfiles() {
-      if (!user?.id) return
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*, tenants(*)')
-        .eq('auth_user_id', user.id)
-      
-      if (!error && data) {
-        // setProfiles(data) // This line is no longer needed as profiles come from useAuth
-      }
-    }
-    fetchProfiles()
-  }, [user?.id])
-
   // const profile = profiles.find(p => p.id === activeProfileId) || authProfile
   // const tenant = profile?.tenants || authTenant
 

@@ -40,7 +40,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
   const _inviteRoles = cfg.inviteRoles || []
   const _defaultInviteRole = cfg.defaultInviteRole || 'staff'
   const _inviteCodeTitle = cfg.inviteCodeTitle || 'Kode Undangan Tim'
-  const { profile, tenant: authTenant } = useAuth();
+  const { profile, tenant: authTenant, refetchProfile } = useAuth();
   const sub = getSubscriptionStatus(authTenant);
   const queryClient = useQueryClient();
   const [isInviteSheetOpen, setIsInviteSheetOpen] = useState(false);
@@ -55,22 +55,8 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { setSidebarOpen } = useOutletContext() || {};
 
-  // --- QUERIES ---
-  const { data: tenant, isLoading: loadingTenant } = useQuery({
-    queryKey: ['tenants', profile?.tenant_id],
-    queryFn: async () => {
-      if (!profile?.tenant_id) return null;
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('id', profile.tenant_id)
-        .single();
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!profile?.tenant_id,
-  });
+  const tenant = authTenant;
+  const loadingTenant = false;
 
   // Sync form when tenant data loads or edit mode starts
   React.useEffect(() => {
@@ -200,7 +186,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
     },
     onSuccess: () => {
       toast.success('Profil bisnis berhasil disimpan');
-      queryClient.invalidateQueries(['tenants']);
+      refetchProfile();
       setIsEditingProfile(false);
     },
     onError: (error) => {

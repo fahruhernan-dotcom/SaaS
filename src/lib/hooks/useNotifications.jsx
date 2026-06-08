@@ -56,7 +56,12 @@ export function NotificationsProvider({ children }) {
   }
 
   useEffect(() => {
-    if (tenant?.id) fetchNotifications()
+    if (!tenant?.id) {
+      setLoading(false)
+      return
+    }
+
+    fetchNotifications()
     
     // Realtime subscription
     const channel = supabase
@@ -65,11 +70,13 @@ export function NotificationsProvider({ children }) {
         event: '*', 
         schema: 'public', 
         table: 'notifications',
-        filter: `tenant_id=eq.${tenant?.id}` 
+        filter: `tenant_id=eq.${tenant.id}` 
       }, fetchNotifications)
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [tenant?.id])
 
   const unreadCount = notifications.filter(n => !n.is_read).length

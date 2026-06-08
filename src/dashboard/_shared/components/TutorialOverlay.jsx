@@ -464,6 +464,16 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
       if (localStorage.getItem(storageKey)) return
     } catch { /* ok */ }
 
+    // Fast path 2: use Auth context profile tutorials_completed if available
+    if (profile && profile.tutorials_completed !== undefined) {
+      if (profile.tutorials_completed?.[storageKey]) {
+        try { localStorage.setItem(storageKey, profile.tutorials_completed[storageKey]) } catch { /* ok */ }
+      } else {
+        setVisible(true)
+      }
+      return
+    }
+
     // Fallback: check DB (handles new device / cleared cache)
     supabase
       .from('profiles')
@@ -478,7 +488,7 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
           setVisible(true)
         }
       })
-  }, [targetTenantId, targetAuthId, storageKey])
+  }, [targetTenantId, targetAuthId, storageKey, profile])
 
   const queryTarget = useCallback((step) => {
     if (!step?.selector) { setTargetRect(null); return }

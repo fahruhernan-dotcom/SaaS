@@ -31,16 +31,12 @@ const ALL_NAV_ITEMS = [...PRIMARY_NAV, ...SECONDARY_NAV]
 
 // ── Shared navigation logic ──────────────────────────────────────────────────
 function useAdminNav() {
-    const { user, switchTenant } = useAuth()
+    const { profiles, switchTenant } = useAuth()
     const navigate = useNavigate()
 
     const handleBackToDashboard = async () => {
         try {
-            const { data } = await supabase
-                .from('profiles')
-                .select('tenant_id, tenants(id, sub_type, business_name, business_vertical)')
-                .eq('auth_user_id', user.id)
-            const target = data?.find(p => p.tenants)?.tenants
+            const target = profiles?.find(p => p.tenants)?.tenants
             if (!target) { navigate('/broker/broker_ayam/beranda'); return }
             localStorage.setItem('ternakos_active_tenant_id', target.id)
             switchTenant(target.id)
