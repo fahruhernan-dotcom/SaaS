@@ -126,9 +126,24 @@ export default function BrokerBeranda() {
       
       const harvestsQuery = supabase.from('chicken_batches').select('*, farms(*)').eq('tenant_id', tenant.id).eq('is_deleted', false).not('estimated_harvest_date', 'is', null)
       
-      const deliveriesQuery = supabase.from('deliveries').select('*, sales(*, rpa_clients(*))').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed')
-      
-      const paymentsQuery = supabase.from('payments').select('*, sales(*, rpa_clients(*))').eq('tenant_id', tenant.id)
+      // deliveriesQuery: narrow sales nested select + row cap.
+      // Only fields needed: province filter + activity label + status display.
+      const deliveriesQuery = supabase
+        .from('deliveries')
+        .select('id, status, created_at, sales!inner(id, rpa_id, rpa_clients(rpa_name, province))')
+        .eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed')
+        .limit(200)
+
+      // paymentsQuery: narrow select to only fields used in activity feed + province filter.
+      // Was: select('*, sales(*, rpa_clients(*)))' with NO date filter — reading ALL-TIME payments.
+      const ninetyDaysAgoDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      const paymentsQuery = supabase
+        .from('payments')
+        .select('id, amount, payment_date, created_at, sales(id, rpa_id, rpa_clients(rpa_name, province))')
+        .eq('tenant_id', tenant.id)
+        .gte('payment_date', ninetyDaysAgoDate)
+        .order('payment_date', { ascending: false })
+        .limit(100)
 
       const unpaidSalesQuery = supabase.from('sales').select('*, rpa_clients(*)').eq('tenant_id', tenant.id).neq('payment_status', 'lunas').eq('is_deleted', false)
 

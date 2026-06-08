@@ -17,10 +17,9 @@ import InstallAppPrompt from '@/components/InstallAppPrompt'
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import {
-  useSembakoDashboardStats, useSembakoSales, useSembakoProducts,
-  useSembakoAllBatches, useSembakoSuppliers, useSembakoCustomers,
+  useSembakoDashboardStats, useSembakoProducts,
+  useSembakoSuppliers, useSembakoCustomers,
   useSembakoEmployees, useSembakoDeliveries, useSembakoSalesPendingDelivery,
-  useSembakoStockOut,
 } from '@/lib/hooks/useSembakoData'
 
 // ── AI Error Boundary ─────────────────────────────────────────
@@ -53,18 +52,35 @@ class AIErrorBoundary extends Component {
 // untuk semua halaman navigasi utama. Saat user buka halaman untuk
 // pertama kali, data sudah ada di cache → langsung tampil tanpa skeleton.
 // staleTime:5m di queryClient memastikan tidak ada re-fetch duplikat.
+//
+// AfterPaint: delays mounting children until after the first browser paint
+// so the Beranda skeleton renders before the prefetch burst begins.
+// Hooks rules are NOT violated — the early return is inside AfterPaint,
+// and the prefetcher components (which own all useQuery calls) only mount
+// once `ready` is true. Never put hooks after a conditional return.
+function AfterPaint({ children, delay = 600 }) {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
+  if (!ready) return null
+  return children
+}
 
 function SembakoPrefetcher() {
+  // Heavy full-table-scan hooks removed to reduce Disk IO:
+  //   useSembakoSales()      — all sales rows, no date window
+  //   useSembakoAllBatches() — all stock batches, no date window
+  //   useSembakoStockOut()   — all stock-out history, no date window
+  // Those pages fetch their own data on-demand when the user navigates there.
   useSembakoDashboardStats()
-  useSembakoSales()
   useSembakoProducts()
-  useSembakoAllBatches()
   useSembakoSuppliers()
   useSembakoCustomers()
   useSembakoEmployees()
   useSembakoDeliveries()
   useSembakoSalesPendingDelivery()
-  useSembakoStockOut()
   return null
 }
 
@@ -72,22 +88,14 @@ function PoultryBrokerPrefetcher() {
   const { tenant } = useAuth()
   const tid = tenant?.id
 
-  // Transaksi page
-  useQuery({
-    queryKey: ['sales', tid],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sales')
-        .select(`*, rpa_clients(rpa_name,phone), purchases(*,farms(farm_name,location)), deliveries(*,vehicles(brand,vehicle_plate),drivers(full_name)), payments(*)`)
-        .eq('tenant_id', tid).eq('is_deleted', false)
-        .order('transaction_date', { ascending: false })
-      if (error) throw error
-      return data
-    },
-    enabled: !!tid,
-  })
+  // NOTE: ['sales', tid] prefetch intentionally removed.
+  // The full sales fetch (7-level join, no date window) was causing a DB
+  // connection spike on startup. Beranda.jsx owns dashboard sales data via
+  // ['dashboard-redesign', tenant.id, province] with a 60-day window.
+  // The Transaksi page fetches its own scoped sales list on demand.
 
-  // Pengiriman page
+  // Pengiriman page — 90-day window + row cap prevents full-history table scan
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
   useQuery({
     queryKey: ['deliveries', tid],
     queryFn: async () => {
@@ -95,7 +103,9 @@ function PoultryBrokerPrefetcher() {
         .from('deliveries')
         .select(`*, drivers(full_name), vehicles(brand,vehicle_plate), sales!inner(id,is_deleted,total_revenue,quantity,total_weight_kg,price_per_kg,delivery_cost,rpa_clients(rpa_name,phone),purchases(total_cost,transport_cost,other_cost,price_per_kg,farms(farm_name)))`)
         .eq('tenant_id', tid).eq('is_deleted', false).eq('sales.is_deleted', false)
+        .gte('created_at', ninetyDaysAgo)
         .order('created_at', { ascending: false })
+        .limit(300)
       if (error) throw error
       return data
     },
@@ -233,8 +243,19 @@ export default function BrokerLayout() {
 
   return (
     <>
-      {isSembako && <SembakoPrefetcher />}
-      {vertical === 'poultry_broker' && <PoultryBrokerPrefetcher />}
+      {/* Prefetchers are delayed via AfterPaint so the first render frame
+          (Beranda skeleton) paints before the cache-warm burst begins.
+          AfterPaint is a separate component — hooks rules are not violated. */}
+      {isSembako && (
+        <AfterPaint delay={600}>
+          <SembakoPrefetcher />
+        </AfterPaint>
+      )}
+      {vertical === 'poultry_broker' && (
+        <AfterPaint delay={600}>
+          <PoultryBrokerPrefetcher />
+        </AfterPaint>
+      )}
       {renderContent()}
       <AIErrorBoundary><AIChatBubble /></AIErrorBoundary>
       <InstallAppPrompt />
