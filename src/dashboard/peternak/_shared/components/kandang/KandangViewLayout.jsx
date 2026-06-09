@@ -262,7 +262,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const normalKandangs = kandangs.filter(k => !k.is_holding)
 
   return (
-    <div className="flex flex-col bg-[#06090F]" style={{ flex: 1, minHeight: 0, margin: isMobile ? '0' : '-24px -32px', overflow: 'hidden' }}>
+    <div className="flex flex-col bg-slate-50 dark:bg-[#06090F]" style={{ flex: 1, minHeight: 0, margin: isMobile ? '0' : '-24px -32px', overflow: 'hidden' }}>
       <div className="relative">
         {isMobile ? (
           <MobileHeader 
@@ -335,7 +335,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
       </div>
 
       {isMobile && (
-        <div className="px-4 py-3 bg-[#0C1319]/80 border-b border-white/[0.05] backdrop-blur-md flex items-center justify-between gap-3 shrink-0 z-30">
+        <div className="px-4 py-3 bg-white/80 dark:bg-[#0C1319]/80 border-b border-slate-200 dark:border-white/[0.05] backdrop-blur-md flex items-center justify-between gap-3 shrink-0 z-30">
           {/* First position: Batch selector button */}
           <button
             onClick={() => setMobileBatchSheetOpen(true)}
@@ -712,7 +712,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
               </div>
             )}
           </div>
-          <div className="p-8 border-t border-white/[0.04] bg-[#06090F]">
+          <div className="p-8 border-t border-slate-200 dark:border-white/[0.04] bg-slate-50 dark:bg-[#06090F]">
             <Button
               onClick={() => updateKdg.mutate({
                 kandangId: editingKandang.id,
@@ -772,7 +772,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
               </div>
             </Tabs>
           </div>
-          <div className="p-8 border-t border-white/[0.04] bg-[#06090F]">
+          <div className="p-8 border-t border-slate-200 dark:border-white/[0.04] bg-slate-50 dark:bg-[#06090F]">
             <Button onClick={handleSaveKandang} disabled={createKandang.isPending} className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-widest rounded-[2rem] shadow-xl shadow-emerald-500/30">
               {createKandang.isPending ? 'Menyimpan...' : 'Gunakan Kandang Ini'}
             </Button>

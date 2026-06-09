@@ -322,7 +322,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
   return (
     <div className="text-slate-100 pb-24">
       {/* Header */}
-      <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+      <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-slate-50 to-white dark:from-[#0C1319] dark:to-[#06090F] border-b border-slate-200 dark:border-white/[0.04]">
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => navigate(`${config.BASE}/beranda`)}
@@ -330,7 +330,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
           >
             <ArrowLeft size={18} />
           </button>
-          <h1 className="font-['Sora'] font-black text-xl text-white">{config.pageTitle}</h1>
+          <h1 className="font-['Sora'] font-black text-xl text-slate-900 dark:text-white">{config.pageTitle}</h1>
         </div>
 
         {/* Batch selector */}
@@ -641,11 +641,11 @@ export function PenggemukanKesehatan({ config, hooks }) {
             />
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[40px] p-8 pb-10 shadow-2xl overflow-y-auto max-h-[90vh] no-scrollbar"
+              className="relative w-full max-w-md bg-white dark:bg-[#0C1319] border-t sm:border border-slate-200 dark:border-white/[0.06] rounded-t-[32px] sm:rounded-[40px] p-8 pb-10 shadow-2xl overflow-y-auto max-h-[90vh] no-scrollbar"
             >
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="font-['Sora'] font-black text-xl text-white mb-1">Catat Penanganan</h3>
+                  <h3 className="font-['Sora'] font-black text-xl text-slate-900 dark:text-white mb-1">Catat Penanganan</h3>
                   <p className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest">Input Data Medis & Vaksin</p>
                 </div>
                 <button
@@ -674,7 +674,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
                       <SelectTrigger className="w-full h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white px-5">
                         <SelectValue placeholder="Pilih batch..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl">
+                      <SelectContent className="bg-white dark:bg-[#0C1319] border-slate-200 dark:border-white/10 rounded-2xl">
                         {batches.map(b => (
                           <SelectItem key={b.id} value={b.id} className="py-3 px-4 font-bold">{b.batch_code}</SelectItem>
                         ))}
@@ -696,7 +696,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
                       <SelectTrigger className="w-full h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white px-5">
                         <SelectValue placeholder="Pilih ekor..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl">
+                      <SelectContent className="bg-white dark:bg-[#0C1319] border-slate-200 dark:border-white/10 rounded-2xl">
                         {config.logSchema !== 'extended' && <SelectItem value="null">-- Seluruh Batch --</SelectItem>}
                         {animals.map(a => (
                           <SelectItem key={a.id} value={a.id} className="py-3 px-4">
@@ -732,7 +732,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
                       <SelectTrigger className="w-full h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white px-5">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl">
+                      <SelectContent className="bg-white dark:bg-[#0C1319] border-slate-200 dark:border-white/10 rounded-2xl">
                         {config.logTypes.map(t => (
                           <SelectItem key={t} value={t} className="py-3 px-4 font-bold">
                             {LOG_TYPE_CFG[t]?.label || t}
@@ -833,7 +833,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
                             <SelectTrigger className="w-full h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white px-5">
                               <SelectValue placeholder="-- Pilih --" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl">
+                            <SelectContent className="bg-white dark:bg-[#0C1319] border-slate-200 dark:border-white/10 rounded-2xl">
                               <SelectItem value="sembuh">Sembuh</SelectItem>
                               <SelectItem value="masih_diobati">Masih Diobati</SelectItem>
                               <SelectItem value="mati">Mati</SelectItem>

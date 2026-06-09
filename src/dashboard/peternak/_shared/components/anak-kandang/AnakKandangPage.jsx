@@ -23,8 +23,8 @@ function GuidancePanel() {
   return (
     <div className="space-y-3">
       {/* Tips Kelola Tim */}
-      <div className="p-4 bg-[#0C1319] border border-white/[0.04] rounded-2xl space-y-2.5">
-        <h3 className="font-['Sora'] font-bold text-[11px] text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+      <div className="p-4 bg-slate-50 dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.04] rounded-2xl space-y-2.5">
+        <h3 className="font-['Sora'] font-bold text-[11px] text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
           <span>💡</span> Tips Kelola Tim
         </h3>
         <p className="text-[11px] text-[#94A3B8] leading-relaxed">
@@ -37,8 +37,8 @@ function GuidancePanel() {
       </div>
 
       {/* Hak Akses Pekerja */}
-      <div className="p-4 bg-[#0C1319] border border-white/[0.04] rounded-2xl space-y-2.5">
-        <h3 className="font-['Sora'] font-bold text-[11px] text-slate-300 uppercase tracking-wider">
+      <div className="p-4 bg-slate-50 dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.04] rounded-2xl space-y-2.5">
+        <h3 className="font-['Sora'] font-bold text-[11px] text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Hak Akses Pekerja
         </h3>
         <div className="space-y-2 text-[11px] text-[#94A3B8]">
@@ -107,7 +107,7 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
     <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-32 space-y-6">
       {/* Mobile Header fallback if hideMobileHeader is false */}
       {!hideMobileHeader && !isDesktop && (
-        <header className="h-14 -mx-4 -mt-4 px-4 flex items-center gap-3 justify-between bg-[#06090F]/80 backdrop-blur-md sticky top-0 z-30 border-b border-white/5 mb-4">
+        <header className="h-14 -mx-4 -mt-4 px-4 flex items-center gap-3 justify-between bg-white/90 dark:bg-[#06090F]/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-white/5 mb-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen?.(true)}
@@ -115,7 +115,7 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
             >
               <Menu size={16} className="text-[#94A3B8]" />
             </button>
-            <h1 className="font-['Sora'] text-[15px] font-black text-white uppercase tracking-tight">Anak Kandang</h1>
+            <h1 className="font-['Sora'] text-[15px] font-black text-slate-900 dark:text-white uppercase tracking-tight">Anak Kandang</h1>
           </div>
           <button
             onClick={() => setWorkerSheet({ open: true, worker: null })}
@@ -148,7 +148,7 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
 
         {/* Left: Management Panel */}
-        <div className="bg-[#0C1319] border border-white/[0.05] rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.05] rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
 
           {/* Panel header with title + compact summary chips */}
           <div className="px-4 py-3 border-b border-white/[0.04] flex flex-col sm:flex-row sm:items-center justify-between gap-3">

@@ -131,7 +131,7 @@ function PeternakAdminGuard({ children }) {
         <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
           <span className="text-2xl">🔒</span>
         </div>
-        <h2 className="font-['Sora'] font-bold text-white text-lg mb-2">Akses Terbatas</h2>
+        <h2 className="font-['Sora'] font-bold text-slate-900 dark:text-white text-lg mb-2">Akses Terbatas</h2>
         <p className="text-[#94A3B8] text-sm max-w-xs mx-auto">
           Hanya Owner atau Admin yang dapat mengakses pengaturan kandang.
         </p>
@@ -175,7 +175,7 @@ function PeternakManagerGuard({ children }) {
         <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
           <span className="text-2xl">🔒</span>
         </div>
-        <h2 className="font-['Sora'] font-bold text-white text-lg mb-2">Akses Terbatas</h2>
+        <h2 className="font-['Sora'] font-bold text-slate-900 dark:text-white text-lg mb-2">Akses Terbatas</h2>
         <p className="text-[#94A3B8] text-sm max-w-xs mx-auto">
           Hanya Owner atau Manajer yang dapat mengakses halaman ini.
         </p>

@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, Sun, Moon } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 
@@ -18,6 +18,48 @@ export function MobileHeader({ title, onMenuClick, onProfileClick, rightElement,
   const initial = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'L'
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Peternak'
 
+  const [theme, setTheme] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('ternakos_theme_mode') || 'light'
+      }
+    } catch {
+      // ignore
+    }
+    return 'light'
+  })
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [theme])
+
+  useEffect(() => {
+    const handler = () => {
+      try {
+        setTheme(localStorage.getItem('ternakos_theme_mode') || 'light')
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('ternakos-theme-mode-changed', handler)
+    return () => window.removeEventListener('ternakos-theme-mode-changed', handler)
+  }, [])
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light'
+    setTheme(nextTheme)
+    try {
+      localStorage.setItem('ternakos_theme_mode', nextTheme)
+      window.dispatchEvent(new CustomEvent('ternakos-theme-mode-changed'))
+    } catch {
+      // ignore
+    }
+  }
+
   const handleProfileClick = () => {
     if (onProfileClick) {
       onProfileClick()
@@ -29,6 +71,13 @@ export function MobileHeader({ title, onMenuClick, onProfileClick, rightElement,
 
   const rightButtons = rightElement || (
     <>
+      <button
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'}
+        className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-[#94A3B8] active:scale-95 transition-transform"
+      >
+        {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+      </button>
       <NotificationBell />
       <button
         onClick={handleProfileClick}

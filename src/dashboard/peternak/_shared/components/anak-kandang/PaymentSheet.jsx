@@ -85,12 +85,12 @@ export default function PaymentSheet({ open, onClose, worker, isDesktop, animalT
         <SheetContent
           side={isDesktop ? 'right' : 'bottom'}
           hideClose
-          className={`bg-[#0C1319] border-white/8 p-0 overflow-y-auto ${isDesktop ? 'w-[400px] sm:w-[450px]' : 'rounded-t-[28px] max-h-[94vh]'}`}
+          className={`bg-white dark:bg-[#0C1319] border-slate-200 dark:border-white/8 p-0 overflow-y-auto ${isDesktop ? 'w-[400px] sm:w-[450px]' : 'rounded-t-[28px] max-h-[94vh]'}`}
         >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b border-white/5 sticky top-0 bg-[#0C1319]/80 backdrop-blur-xl z-20 text-left sm:text-left space-y-0">
+          <SheetHeader className="px-6 pt-6 pb-4 border-b border-slate-200 dark:border-white/5 sticky top-0 bg-white/90 dark:bg-[#0C1319]/80 backdrop-blur-xl z-20 text-left sm:text-left space-y-0">
             <div className="flex items-center justify-between">
               <div>
-                <SheetTitle className="text-white font-['Sora'] font-black text-lg">
+                <SheetTitle className="text-slate-900 dark:text-white font-['Sora'] font-black text-lg">
                   Riwayat Gaji — {worker.full_name}
                 </SheetTitle>
                 <SheetDescription className="text-[#4B6478] text-[11px] font-bold uppercase tracking-wider mt-1">
@@ -241,12 +241,12 @@ export default function PaymentSheet({ open, onClose, worker, isDesktop, animalT
                   initial={{ scale: 0.9, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                  className="relative w-full max-w-[340px] bg-[#0C1319] border border-white/[0.1] rounded-[40px] p-8 text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] z-[101]"
+                  className="relative w-full max-w-[340px] bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.1] rounded-[40px] p-8 text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] z-[101]"
                 >
                   <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                     <AlertCircle size={32} className="text-red-400" />
                   </div>
-                  <h4 className="text-white font-['Sora'] font-black text-xl mb-3">Hapus Data?</h4>
+                  <h4 className="text-slate-900 dark:text-white font-['Sora'] font-black text-xl mb-3">Hapus Data?</h4>
                   <p className="text-[#94A3B8] text-[13px] font-medium leading-relaxed mb-10 px-2">
                     Tindakan ini permanen. Riwayat gaji pekerja ini akan dihapus dari sistem.
                   </p>

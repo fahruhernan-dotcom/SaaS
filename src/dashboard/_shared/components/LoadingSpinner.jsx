@@ -2,14 +2,7 @@ import { motion } from 'framer-motion'
 
 export default function LoadingSpinner({ fullPage = false }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: fullPage ? '100vh' : '200px',
-      width: '100%',
-      background: fullPage ? '#06090F' : 'transparent',
-    }}>
+    <div className={fullPage ? 'flex items-center justify-center h-screen w-full bg-white dark:bg-[#06090F]' : 'flex items-center justify-center h-[200px] w-full'}>
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}

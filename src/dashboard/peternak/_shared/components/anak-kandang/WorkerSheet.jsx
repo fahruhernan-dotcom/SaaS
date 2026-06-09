@@ -86,10 +86,10 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
       <SheetContent
         side="right"
-        className="bg-[#0C1319] border-white/8 overflow-y-auto p-0 w-full max-w-[420px] rounded-l-2xl"
+        className="bg-white dark:bg-[#0C1319] border-slate-200 dark:border-white/8 overflow-y-auto p-0 w-full max-w-[420px] rounded-l-2xl"
       >
-        <SheetHeader className="px-5 pt-5 pb-4 border-b border-white/5">
-          <SheetTitle className="text-white font-['Sora'] font-black text-base">
+        <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-200 dark:border-white/5">
+          <SheetTitle className="text-slate-900 dark:text-white font-['Sora'] font-black text-base">
             {isEdit ? 'Edit Anak Kandang' : 'Tambah Anak Kandang'}
           </SheetTitle>
           <SheetDescription className="text-[#4B6478] text-[10px] font-bold uppercase tracking-wider">
@@ -127,7 +127,7 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
                 <SelectTrigger className="w-full h-12 px-3.5 bg-[#111C24] border-white/[0.08] text-slate-100 rounded-xl focus:ring-1 focus:ring-violet-500/50">
                   <SelectValue placeholder="— Tidak terhubung —" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1A2634] border-white/10 text-slate-200 rounded-xl">
+                <SelectContent className="bg-white dark:bg-[#1A2634] border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 rounded-xl">
                   <SelectItem value="none" className="focus:bg-white/5 focus:text-white">— Tidak terhubung —</SelectItem>
                   {teamMembers.map(m => (
                     <SelectItem key={m.profile_id} value={m.profile_id} className="focus:bg-white/5 focus:text-white">
@@ -240,7 +240,7 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
                 <SelectTrigger className="w-full h-12 px-3.5 bg-[#111C24] border-white/[0.08] text-slate-100 rounded-xl focus:ring-1 focus:ring-violet-500/50">
                   <SelectValue placeholder="Pilih tanggal" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1A2634] border-white/10 text-slate-200 rounded-xl max-h-60">
+                <SelectContent className="bg-white dark:bg-[#1A2634] border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 rounded-xl max-h-60">
                   {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
                     <SelectItem key={d} value={d.toString()} className="focus:bg-white/5 focus:text-white">
                       Tanggal {d}

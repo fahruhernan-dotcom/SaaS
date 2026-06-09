@@ -75,7 +75,7 @@ function SummaryStrip({ items = [] }) {
           <p className="font-black text-[#4B6478] uppercase tracking-widest leading-none mb-1.5 text-[9px]">
             {item.label}
           </p>
-          <p className="font-black text-sm text-white tabular-nums">
+          <p className="font-black text-sm text-slate-900 dark:text-white tabular-nums">
             {item.value}
           </p>
         </div>
@@ -192,7 +192,7 @@ export default function UniversalTaskSettings({ livestockType = 'sapi_penggemuka
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="min-h-screen bg-[#06090F] text-slate-100 pb-24 lg:pb-0 font-body">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#06090F] text-slate-100 pb-24 lg:pb-0 font-body">
       <BrokerPageHeader 
         title="Pengaturan Tugas"
         subtitle="Kelola jadwal dan template tugas rutin untuk pekerja kandang."
@@ -572,7 +572,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, livestockT
           </div>
         </div>
 
-        <div className="p-6 border-t border-white/5 bg-[#06090F]">
+        <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#06090F]">
           <Button 
             onClick={handleSubmit}
             disabled={createTask.isPending || updateTask.isPending}
@@ -742,7 +742,7 @@ function TernakOSTemplateSheet({ open, onOpenChange, existingTemplates, isDeskto
           )}
         </div>
 
-        <div className="p-6 border-t border-white/5 bg-[#06090F]">
+        <div className="p-6 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#06090F]">
           <Button
             onClick={handleApply}
             disabled={!canApply || applyTemplate.isPending}

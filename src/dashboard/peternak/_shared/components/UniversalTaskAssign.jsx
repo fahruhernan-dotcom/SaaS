@@ -510,7 +510,7 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="flex flex-col h-full bg-[#06090F] w-full overflow-x-hidden">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#06090F] w-full overflow-x-hidden">
       <div className="w-full max-w-6xl mx-auto flex flex-col h-full">
         <BrokerPageHeader
           title="Penugasan"

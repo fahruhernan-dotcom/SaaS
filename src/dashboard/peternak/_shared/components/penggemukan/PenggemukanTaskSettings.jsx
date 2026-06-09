@@ -170,7 +170,7 @@ function SummaryStrip({ items = [], accent }) {
           <p className="font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0 sm:mb-2 text-[8px] sm:text-[9px]">
             {item.label}
           </p>
-          <p className="font-bold text-sm sm:text-lg text-white tabular-nums">
+          <p className="font-bold text-sm sm:text-lg text-slate-900 dark:text-white tabular-nums">
             {item.value}
           </p>
         </div>
@@ -279,7 +279,7 @@ function TemplateItemMobile({
                 <MoreVertical size={14} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl w-48 p-1.5 shadow-2xl z-[5000]">
+            <DropdownMenuContent align="end" className="bg-white/98 dark:bg-[#0C1319]/95 backdrop-blur-xl border-slate-200 dark:border-white/10 rounded-2xl w-48 p-1.5 shadow-2xl z-[5000]">
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
@@ -381,7 +381,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
       <SheetContent
         side={isDesktop ? 'right' : 'bottom'}
         className={cn(
-          "bg-[#0C1319]/95 backdrop-blur-xl border-white/10 outline-none p-0 flex flex-col",
+          "bg-white dark:bg-[#0C1319]/95 backdrop-blur-xl border-slate-200 dark:border-white/10 outline-none p-0 flex flex-col",
           isDesktop ? "w-[520px] border-l" : "rounded-t-[40px] border-t max-h-[92vh]"
         )}
       >
@@ -562,7 +562,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
           </div>
         </div>
 
-        <div className="p-8 border-t border-white/[0.04] bg-[#06090F]">
+        <div className="p-8 border-t border-slate-200 dark:border-white/[0.04] bg-slate-50 dark:bg-[#06090F]">
           <Button
             onClick={handleSubmit}
             disabled={createTask.isPending || updateTask.isPending}
@@ -617,7 +617,7 @@ function PresetTemplateSheet({ open, onOpenChange, existingTemplates, isDesktop,
       <SheetContent
         side={isDesktop ? 'right' : 'bottom'}
         className={cn(
-          'bg-[#0C1319]/95 backdrop-blur-xl border-white/10 outline-none p-0 flex flex-col',
+          'bg-white dark:bg-[#0C1319]/95 backdrop-blur-xl border-slate-200 dark:border-white/10 outline-none p-0 flex flex-col',
           isDesktop ? 'w-[480px] border-l' : 'rounded-t-[40px] border-t max-h-[92vh]'
         )}
       >
@@ -713,7 +713,7 @@ function PresetTemplateSheet({ open, onOpenChange, existingTemplates, isDesktop,
           )}
         </div>
 
-        <div className="p-8 border-t border-white/[0.04] bg-[#06090F]">
+        <div className="p-8 border-t border-slate-200 dark:border-white/[0.04] bg-slate-50 dark:bg-[#06090F]">
           <Button
             onClick={handleApply}
             disabled={!canApply || applyTemplate.isPending}
@@ -863,7 +863,7 @@ export function PenggemukanTaskSettings({ config, hooks }) {
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="min-h-screen bg-[#06090F] text-slate-100 pb-32 lg:pb-0 font-body">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#06090F] text-slate-900 dark:text-slate-100 pb-32 lg:pb-0 font-body">
       <BrokerPageHeader
         title={config.pageTitle}
         subtitle={!isDesktop ? `${templates.filter(t => t.is_active).length} template aktif · ${templates.filter(t => t.linked_data_entry).length} input data` : config.pageSubtitle}
@@ -1103,7 +1103,7 @@ export function PenggemukanTaskSettings({ config, hooks }) {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6 px-8 py-4 bg-[#0C1319]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] min-w-[320px]"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6 px-8 py-4 bg-white/90 dark:bg-[#0C1319]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] min-w-[320px]"
           >
             <div className="flex items-center gap-3 pr-6 border-r border-white/10">
               <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs text-white", accent.bulkCountBg, accent.checkGlow)}>
@@ -1135,7 +1135,7 @@ export function PenggemukanTaskSettings({ config, hooks }) {
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-[#0C1319] border border-white/10 text-white rounded-3xl">
+        <AlertDialogContent className="bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-bold text-xl">Konfirmasi Hapus</AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">

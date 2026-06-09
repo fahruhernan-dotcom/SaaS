@@ -65,11 +65,11 @@ export function TaskCategoryAudit({ tasks, onNavigate }) {
         {/* Scrollable Container */}
         <div className="relative group z-10">
           {/* Scroll Navigation Overlay */}
-          <button className="absolute -left-2 top-[30px] -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-900 dark:hover:text-white hover:bg-slate-55 dark:hover:bg-white/10 z-20 opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-sm dark:shadow-none">
+          <button className="absolute -left-2 top-[30px] -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 z-20 opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-sm dark:shadow-none">
             <ChevronLeft size={16} />
           </button>
 
-          <button className="absolute -right-2 top-[30px] -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-900 dark:hover:text-white hover:bg-slate-55 dark:hover:bg-white/10 z-20 opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-sm dark:shadow-none">
+          <button className="absolute -right-2 top-[30px] -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 z-20 opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-sm dark:shadow-none">
             <ChevronRight size={16} />
           </button>
 
@@ -147,7 +147,7 @@ export function TaskCategoryAudit({ tasks, onNavigate }) {
                   </div>
 
                   {/* Text Information */}
-                  <p className="text-[10px] text-slate-400 dark:text-[#4B6478] font-bold mb-0.5 opacity-80">{displayTime}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-0.5 opacity-80">{displayTime}</p>
                   <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight mb-1">{meta.label}</p>
                   <p className={`text-[10px] font-bold ${statusColor}`}>{statusText}</p>
                 </div>

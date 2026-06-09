@@ -275,11 +275,11 @@ function CloseBatchWizard({ batch, config, hooks, onClose }) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-[4000] bg-white/98 dark:bg-[#0A1015]/95 backdrop-blur-xl border-l border-slate-200 dark:border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.15)] dark:shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
-      <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
+      <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-slate-200 dark:border-white/5">
         <div>
-          <h2 className="font-['Sora'] font-extrabold text-xl text-white tracking-tight mb-1">Tutup Batch</h2>
+          <h2 className="font-['Sora'] font-extrabold text-xl text-slate-900 dark:text-white tracking-tight mb-1">Tutup Batch</h2>
           <p className="text-[11px] text-amber-400 font-black uppercase tracking-widest">{batch.batch_code}</p>
         </div>
         <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white transition-colors">
@@ -300,8 +300,8 @@ function CloseBatchWizard({ batch, config, hooks, onClose }) {
           </div>
         )}
 
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-3">
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-white/[0.06] pb-2 mb-3">Ringkasan KPI Final</p>
+        <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-4 space-y-3">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-slate-200 dark:border-white/[0.06] pb-2 mb-3">Ringkasan KPI Final</p>
           {[
             { label: 'Tgl Selesai', value: format(new Date(), 'dd MMMM yyyy', { locale: id }) },
             { label: 'Total Ekor', value: `${animals.length} Ekor` },
@@ -316,8 +316,8 @@ function CloseBatchWizard({ batch, config, hooks, onClose }) {
         </div>
 
         {/* Operational Costs Inputs */}
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-4">
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-white/[0.06] pb-2 mb-1">Audit Biaya Operasional</p>
+        <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-4 space-y-4">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-slate-200 dark:border-white/[0.06] pb-2 mb-1">Audit Biaya Operasional</p>
 
           <div className="space-y-3">
             <div>
@@ -390,7 +390,7 @@ function CloseBatchWizard({ batch, config, hooks, onClose }) {
         </div>
       </div>
 
-      <div className="px-5 py-4 border-t border-white/5 bg-[#0C1319] space-y-2">
+      <div className="px-5 py-4 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0C1319] space-y-2">
         <button
           onClick={handleClose}
           disabled={isPending}
@@ -459,13 +459,13 @@ function CreateBatchSheet({ config, hooks, onClose }) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-      className="fixed inset-y-0 right-0 w-[500px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-3xl border-l border-white/[0.08] shadow-[-20px_0_60px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[500px] max-w-full z-[4000] bg-white/98 dark:bg-[#0A1015]/95 backdrop-blur-3xl border-l border-slate-200 dark:border-white/[0.08] shadow-[-20px_0_60px_rgba(0,0,0,0.12)] dark:shadow-[-20px_0_60px_rgba(0,0,0,0.5)] flex flex-col"
     >
-      <div className="px-8 pt-10 pb-6 border-b border-white/[0.05] relative overflow-hidden">
+      <div className="px-8 pt-10 pb-6 border-b border-slate-200 dark:border-white/[0.05] relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5"><LayoutGrid size={120} /></div>
         <div className="relative z-10 flex items-center justify-between">
             <div>
-              <h2 className="font-['Sora'] font-black text-2xl text-white tracking-tight leading-none mb-1.5">New Batch Cycle</h2>
+              <h2 className="font-['Sora'] font-black text-2xl text-slate-900 dark:text-white tracking-tight leading-none mb-1.5">New Batch Cycle</h2>
               <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest">Inisialisasi sistem fattening {config.animalLabel.toLowerCase()}</p>
             </div>
             <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#4B6478] hover:text-white transition-all">
@@ -637,7 +637,7 @@ function CreateBatchSheet({ config, hooks, onClose }) {
         </form>
       </div>
 
-      <div className="p-8 border-t border-white/[0.05] bg-[#06090F]">
+      <div className="p-8 border-t border-slate-200 dark:border-white/[0.05] bg-slate-50 dark:bg-[#06090F]">
         <Button
           form="createBatchForm"
           type="submit"
@@ -675,7 +675,7 @@ export function PenggemukanBatch({ config, hooks, KandangMiniMap }) {
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="flex flex-col h-full bg-[#06090F]">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#06090F]">
       {isMobile ? (
         <MobileHeader
           title="Manajemen Batch"

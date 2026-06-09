@@ -1040,7 +1040,7 @@ function SaleSheet({ batchId, animals, hppData, onClose, useAddSale, animalLabel
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-      className="fixed inset-y-0 right-0 w-[440px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[440px] max-w-full z-[4000] bg-white dark:bg-[#0A1015]/95 backdrop-blur-xl border-l border-slate-200 dark:border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
       {/* Header */}
       <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
@@ -1169,7 +1169,7 @@ function SaleSheet({ batchId, animals, hppData, onClose, useAddSale, animalLabel
                 <div>
                   <label className={labelCls}><Calendar size={11} className="inline mr-1" />Tanggal Jual</label>
                   <Controller name="sale_date" control={control} render={({ field }) =>
-                    <DatePicker value={field.value} onChange={field.onChange} className="h-11 bg-[#111C24] border-white/5 rounded-xl" />
+                    <DatePicker value={field.value} onChange={field.onChange} className="h-11 bg-slate-50 dark:bg-[#111C24] border-slate-200 dark:border-white/5 rounded-xl" />
                   } />
                 </div>
 
@@ -1304,7 +1304,7 @@ function SaleSheet({ batchId, animals, hppData, onClose, useAddSale, animalLabel
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-white/5 bg-[#0C1319]">
+      <div className="px-5 py-4 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0C1319]">
         {step === 1 ? (
           <button
             disabled={selectedIds.size === 0}
@@ -1706,11 +1706,11 @@ export function PenggemukanPenjualan({ config, hooks }) {
 
   if (!perm.canViewPenjualan) {
     return (
-      <div className="min-h-screen bg-[#060B0F] flex flex-col items-center justify-center text-center p-6">
+      <div className="min-h-screen bg-white dark:bg-[#060B0F] flex flex-col items-center justify-center text-center p-6">
         <AlertCircle size={48} className="text-red-500/50 mb-4" />
-        <h2 className="text-white font-['Sora'] font-black text-xl mb-2">Akses Ditolak</h2>
-        <p className="text-[#4B6478] text-sm">Anda tidak memiliki izin untuk melihat halaman Penjualan.</p>
-        <button onClick={() => navigate(BASE + '/beranda')} className="mt-6 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-xs font-bold transition-colors">
+        <h2 className="text-slate-900 dark:text-white font-['Sora'] font-black text-xl mb-2">Akses Ditolak</h2>
+        <p className="text-slate-500 dark:text-[#4B6478] text-sm">Anda tidak memiliki izin untuk melihat halaman Penjualan.</p>
+        <button onClick={() => navigate(BASE + '/beranda')} className="mt-6 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg text-xs font-bold transition-colors">
           Kembali ke Beranda
         </button>
       </div>
@@ -1718,13 +1718,13 @@ export function PenggemukanPenjualan({ config, hooks }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#060B0F] pb-28 w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#060B0F] pb-28 w-full max-w-full overflow-x-hidden">
       {/* Header */}
-      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+      <header className="px-4 pt-6 pb-5 bg-white dark:bg-gradient-to-b dark:from-[#0C1319] dark:to-[#06090F] border-b border-slate-200 dark:border-white/[0.04]">
         {/* Desktop Header */}
         <div className="hidden sm:flex items-center justify-between mb-4">
           <div className="flex flex-col">
-            <h1 className="font-['Sora'] font-black text-[22px] leading-tight text-white tracking-tight uppercase">
+            <h1 className="font-['Sora'] font-black text-[22px] leading-tight text-slate-900 dark:text-white tracking-tight uppercase">
               Penjualan
             </h1>
             <div className="flex items-center gap-2 text-[10px] text-[#4B6478] font-['Plus_Jakarta_Sans'] font-bold tracking-wider uppercase mt-0.5">
@@ -1743,7 +1743,7 @@ export function PenggemukanPenjualan({ config, hooks }) {
         {/* Mobile Header */}
         <div className="flex sm:hidden flex-col gap-2 mb-4">
           <div className="flex items-center justify-between">
-            <h1 className="font-['Sora'] font-black text-xl leading-tight text-white tracking-tight uppercase">
+            <h1 className="font-['Sora'] font-black text-xl leading-tight text-slate-900 dark:text-white tracking-tight uppercase">
               Penjualan
             </h1>
             {perm.canInputPenjualan && (
@@ -1816,7 +1816,7 @@ export function PenggemukanPenjualan({ config, hooks }) {
             ref={selectWrapperRef}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="fixed bg-[#111C24] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
+            className="fixed bg-white dark:bg-[#111C24] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
             style={{
               top: selectRect.bottom + 8,
               left: selectRect.left,

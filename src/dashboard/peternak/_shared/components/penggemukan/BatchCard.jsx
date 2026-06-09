@@ -59,7 +59,7 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-600 dark:text-red-400 font-black tracking-tighter uppercase">🚨 Kritis</span>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-slate-400 dark:text-[#4B6478]">
+                <div className="flex items-center gap-1.5 text-slate-500 dark:text-[#4B6478]">
                   <MapPin size={11} />
                   <p className="text-[11px] font-bold uppercase tracking-wider">{batch.kandang_name}</p>
                 </div>
@@ -73,7 +73,7 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
             {/* Time Progress */}
             <div className="mb-5 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.02] p-3.5 rounded-2xl">
               <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide mb-2">
-                <span className="text-slate-400 dark:text-[#4B6478]">Hari ke-<span className="text-slate-900 dark:text-white">{hari}</span></span>
+                <span className="text-slate-500 dark:text-[#4B6478]">Hari ke-<span className="text-slate-900 dark:text-white">{hari}</span></span>
                 <span className={sisaColor}>{isOverdue ? `${hari - targetDays} Hari Overdue` : `Sisa ${sisaHari} Hari`}</span>
               </div>
               <div className="h-2 bg-slate-200 dark:bg-white/[0.06] rounded-full overflow-hidden">
@@ -84,7 +84,7 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
                   className={`h-full rounded-full ${progressColor}`}
                 />
               </div>
-              <div className="flex justify-between text-[9px] text-slate-400 dark:text-[#4B6478] font-medium mt-1.5">
+              <div className="flex justify-between text-[9px] text-slate-500 dark:text-[#4B6478] font-medium mt-1.5">
                 <span>Mulai: {format(new Date(batch.start_date), 'dd MMM', { locale: id })}</span>
                 <span className={isNearHarvest ? 'text-amber-600 dark:text-amber-400 font-bold' : ''}>
                   Panen: {format(estimasiPanen, 'dd MMM yyyy', { locale: id })}

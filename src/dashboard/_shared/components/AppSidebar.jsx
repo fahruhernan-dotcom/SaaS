@@ -516,7 +516,7 @@ export default function AppSidebar({ open, onClose }) {
                       {activeVerticalInfo.label}
                     </p>
                   </div>
-                  <ChevronsUpDown size={14} className="text-slate-550 dark:text-slate-400 ml-auto" />
+                  <ChevronsUpDown size={14} className="text-slate-500 dark:text-slate-400 ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -629,7 +629,7 @@ export default function AppSidebar({ open, onClose }) {
                           }
                         }}
                         className={`gap-3 rounded-lg p-2.5 cursor-pointer transition-all mb-1 flex items-center focus:bg-slate-100 dark:focus:bg-white/[0.06] focus:text-slate-900 dark:focus:text-white ${
-                          isActive ? 'bg-emerald-500/10 dark:bg-emerald-500/8 border border-emerald-500/25 dark:border-emerald-500/20 text-emerald-650 dark:text-white' : 'hover:bg-slate-50 dark:hover:bg-[#182434] hover:text-slate-900 dark:hover:text-white text-slate-650 dark:text-slate-300 border border-transparent'
+                          isActive ? 'bg-emerald-500/10 dark:bg-emerald-500/8 border border-emerald-500/25 dark:border-emerald-500/20 text-emerald-600 dark:text-white' : 'hover:bg-slate-50 dark:hover:bg-[#182434] hover:text-slate-900 dark:hover:text-white text-slate-600 dark:text-slate-300 border border-transparent'
                         }`}
                       >
                         <div 
@@ -646,7 +646,7 @@ export default function AppSidebar({ open, onClose }) {
                           })()}
                         </div>
                         <div className="flex-1 overflow-hidden">
-                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-extrabold text-emerald-650 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
+                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-extrabold text-emerald-600 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                             {p.tenants?.business_name || 'My Business'}
                           </p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
@@ -720,7 +720,7 @@ export default function AppSidebar({ open, onClose }) {
                         </div>
                         
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1.5 leading-tight">Setup Bisnis Baru</h3>
-                        <p className="text-[13px] text-slate-650 dark:text-slate-400 leading-relaxed font-medium">
+                        <p className="text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                           Mulai langkah ekspansi Anda. Setiap bisnis baru memiliki data dan infrastruktur keuangan terisolasi.
                         </p>
                       </div>
@@ -734,7 +734,7 @@ export default function AppSidebar({ open, onClose }) {
                         </div>
                         <div>
                           <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">Data Terisolasi Penuh</p>
-                          <p className="text-[11px] text-slate-550 dark:text-slate-500 font-medium leading-tight mt-0.5">Keamanan data stok dan transaksi dijamin tidak akan bercampur antar tenant.</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-500 font-medium leading-tight mt-0.5">Keamanan data stok dan transaksi dijamin tidak akan bercampur antar tenant.</p>
                         </div>
                       </div>
                       
@@ -744,7 +744,7 @@ export default function AppSidebar({ open, onClose }) {
                         </div>
                         <div>
                           <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200">Delegasi Tim Kustom</p>
-                          <p className="text-[11px] text-slate-550 dark:text-slate-500 font-medium leading-tight mt-0.5">Undang tim berbeda untuk setiap unit bisnis dengan kontrol akses granular.</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-500 font-medium leading-tight mt-0.5">Undang tim berbeda untuk setiap unit bisnis dengan kontrol akses granular.</p>
                         </div>
                       </div>
                     </div>
@@ -803,12 +803,12 @@ export default function AppSidebar({ open, onClose }) {
                 onClick={() => setUtamaCollapsed(v => !v)}
                 className="w-full flex items-center justify-between px-2 mb-1 bg-transparent border-none cursor-pointer select-none group"
               >
-                <span className="text-[10px] font-bold tracking-[0.15em] text-slate-400 group-hover:text-slate-350 transition-colors">
+                <span className="text-[10px] font-bold tracking-[0.15em] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                   {group.label}
                 </span>
                 <ChevronDown
                   size={12}
-                  className="text-slate-400 group-hover:text-slate-350 transition-all duration-200"
+                  className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-all duration-200"
                   style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
                 />
               </button>
@@ -841,7 +841,7 @@ export default function AppSidebar({ open, onClose }) {
                             ? 'opacity-50 cursor-not-allowed'
                             : isActive
                               ? 'bg-opacity-10 cursor-pointer'
-                              : 'hover:bg-white/[0.04] text-slate-300 hover:text-white cursor-pointer'
+                              : 'hover:bg-slate-100 dark:hover:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer'
                         }`}
                         style={isActive && !isLocked ? { 
                           background: `${color}18`, 
@@ -876,10 +876,10 @@ export default function AppSidebar({ open, onClose }) {
                             <item.icon
                               size={18}
                               style={isActive ? { color: color } : {}}
-                              className={!isActive ? 'text-slate-400 group-hover:text-slate-200 transition-colors' : ''}
+                              className={!isActive ? 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors' : ''}
                               strokeWidth={isActive ? 2.5 : 2}
                             />
-                            <span className={`font-body text-[14px] flex-1 ${isActive ? 'font-semibold text-white' : 'font-medium text-slate-300 group-hover:text-white transition-colors'}`} style={isActive ? { color: color } : {}}>
+                            <span className={`font-body text-[14px] flex-1 ${isActive ? 'font-semibold text-white' : 'font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors'}`} style={isActive ? { color: color } : {}}>
                               {item.title}
                             </span>
                             {item.badge && (
@@ -944,12 +944,12 @@ export default function AppSidebar({ open, onClose }) {
                       border: `1px solid ${farmColor}33`,
                     } : {}}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl mb-0.5 transition-colors text-left cursor-pointer border-none ${
-                      isOnFarm ? '' : 'bg-transparent hover:bg-white/[0.03]'
+                      isOnFarm ? '' : 'bg-transparent hover:bg-slate-100 dark:hover:bg-white/[0.03]'
                     }`}
                   >
                     <span className="text-base flex-shrink-0">{emoji}</span>
                     <span
-                      className="font-['Sora'] text-[13px] font-bold flex-1 truncate"
+                      className="font-['Sora'] text-[13px] font-bold flex-1 truncate text-slate-700 dark:text-slate-200"
                       style={{ color: isOnFarm ? farmColor : undefined }}
                     >
                       {farm.farm_name}
@@ -979,7 +979,7 @@ export default function AppSidebar({ open, onClose }) {
                                 asChild
                                 isActive={isActive}
                                 className={`rounded-xl mb-0.5 transition-all select-none cursor-pointer ${
-                                  isActive ? '' : 'hover:bg-white/[0.03] text-foreground'
+                                  isActive ? '' : 'hover:bg-slate-100 dark:hover:bg-white/[0.03] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                                 }`}
                                 style={isActive ? {
                                   background: `${farmColor}18`,
@@ -1025,8 +1025,8 @@ export default function AppSidebar({ open, onClose }) {
                     disabled={!canAddKandang}
                     className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-colors ${
                       canAddKandang
-                        ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer bg-transparent'
-                        : 'border-white/10 text-muted-foreground cursor-not-allowed bg-transparent opacity-60'
+                        ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer bg-transparent'
+                        : 'border-slate-200 dark:border-white/10 text-muted-foreground cursor-not-allowed bg-transparent opacity-60'
                     }`}
                     title={!canAddKandang ? `Batas kandang plan kamu ${limitLabel} — upgrade untuk tambah lebih` : 'Tambah kandang baru'}
                   >
@@ -1055,7 +1055,7 @@ export default function AppSidebar({ open, onClose }) {
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === '/dashboard/harga-pasar'} 
-                    className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                    className="rounded-xl mb-0.5 hover:bg-slate-100 dark:hover:bg-white/[0.03]"
                     style={location.pathname === '/dashboard/harga-pasar' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
                   >
                     <NavLink to="/dashboard/harga-pasar" className="flex items-center gap-3 w-full">
@@ -1083,7 +1083,7 @@ export default function AppSidebar({ open, onClose }) {
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === akunPath} 
-                    className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                    className="rounded-xl mb-0.5 hover:bg-slate-100 dark:hover:bg-white/[0.03]"
                     style={location.pathname === akunPath ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
                   >
                     <NavLink to={akunPath} className="flex items-center gap-3 w-full">
@@ -1098,7 +1098,7 @@ export default function AppSidebar({ open, onClose }) {
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname.startsWith('/admin')} 
-                    className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                    className="rounded-xl mb-0.5 hover:bg-slate-100 dark:hover:bg-white/[0.03]"
                     style={location.pathname.startsWith('/admin') ? { background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', color: '#F59E0B' } : {}}
                   >
                     <NavLink to="/admin" className="flex items-center gap-3 w-full">
@@ -1258,8 +1258,8 @@ export default function AppSidebar({ open, onClose }) {
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
                       isSuperadmin ? 'bg-amber-500/10 text-amber-600 dark:text-amber-500' :
                       isOwner(profile) ? 'bg-[#10B981]/10 text-[#10B981]' :
-                      isStaff(profile) ? 'bg-blue-500/10 text-blue-555 dark:text-blue-400' :
-                      'bg-slate-100 dark:bg-white/5 text-slate-550 dark:text-[#4B6478]'
+                      isStaff(profile) ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' :
+                      'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-[#4B6478]'
                     }`}>
                       {isSuperadmin ? 'SUPERADMIN' : profile?.role?.replace('_', ' ')}
                     </span>
@@ -1276,7 +1276,7 @@ export default function AppSidebar({ open, onClose }) {
                     <button
                       key={label}
                       onClick={onClick}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-650 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-55 dark:hover:bg-white/5 cursor-pointer transition-colors border-none bg-transparent text-left"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition-colors border-none bg-transparent text-left"
                     >
                       <Icon size={16} className="shrink-0" />
                       <span>{label}</span>
@@ -1288,7 +1288,7 @@ export default function AppSidebar({ open, onClose }) {
                       <div className="h-px bg-slate-200 dark:bg-white/8 mx-2 my-1" />
                       <button
                         onClick={() => { handleGoToAdmin(); setDropdownOpen(false) }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-655 dark:text-amber-400 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 cursor-pointer transition-colors border-none bg-transparent text-left font-bold"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 cursor-pointer transition-colors border-none bg-transparent text-left font-bold"
                       >
                         <Shield size={16} className="shrink-0" />
                         <span>Admin Panel</span>
@@ -1300,7 +1300,7 @@ export default function AppSidebar({ open, onClose }) {
 
                   <button
                     onClick={() => { handleLogout(); setDropdownOpen(false) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-655 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer transition-colors border-none bg-transparent text-left font-bold"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer transition-colors border-none bg-transparent text-left font-bold"
                   >
                     <LogOut size={16} className="shrink-0" />
                     <span>Keluar</span>
@@ -1451,7 +1451,7 @@ export default function AppSidebar({ open, onClose }) {
                       <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-extrabold text-emerald-700 dark:text-slate-100' : 'font-semibold text-slate-700 dark:text-slate-300'}`}>
                         {p.tenants?.business_name || 'My Business'}
                       </p>
-                      <p className="text-[11px] text-slate-550 dark:text-slate-400 mt-0.5 font-medium">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                         {getVerticalInfo(p.tenants?.business_vertical).label}
                       </p>
                     </div>
@@ -1489,7 +1489,7 @@ export default function AppSidebar({ open, onClose }) {
     return (
       <>
         <Sheet open={open} onOpenChange={(val) => !val && onClose?.()}>
-          <SheetContent side="left" className="p-0 border-r border-white/[0.08] w-[280px] flex flex-col overflow-hidden animate-in fade-in duration-200" style={{ background: '#0D141B' }}>
+          <SheetContent side="left" className="p-0 border-r border-slate-200 dark:border-white/[0.08] w-[280px] flex flex-col overflow-hidden animate-in fade-in duration-200" style={{ background: 'var(--bg-1-val)' }}>
             <SheetHeader className="sr-only">
               <SheetTitle>Navigasi Sidebar</SheetTitle>
               <SheetDescription>Menu navigasi utama aplikasi TernakOS.</SheetDescription>
@@ -1508,7 +1508,7 @@ export default function AppSidebar({ open, onClose }) {
 
   return (
     <>
-      <Sidebar collapsible="offcanvas" className="select-none cursor-default" style={{ background: '#0D141B' }}>
+      <Sidebar collapsible="offcanvas" className="select-none cursor-default border-r border-slate-200 dark:border-white/[0.08]" style={{ background: 'var(--bg-1-val)' }}>
         {sidebarContent}
       </Sidebar>
       {renderMobileSwitcher()}

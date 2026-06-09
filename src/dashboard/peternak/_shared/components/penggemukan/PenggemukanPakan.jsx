@@ -464,7 +464,7 @@ function ContainerPresetDropdown({ feedType, preset, onSelect }) {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[#0C1319] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)] overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8)] overflow-hidden">
           {/* Clear option */}
           <button
             type="button"
@@ -645,7 +645,7 @@ function BatchPillSelect({ batches, value, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 min-w-[160px] bg-[#0C1319] border border-white/[0.08] rounded-2xl shadow-[0_16px_48px_-8px_rgba(0,0,0,0.8)] overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 z-50 min-w-[160px] bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-[0_16px_48px_-8px_rgba(0,0,0,0.8)] overflow-hidden">
           <div className="py-1">
             {batches.map(b => {
               const isActive = b.id === value
@@ -727,10 +727,10 @@ function FeedLogSheet({
       />
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-        className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar"
+        className="relative w-full max-w-md bg-white dark:bg-[#0C1319] border-t sm:border border-slate-200 dark:border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar"
       >
         {/* ── Sticky Header ── */}
-        <div className="sticky top-0 shrink-0 bg-[#0C1319] z-10 px-5 py-4 flex items-center justify-between border-b border-white/[0.04]">
+        <div className="sticky top-0 shrink-0 bg-white dark:bg-[#0C1319] z-10 px-5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/[0.04]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
               <Wheat size={15} className="text-emerald-400" />
@@ -1337,12 +1337,12 @@ export function PenggemukanPakan({ config, hooks }) {
   return (
     <div className="text-slate-100 pb-28">
       {/* Header */}
-      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+      <header className="px-4 pt-6 pb-5 bg-white dark:bg-gradient-to-b dark:from-[#0C1319] dark:to-[#06090F] border-b border-slate-200 dark:border-white/[0.04]">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#4B6478] hover:text-white transition-colors">
             <ArrowLeft size={18} />
           </button>
-          <h1 className="font-['Sora'] font-black text-xl text-white">{config.pageTitle}</h1>
+          <h1 className="font-['Sora'] font-black text-xl text-slate-900 dark:text-white">{config.pageTitle}</h1>
         </div>
 
         {batches.length > 0 && (
@@ -1603,10 +1603,10 @@ export function PenggemukanPakan({ config, hooks }) {
                 onClick={resetCostForm}
                 className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm" />
               <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar">
+                className="relative w-full max-w-md bg-white dark:bg-[#0C1319] border-t sm:border border-slate-200 dark:border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar">
                 
-                <div className="sticky top-0 shrink-0 bg-[#0C1319] z-10 px-6 py-4 flex items-center justify-between border-b border-white/[0.04]">
-                  <h3 className="font-['Sora'] font-black text-lg text-white">Catat Biaya / Belanja</h3>
+                <div className="sticky top-0 shrink-0 bg-white dark:bg-[#0C1319] z-10 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/[0.04]">
+                  <h3 className="font-['Sora'] font-black text-lg text-slate-900 dark:text-white">Catat Biaya / Belanja</h3>
                   <button
                     type="button"
                     onClick={resetCostForm}
@@ -1835,7 +1835,7 @@ export function PenggemukanPakan({ config, hooks }) {
                     )}
                   </div>
 
-                  <div className="sticky bottom-0 shrink-0 bg-[#0C1319] border-t border-white/[0.04] px-6 py-4 sm:py-6 flex gap-3 z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
+                  <div className="sticky bottom-0 shrink-0 bg-white dark:bg-[#0C1319] border-t border-slate-100 dark:border-white/[0.04] px-6 py-4 sm:py-6 flex gap-3 z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
                     <button
                       type="button"
                       onClick={resetCostForm}

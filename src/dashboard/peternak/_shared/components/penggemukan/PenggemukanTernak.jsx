@@ -185,12 +185,12 @@ export function PenggemukanTernak({ config, hooks }) {
   if (loadingBatches) return <LoadingSpinner fullPage />
 
   return (
-    <div className="text-slate-100 pb-24">
+    <div className="text-slate-900 dark:text-slate-100 pb-24">
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+      <header className="px-4 pt-6 pb-5 bg-white dark:bg-gradient-to-b dark:from-[#0C1319] dark:to-[#06090F] border-b border-slate-200 dark:border-white/[0.04]">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="font-['Sora'] font-black text-xl text-white tracking-tight">Data Ternak</h1>
+            <h1 className="font-['Sora'] font-black text-xl text-slate-900 dark:text-white tracking-tight">Data Ternak</h1>
             <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest mt-0.5">
               {filter === 'all'
                 ? `${animals.length} TOTAL UNIT`
@@ -199,7 +199,7 @@ export function PenggemukanTernak({ config, hooks }) {
           </div>
           <div className="flex items-center gap-2">
             {limitLabel && (
-              <span className={`text-[10px] font-black px-2 py-1 rounded-lg border ${!canAdd ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-[#4B6478] bg-white/5 border-white/5'}`}>
+              <span className={`text-[10px] font-black px-2 py-1 rounded-lg border ${!canAdd ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-slate-500 dark:text-[#4B6478] bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5'}`}>
                 {limitLabel}
               </span>
             )}
@@ -207,7 +207,7 @@ export function PenggemukanTernak({ config, hooks }) {
               disabled={isAllBatches || !canAdd || (selectedBatch && selectedBatch.status !== 'active')}
               title={isAllBatches ? 'Pilih batch dulu' : !canAdd ? upgradeTitle : (selectedBatch && selectedBatch.status !== 'active') ? 'Batch sudah ditutup' : undefined}
               onClick={() => setSheet('bulk')}
-              className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white hover:bg-white/10 transition-all shadow-inner disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-[#4B6478] hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-inner disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ListPlus size={18} />
             </button>
@@ -235,8 +235,8 @@ export function PenggemukanTernak({ config, hooks }) {
           <button
             ref={batchTriggerRef}
             onClick={() => { const rect = batchTriggerRef.current?.getBoundingClientRect(); setBatchRect(rect ?? null); setBatchOpen(o => !o) }}
-            className={cn('w-full h-12 px-4 flex items-center gap-3 bg-white/[0.03] border rounded-2xl text-sm font-bold text-white transition-all shadow-inner',
-              batchOpen ? 'border-green-500/40 bg-white/[0.06]' : 'border-white/[0.08] hover:border-white/[0.14] hover:bg-white/[0.05]'
+            className={cn('w-full h-12 px-4 flex items-center gap-3 bg-slate-50 dark:bg-white/[0.03] border rounded-2xl text-sm font-bold text-slate-800 dark:text-white transition-all shadow-inner',
+              batchOpen ? 'border-green-500/40 bg-slate-100 dark:bg-white/[0.06]' : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.14] hover:bg-slate-100 dark:hover:bg-white/[0.05]'
             )}
           >
             {isAllBatches ? (
@@ -274,10 +274,10 @@ export function PenggemukanTernak({ config, hooks }) {
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full h-11 pl-10 pr-4 bg-white/[0.03] border border-white/[0.06] focus:border-green-500/40 rounded-xl text-xs font-bold text-white placeholder-[#4B6478] outline-none transition-all shadow-inner"
+              className="w-full h-11 pl-10 pr-4 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] focus:border-green-500/40 rounded-xl text-xs font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-[#4B6478] outline-none transition-all shadow-inner"
             />
           </div>
-          <div className="w-11 h-11 flex items-center justify-center bg-white/[0.03] border border-white/[0.06] rounded-xl text-[#4B6478]">
+          <div className="w-11 h-11 flex items-center justify-center bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] rounded-xl text-slate-400 dark:text-[#4B6478]">
             <Filter size={16} />
           </div>
         </div>
@@ -286,7 +286,7 @@ export function PenggemukanTernak({ config, hooks }) {
           {['active', 'sold', 'dead', 'culled', 'all'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
               className={cn('px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all whitespace-nowrap shadow-sm',
-                filter === s ? 'bg-green-600/10 border-green-600/30 text-green-400' : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478] hover:border-white/10'
+                filter === s ? 'bg-green-600/10 border-green-600/30 text-green-600 dark:text-green-400' : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-[#4B6478] hover:border-slate-300 dark:hover:border-white/10'
               )}
             >
               {s === 'active' ? 'Aktif' : s === 'sold' ? 'Terjual' : s === 'dead' ? 'Mati' : s === 'culled' ? 'Afkir' : 'Seluruhnya'}
@@ -306,14 +306,14 @@ export function PenggemukanTernak({ config, hooks }) {
               />
             ))}
             {filtered.length === 0 && (
-              <div className="text-center py-12 border border-white/[0.03] rounded-3xl bg-white/[0.01] shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)] px-6 max-w-md mx-auto">
+              <div className="text-center py-12 border border-slate-100 dark:border-white/[0.03] rounded-3xl bg-slate-50/50 dark:bg-white/[0.01] shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)] px-6 max-w-md mx-auto">
                 {animals.length === 0 ? (
                   <>
                     <Search size={28} className="mx-auto text-[#4B6478]/40 mb-3" />
                     {isAllBatches ? (
                       batches.length > 0 ? (
                         <>
-                          <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">
+                          <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest font-['Sora'] mb-1">
                             Pilih batch untuk melihat data ternak
                           </p>
                           <p className="text-[10px] text-[#4B6478] mb-5 leading-relaxed">
@@ -329,7 +329,7 @@ export function PenggemukanTernak({ config, hooks }) {
                         </>
                       ) : (
                         <>
-                          <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">
+                          <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest font-['Sora'] mb-1">
                             Belum Ada Batch Aktif
                           </p>
                           <p className="text-[10px] text-[#4B6478] mb-5 leading-relaxed">
@@ -346,7 +346,7 @@ export function PenggemukanTernak({ config, hooks }) {
                       )
                     ) : (
                       <>
-                        <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">
+                        <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest font-['Sora'] mb-1">
                           Belum ada ternak di batch ini
                         </p>
                         <p className="text-[10px] text-[#4B6478] mb-5 leading-relaxed">
@@ -367,7 +367,7 @@ export function PenggemukanTernak({ config, hooks }) {
                 ) : (
                   <>
                     <Search size={28} className="mx-auto text-[#4B6478]/40 mb-3" />
-                    <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">Data Tidak Ditemukan</p>
+                    <p className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest font-['Sora'] mb-1">Data Tidak Ditemukan</p>
                     <p className="text-[10px] text-[#4B6478] mb-5 leading-relaxed">
                       Tidak ada ternak yang cocok dengan pencarian or filter saat ini.
                     </p>
@@ -395,11 +395,11 @@ export function PenggemukanTernak({ config, hooks }) {
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{ position: 'fixed', top: batchRect.bottom + 6, left: batchRect.left, width: batchRect.width, zIndex: 9999 }}
-            className="bg-[#0C1319]/95 backdrop-blur-2xl border border-white/[0.1] rounded-2xl shadow-2xl shadow-black/60 overflow-hidden"
+            className="bg-white/95 dark:bg-[#0C1319]/95 backdrop-blur-2xl border border-slate-200 dark:border-white/[0.1] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 overflow-hidden"
           >
             <button
               onClick={() => { setSelectedBatchId('all'); navigate(`${BASE}/ternak`); setBatchOpen(false) }}
-              className={cn('flex items-center gap-3 w-full px-4 py-3 text-left transition-colors', isAllBatches ? 'bg-blue-500/10 text-white' : 'text-[#8CA0B3] hover:bg-white/[0.04] hover:text-white')}
+              className={cn('flex items-center gap-3 w-full px-4 py-3 text-left transition-colors', isAllBatches ? 'bg-blue-500/10 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-[#8CA0B3] hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-800 dark:hover:text-white')}
             >
               <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
               <span className="text-[11px] font-black uppercase tracking-widest flex-1">Semua Batch</span>
@@ -415,7 +415,7 @@ export function PenggemukanTernak({ config, hooks }) {
                 <button
                   key={b.id}
                   onClick={() => { setSelectedBatchId(b.id); navigate(`${BASE}/ternak?batch=${b.id}`); setBatchOpen(false) }}
-                  className={cn('flex items-center gap-3 w-full px-4 py-3 text-left transition-colors', isActive ? 'bg-green-500/10 text-white' : 'text-[#8CA0B3] hover:bg-white/[0.04] hover:text-white')}
+                  className={cn('flex items-center gap-3 w-full px-4 py-3 text-left transition-colors', isActive ? 'bg-green-500/10 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-[#8CA0B3] hover:bg-slate-100 dark:hover:bg-white/[0.04] hover:text-slate-800 dark:hover:text-white')}
                 >
                   <span className={cn('w-2 h-2 rounded-full shrink-0', isRunning ? 'bg-green-400' : 'bg-[#4B6478]')} />
                   <div className="flex-1 min-w-0">

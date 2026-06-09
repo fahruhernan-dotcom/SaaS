@@ -510,7 +510,7 @@ export function PenggemukanTaskAssign({ config }) {
   if (tasksLoading || workersLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="flex flex-col h-full bg-[#06090F] w-full overflow-x-hidden">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#06090F] w-full overflow-x-hidden">
       <div className="w-full max-w-6xl mx-auto flex flex-col h-full">
         <BrokerPageHeader
           title={config.pageTitle ?? 'Board Penugasan'}
@@ -560,7 +560,7 @@ export function PenggemukanTaskAssign({ config }) {
               <SelectTrigger className="h-10 w-[130px] rounded-xl bg-white/[0.03] border-white/[0.08] px-3 text-[11px] font-black uppercase tracking-widest text-[#4B6478] focus:ring-0">
                 <SelectValue placeholder="Tampilan" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-1.5 shadow-2xl">
+              <SelectContent className="bg-white/98 dark:bg-[#0C1319]/95 backdrop-blur-xl border-slate-200 dark:border-white/10 rounded-2xl p-1.5 shadow-2xl">
                 <SelectItem value="hari_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Hari Ini Saja</SelectItem>
                 <SelectItem value="minggu_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Minggu Ini</SelectItem>
                 <SelectItem value="bulan_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Bulan Ini</SelectItem>
@@ -584,7 +584,7 @@ export function PenggemukanTaskAssign({ config }) {
                   {autoAssignBatch.isPending ? 'Memproses...' : 'Auto-Assign'}
                 </button>
               </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-2 z-[9999] shadow-2xl">
+            <DropdownMenuContent align="end" className="w-64 bg-white/98 dark:bg-[#0C1319]/95 backdrop-blur-xl border-slate-200 dark:border-white/10 rounded-2xl p-2 z-[9999] shadow-2xl">
               <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Alokasi Dasar</div>
               <DropdownMenuItem onClick={() => handleAutoAssignAction('auto')} className="text-xs font-bold text-white hover:bg-white/10 rounded-xl cursor-pointer p-3">
                 Isi Yang Kosong {viewRange === 'hari_ini' ? '(Hari Ini)' : viewRange === 'minggu_ini' ? '(Minggu Ini)' : '(Bulan Ini)'}

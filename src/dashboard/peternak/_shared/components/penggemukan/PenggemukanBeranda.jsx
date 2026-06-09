@@ -162,7 +162,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
             <Scale size={24} className="text-green-500 dark:text-green-400 opacity-45" />
           </div>
           <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Kelompok (Batch)</h4>
-          <p className="text-[10px] text-slate-550 dark:text-slate-400 mb-5 max-w-[260px]">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-5 max-w-[260px]">
             Buat kelompok penggemukan terlebih dahulu untuk mulai merekam data berat badan.
           </p>
           <button
@@ -180,10 +180,10 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
       return (
         <div className="flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 dark:bg-[#06090F]/20 border border-slate-200 dark:border-white/[0.02] rounded-2xl h-[260px] sm:h-[300px]">
           <div className="w-12 h-12 rounded-2xl bg-green-500/5 flex items-center justify-center mb-3 shadow-lg">
-            <Scale size={24} className="text-green-550 dark:text-green-400 opacity-60" />
+            <Scale size={24} className="text-green-600 dark:text-green-400 opacity-60" />
           </div>
           <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Data {animalLabel}</h4>
-          <p className="text-[10px] text-slate-550 dark:text-slate-400 mb-5 max-w-[260px]">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-5 max-w-[260px]">
             Tambahkan data {animalLabel.toLowerCase()} ke dalam kelompok Anda agar grafik berat dapat ditampilkan.
           </p>
           <button
@@ -203,7 +203,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
           <Scale size={24} className="text-green-500 dark:text-green-400" />
         </div>
         <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1 font-['Sora']">Belum Ada Data Timbangan</h4>
-        <p className="text-[10px] text-slate-550 dark:text-slate-400 mb-5 max-w-[260px]">
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-5 max-w-[260px]">
           Data bobot badan belum terekam. Lakukan penimbangan berkala untuk memantau kenaikan berat harian (ADG).
         </p>
         <div className="flex items-center gap-2">
@@ -353,10 +353,10 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                   className={cn(
                     "relative p-6 rounded-2xl border transition-all flex flex-col justify-between min-h-[180px]",
                     isCompleted 
-                      ? "bg-slate-55 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.03] opacity-60"
+                      ? "bg-slate-100/50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.03] opacity-60"
                       : isActive
                         ? "bg-white dark:bg-white/[0.04] border-slate-300 dark:border-white/[0.08] shadow-md dark:shadow-lg"
-                        : "bg-slate-55/50 dark:bg-white/[0.01] border-slate-100 dark:border-white/[0.03] opacity-35 select-none"
+                        : "bg-slate-50/50 dark:bg-white/[0.01] border-slate-100 dark:border-white/[0.03] opacity-35 select-none"
                   )}
                 >
                   <div>
@@ -398,10 +398,10 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                   className={cn(
                     "flex items-start gap-5 p-5 rounded-2xl border transition-all",
                     isCompleted 
-                      ? "bg-slate-55 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.03] opacity-60"
+                      ? "bg-slate-100/50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.03] opacity-60"
                       : isActive
                         ? "bg-white dark:bg-white/[0.03] border-slate-300 dark:border-white/[0.05] shadow-md dark:shadow-lg"
-                        : "bg-slate-55/50 dark:bg-white/[0.01] border-slate-100 dark:border-white/[0.03] opacity-30 select-none"
+                        : "bg-slate-50/50 dark:bg-white/[0.01] border-slate-100 dark:border-white/[0.03] opacity-30 select-none"
                   )}
                 >
                   <div className={cn(
@@ -1215,7 +1215,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                             <XAxis dataKey="date" hide />
                             <YAxis
                               domain={['dataMin - 2', 'dataMax + 2']}
-                              tick={{ fontSize: 10, fill: '#94A3B8', fontWeight: 'bold' }}
+                              tick={{ fontSize: 10, fill: 'var(--text-muted-val, #94A3B8)', fontWeight: 'bold' }}
                               axisLine={false}
                               tickLine={false}
                             />

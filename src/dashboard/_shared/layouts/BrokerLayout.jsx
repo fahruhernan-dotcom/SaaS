@@ -95,10 +95,10 @@ function PoultryBrokerPrefetcher() {
   // The Transaksi page fetches its own scoped sales list on demand.
 
   // Pengiriman page — 90-day window + row cap prevents full-history table scan
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
   useQuery({
     queryKey: ['deliveries', tid],
     queryFn: async () => {
+      const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
       const { data, error } = await supabase
         .from('deliveries')
         .select(`*, drivers(full_name), vehicles(brand,vehicle_plate), sales!inner(id,is_deleted,total_revenue,quantity,total_weight_kg,price_per_kg,delivery_cost,rpa_clients(rpa_name,phone),purchases(total_cost,transport_cost,other_cost,price_per_kg,farms(farm_name)))`)

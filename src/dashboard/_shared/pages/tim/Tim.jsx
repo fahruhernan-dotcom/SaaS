@@ -277,7 +277,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
     <div className={cn("max-w-5xl mx-auto", isDesktop ? "p-8 space-y-8 pb-32" : "space-y-5 pb-24")}>
       {/* Mobile sticky header — hidden when embedded inside TimManajemenPage */}
       {!hideMobileHeader && (
-        <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
+        <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-white/90 dark:bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen?.(true)}
@@ -285,7 +285,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
             >
               <Menu size={16} className="text-[#94A3B8]" />
             </button>
-            <h1 className="font-display text-[15px] font-black text-white uppercase tracking-tight">Tim & Akses</h1>
+            <h1 className="font-display text-[15px] font-black text-slate-900 dark:text-white uppercase tracking-tight">Tim & Akses</h1>
           </div>
           {isOwner && (
             <button
@@ -643,9 +643,9 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
 
       {/* Confirm: hapus anggota */}
       <AlertDialog open={!!confirmRemove} onOpenChange={v => !v && setConfirmRemove(null)}>
-        <AlertDialogContent className="bg-[#0C1319] border border-white/8 rounded-2xl max-w-sm">
+        <AlertDialogContent className="bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/8 rounded-2xl max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Hapus Anggota?</AlertDialogTitle>
+            <AlertDialogTitle className="text-slate-900 dark:text-white">Hapus Anggota?</AlertDialogTitle>
             <AlertDialogDescription className="text-[#4B6478]">
               <span className="font-bold text-white/70">{confirmRemove?.full_name || confirmRemove?.email}</span> akan dihapus dari tim dan kehilangan akses ke bisnis ini.
             </AlertDialogDescription>
@@ -666,9 +666,9 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
 
       {/* Confirm: batalkan undangan */}
       <AlertDialog open={!!confirmCancel} onOpenChange={v => !v && setConfirmCancel(null)}>
-        <AlertDialogContent className="bg-[#0C1319] border border-white/8 rounded-2xl max-w-sm">
+        <AlertDialogContent className="bg-white dark:bg-[#0C1319] border border-slate-200 dark:border-white/8 rounded-2xl max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Batalkan Undangan?</AlertDialogTitle>
+            <AlertDialogTitle className="text-slate-900 dark:text-white">Batalkan Undangan?</AlertDialogTitle>
             <AlertDialogDescription className="text-[#4B6478]">
               Kode <span className="font-mono font-black text-amber-400">{confirmCancel?.token}</span> akan dinonaktifkan dan tidak bisa digunakan lagi.
             </AlertDialogDescription>
@@ -730,7 +730,7 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
     }}>
       <SheetContent 
         side={isDesktop ? 'right' : 'bottom'} 
-        className="bg-[#0C1319] border-l border-border/10 flex flex-col"
+        className="bg-white dark:bg-[#0C1319] border-l border-slate-200 dark:border-border/10 flex flex-col"
         style={{
           width: isDesktop ? '520px' : '100%',
           maxWidth: '100vw',
@@ -784,7 +784,7 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
             </form>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-300">
-              <div className="w-full bg-[#0C1319] border border-[#10B981]/30 rounded-2xl p-8 text-center space-y-6 shadow-xl shadow-emerald-500/5">
+              <div className="w-full bg-slate-50 dark:bg-[#0C1319] border border-[#10B981]/30 rounded-2xl p-8 text-center space-y-6 shadow-xl shadow-emerald-500/5">
                 <h3 className="text-tx-3 text-xs font-bold uppercase tracking-[0.2em]">Kode Undangan Tim</h3>
                 
                 <div className="font-display text-4xl font-black text-[#10B981] tracking-[0.4em] py-6 bg-[#10B981]/5 rounded-2xl border border-[#10B981]/10">

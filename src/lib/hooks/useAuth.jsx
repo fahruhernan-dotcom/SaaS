@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { getXBasePath } from '../businessModel'
-import { toast } from 'sonner'
 import { setLoggerContext, logError } from '@/lib/logger/errorLogger'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
