@@ -92,8 +92,8 @@ function TestimonialCard({ t }) {
           {t.avatar}
         </div>
         <div>
-          <h4 className="font-display font-black text-text-primary text-[11px] md:text-base uppercase tracking-tight">{t.name}</h4>
-          <p className="text-emerald-500 font-bold text-[9px] md:text-xs uppercase tracking-widest">{t.role}</p>
+          <h4 className="font-display font-medium text-text-primary text-[11px] md:text-base tracking-tight">{t.name}</h4>
+          <p className="text-emerald-500 font-normal text-[9px] md:text-xs tracking-wide">{t.role}</p>
         </div>
       </div>
       <p className="text-text-secondary text-[11px] md:text-sm font-medium leading-relaxed italic">
@@ -150,7 +150,7 @@ export default function TestimonialsNew() {
             DARI PELAKU INDUSTRI
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-normal text-text-primary leading-tight">
-            Mereka sudah merasakan perbedaannya.
+            Mereka Sudah Merasakan Perbedaannya.
           </h2>
         </div>
       </AnimatedContent>

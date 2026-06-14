@@ -4,7 +4,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import { 
   Home, Users, CreditCard, Tag, LogOut, Shield, 
   ArrowLeft, Activity, Bird, LayoutGrid, Menu as MenuIcon,
-  ChevronRight, Settings, Info, HelpCircle
+  ChevronRight, Settings, Info, HelpCircle, Globe
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getXBasePath } from '@/lib/businessModel'
@@ -22,6 +22,7 @@ const PRIMARY_NAV = [
 
 const SECONDARY_NAV = [
     { label: 'Activity Log',   shortLabel: 'Activity',  icon: Activity,   path: '/admin/activity' },
+    { label: 'Scraper Harga',  shortLabel: 'Scraper',   icon: Globe,      path: '/admin/scraper-harga' },
     { label: 'Settings',       shortLabel: 'Settings',  icon: Settings,   path: '/admin/settings' },
     { label: 'System Info',    shortLabel: 'Info',      icon: Info,       path: '/admin/info' },
     { label: 'Support',        shortLabel: 'Help',      icon: HelpCircle, path: '/admin/help' },

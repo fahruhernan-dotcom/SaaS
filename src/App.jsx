@@ -71,6 +71,7 @@ const AdminPricing      = lazy(() => import('./dashboard/admin/AdminPricing'))
 const AdminActivity     = lazy(() => import('./dashboard/admin/AdminActivity'))
 const AdminSettings     = lazy(() => import('./dashboard/admin/AdminSettings'))
 const AdminInfo         = lazy(() => import('./dashboard/admin/AdminInfo'))
+const ScraperHargaFB    = lazy(() => import('./dashboard/admin/ScraperHargaFB'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
 import { isCapacitor } from '@/lib/capacitor'
@@ -569,6 +570,7 @@ export const routes = createRoutesFromElements(
       <Route path="settings" element={<AdminSettings />} />
       <Route path="info" element={<AdminInfo />} />
       <Route path="help" element={<AdminComingSoon />} />
+      <Route path="scraper-harga" element={<ScraperHargaFB />} />
     </Route>
 
     {/* Fallback */}

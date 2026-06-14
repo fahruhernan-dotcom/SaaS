@@ -54,7 +54,7 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
       ]
     },
     peternak: {
-      title: "Kenapa Peternak Sering Rugi di Akhir Siklus?",
+      title: "Kenapa Peternak Sering Rugi Di Akhir Siklus?",
       points: [
         {
           icon: <Activity size={13} strokeWidth={2} />,
@@ -158,13 +158,13 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
                 <button
                   key={role}
                   onClick={() => setActiveRole(role)}
-                  className={`px-5 py-2.5 rounded-full font-body text-[11px] font-bold tracking-wider uppercase transition-all duration-300 ${
+                  className={`px-5 py-2.5 rounded-full font-body text-[11px] font-medium tracking-wide capitalize transition-all duration-300 ${
                     activeRole === role
                       ? 'bg-emerald-500 text-white shadow-sm'
                       : 'text-text-secondary hover:text-text-primary hover:bg-bg-3/50'
                   }`}
                 >
-                  {role}
+                  {role === 'rpa' ? 'RPA' : role.charAt(0).toUpperCase() + role.slice(1)}
                 </button>
               ))}
             </div>
@@ -198,13 +198,13 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
                     
                     <div>
                       {/* Badge pill */}
-                      <div className="inline-flex items-center gap-1.5 bg-bg-2 border border-border-subtle rounded-full px-2.5 py-1 mb-4 text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                      <div className="inline-flex items-center gap-1.5 bg-bg-2 border border-border-subtle rounded-full px-2.5 py-1 mb-4 text-[10px] font-medium text-text-secondary tracking-wide">
                         {point.icon}
                         {point.label}
                       </div>
 
                       {/* Title */}
-                      <h3 className="font-display text-[15px] md:text-[17px] font-bold text-text-primary mb-2 leading-[1.3]">
+                      <h3 className="font-display text-[15px] md:text-[17px] font-normal text-text-primary mb-2 leading-[1.3]">
                         {point.title}
                       </h3>
                     </div>

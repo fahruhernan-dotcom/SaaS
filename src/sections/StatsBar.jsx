@@ -81,7 +81,7 @@ const StatsBar = () => {
               </div>
 
               {/* Label + live dot */}
-              <div className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-widest text-text-muted mt-1">
+              <div className="flex items-center justify-center gap-1.5 text-[11px] tracking-wide text-text-muted mt-1">
                 {item.isLive && (
                   <span
                     className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-pulse inline-block"

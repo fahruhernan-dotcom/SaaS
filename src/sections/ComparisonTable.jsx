@@ -34,7 +34,7 @@ const ComparisonTable = () => {
       win: "ternakos"
     },
     {
-      name: "Kordinasi Tim",
+      name: "Koordinasi Tim",
       excel: "Kirim File via WA",
       ternakos: "Tim Update Serentak",
       icon: <Clock size={16} />,
@@ -48,8 +48,8 @@ const ComparisonTable = () => {
       <div className="max-w-4xl mx-auto relative z-10">
         <AnimatedContent direction="vertical" distance={20}>
           <div className="text-center mb-12">
-            <h2 className="font-display text-2xl md:text-3xl font-normal text-text-primary uppercase tracking-tight mb-3">
-              KENAPA PINDAH DARI <span className="text-emerald-500">EXCEL?</span>
+            <h2 className="font-display text-2xl md:text-3xl font-normal text-text-primary tracking-tight mb-3">
+              Kenapa Pindah Dari <span className="text-emerald-500">Excel?</span>
             </h2>
             <p className="text-text-secondary text-sm md:text-base max-w-lg mx-auto font-medium leading-relaxed">
               Sudah saatnya meninggalkan cara lama yang menghambat pertumbuhan bisnis Anda.
@@ -60,16 +60,16 @@ const ComparisonTable = () => {
         <div className="bg-bg-1 rounded-2xl border border-border-default overflow-hidden shadow-sm">
           {/* Header Row */}
           <div className="grid grid-cols-12 border-b border-border-default bg-bg-2/50">
-            <div className="col-span-6 md:col-span-4 p-4 md:p-5 font-display text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest flex items-center">
-              KATEGORI PERBANDINGAN
+            <div className="col-span-6 md:col-span-4 p-4 md:p-5 font-display text-[10px] md:text-xs font-medium text-text-muted tracking-wide flex items-center">
+              Kategori Perbandingan
             </div>
-            <div className="col-span-3 md:col-span-4 p-4 md:p-5 font-display text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest flex items-center justify-center gap-2">
+            <div className="col-span-3 md:col-span-4 p-4 md:p-5 font-display text-[10px] md:text-xs font-medium text-text-muted tracking-wide flex items-center justify-center gap-2">
               <FileSpreadsheet size={15} className="hidden md:block text-text-muted" />
-              EXCEL / WHATSAPP
+              Excel / WhatsApp
             </div>
-            <div className="col-span-3 md:col-span-4 p-4 md:p-5 font-display text-[10px] md:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center justify-center gap-2 bg-emerald-500/5 border-l border-border-default">
+            <div className="col-span-3 md:col-span-4 p-4 md:p-5 font-display text-[10px] md:text-xs font-medium text-emerald-600 dark:text-emerald-400 tracking-wide flex items-center justify-center gap-2 bg-emerald-500/5 border-l border-border-default">
               <Zap size={14} className="hidden md:block text-emerald-500" />
-              TERNAKOS
+              TernakOS
             </div>
           </div>
 
@@ -87,17 +87,17 @@ const ComparisonTable = () => {
                 <div className="hidden md:flex w-7 h-7 rounded-lg bg-bg-2 border border-border-subtle items-center justify-center text-text-secondary">
                   {React.cloneElement(f.icon, { size: 13 })}
                 </div>
-                <span className="text-[12px] md:text-[14px] font-bold text-text-primary leading-tight">{f.name}</span>
+                <span className="text-[12px] md:text-[14px] font-medium text-text-primary leading-tight">{f.name}</span>
               </div>
               
               <div className="col-span-3 md:col-span-4 p-4 md:p-5 flex flex-col items-center justify-center text-center border-l border-border-subtle">
                 <X size={15} className="text-text-muted mb-0.5" />
-                <span className="text-[10px] md:text-[12px] font-semibold text-text-secondary leading-tight text-center">{f.excel}</span>
+                <span className="text-[10px] md:text-[12px] font-normal text-text-secondary leading-tight text-center">{f.excel}</span>
               </div>
 
               <div className="col-span-3 md:col-span-4 p-4 md:p-5 flex flex-col items-center justify-center text-center bg-emerald-500/[0.02] border-l border-border-subtle">
                 <Check size={15} className="text-emerald-600 dark:text-emerald-400 mb-0.5" strokeWidth={3} />
-                <span className="text-[10px] md:text-[12px] font-bold text-emerald-600 dark:text-emerald-400 leading-tight text-center">{f.ternakos}</span>
+                <span className="text-[10px] md:text-[12px] font-medium text-emerald-600 dark:text-emerald-400 leading-tight text-center">{f.ternakos}</span>
               </div>
             </motion.div>
           ))}
@@ -110,13 +110,13 @@ const ComparisonTable = () => {
               <Zap size={18} fill="currentColor" />
             </div>
             <div className="text-left">
-              <h4 className="font-display text-sm md:text-base font-black text-text-primary leading-tight uppercase tracking-tight">Siap Migrasi?</h4>
+              <h4 className="font-display text-sm md:text-base font-normal text-text-primary leading-tight">Siap Migrasi?</h4>
               <p className="text-[13px] text-text-secondary font-medium">Kami bantu import data Excel pertama Anda secara gratis.</p>
             </div>
           </div>
           <a 
             href="/register"
-            className="w-full md:w-auto px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-display font-bold text-xs uppercase tracking-wider rounded-[99px] transition-all shadow-md active:scale-95 text-center"
+            className="w-full md:w-auto px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-display font-medium text-sm rounded-[99px] transition-all shadow-md active:scale-95 text-center"
           >
             Mulai Migrasi Sekarang
           </a>

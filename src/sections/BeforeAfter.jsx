@@ -80,7 +80,7 @@ function Column({ items, variant }) {
       {/* Column heading tag */}
       <div className="flex">
         <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-[9px] font-bold tracking-wider uppercase border ${
+          className={`inline-flex items-center rounded-full px-3 py-1 text-[9px] font-medium tracking-wide border ${
             isBefore 
               ? 'bg-red-500/5 border-red-500/20 text-red-500' 
               : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
@@ -119,7 +119,7 @@ function StatsRow({ stats }) {
           className="rounded-2xl border border-border-default bg-bg-1 px-4 py-4 text-center shadow-sm hover:shadow-md transition-shadow"
         >
           <p className="font-['Sora'] text-base md:text-lg font-black text-text-primary leading-none mb-1.5">{s.value}</p>
-          <p className="text-[11px] text-text-secondary font-medium uppercase tracking-wider">{s.label}</p>
+          <p className="text-[11px] text-text-secondary font-medium tracking-wide">{s.label}</p>
         </div>
       ))}
     </div>
@@ -136,8 +136,8 @@ export default function BeforeAfter({ activeRole = 'broker' }) {
 
       {/* Section header */}
       <div className="text-center mb-12">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#021a02] dark:text-emerald-400 mb-3">
-          TRANSFORMASI OPERASIONAL
+        <p className="text-[10px] font-medium tracking-wide text-[#021a02] dark:text-emerald-400 mb-3">
+          Transformasi Operasional
         </p>
         <h2 className="font-['Sora'] text-2xl md:text-3xl font-normal text-text-primary leading-tight">
           Dari Excel Berantakan Menjadi Dasbor Otomatis

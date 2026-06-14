@@ -11,7 +11,7 @@ import anime from '../lib/animation';
 const MarketPrice = ({ activeRole }) => {
   const content = useMemo(() => ({
     broker: {
-      title: <>Data Harga Pasar yang <br/><span className="text-emerald-500">Selalu Up-to-Date</span></>,
+      title: <>Data Harga Pasar Yang <br/><span className="text-emerald-500">Selalu Up-To-Date</span></>,
       desc: "Setiap kali broker mencatat transaksi, harga secara otomatis masuk ke sistem. Kamu tahu rata-rata harga pasar hari ini, bahkan sebelum mulai negosiasi.",
       checklist: [
         'Data dari transaksi nyata, bukan rumor WA',
@@ -29,7 +29,7 @@ const MarketPrice = ({ activeRole }) => {
       ]
     },
     rpa: {
-      title: <>Beli Ayam di <br/><span className="text-emerald-500">Harga yang Tepat</span></>,
+      title: <>Beli Ayam Di <br/><span className="text-emerald-500">Harga Yang Tepat</span></>,
       desc: "Referensi harga jual broker hari ini dari data transaksi nyata. Negosiasi dengan data, bukan feeling.",
       checklist: [
         'Harga jual broker rata-rata per wilayah',
@@ -235,8 +235,8 @@ const MarketPrice = ({ activeRole }) => {
             <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0}>
               <div className="inline-flex items-center gap-[6px] bg-emerald-500/5 border border-emerald-500/15 rounded-full py-[5px] px-[12px] mb-4">
                 <div className="w-[5px] h-[5px] rounded-full bg-emerald-500 animate-pulse-dot" />
-                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
-                  FITUR EKSKLUSIF
+                <span className="text-[10px] font-medium text-emerald-500 tracking-wide">
+                  Fitur Eksklusif
                 </span>
               </div>
             </AnimatedContent>
@@ -292,16 +292,16 @@ const MarketPrice = ({ activeRole }) => {
             className="w-full flex-1 bg-bg-1 border border-border-default rounded-[24px] p-6 md:p-8 relative overflow-hidden shadow-sm hover:border-border-strong transition-all duration-300"
           >
              <div className="relative z-10 flex justify-between items-center mb-6 border-b border-border-subtle pb-4">
-                <p className="text-[11px] md:text-xs font-bold text-text-primary uppercase tracking-wider">Data Harga Pasar (Regional & Nasional)</p>
+                <p className="text-[11px] md:text-xs font-medium text-text-primary tracking-wide">Data Harga Pasar (Regional & Nasional)</p>
                 <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/15">
                   <span ref={dotRef} className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Live</span>
+                  <span className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400 tracking-wide">Live</span>
                 </div>
              </div>
 
              <div className="grid grid-cols-2 gap-6 mb-6 relative z-10">
                 <div>
-                   <p className="text-[10px] md:text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Beli Kandang</p>
+                   <p className="text-[10px] md:text-xs text-text-muted font-medium tracking-wide mb-1">Beli Kandang</p>
                    <div className="flex items-end gap-1.5">
                       <p className="font-display text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
                         <CountUp from={0} to={displayBuyPrice} duration={1.2} separator="." />
@@ -323,7 +323,7 @@ const MarketPrice = ({ activeRole }) => {
                    <p className="text-[10px] md:text-xs text-text-secondary mt-1">per kg / hari ini</p>
                 </div>
                 <div>
-                   <p className="text-[10px] md:text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Jual RPA</p>
+                   <p className="text-[10px] md:text-xs text-text-muted font-medium tracking-wide mb-1">Jual RPA</p>
                    <div className="flex items-end gap-1.5">
                       <p className="font-display text-xl md:text-2xl font-black text-text-primary leading-none">
                         <CountUp from={0} to={displaySellPrice} duration={1.2} separator="." />

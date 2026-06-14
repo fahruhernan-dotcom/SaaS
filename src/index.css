@@ -40,11 +40,11 @@ body {
 }
 
 .section-h2 {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Sora', 'Inter', sans-serif;
   font-size: clamp(24px, 4.5vw, 38px);
-  font-weight: 800;
-  letter-spacing: -1.2px;
-  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: -1px;
+  line-height: 1.2;
   color: var(--text-primary-val);
   user-select: none;
   cursor: default;
@@ -220,7 +220,7 @@ section h1, section h2, section h3 {
     --mobile-button-secondary-hover-bg: rgba(0, 0, 0, 0.08);
 
     /* Fonts */
-    --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-sans: "Sora", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
     /* Colors - Forest Palette */
     --forest-900: #052E16;

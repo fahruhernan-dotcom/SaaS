@@ -73,7 +73,7 @@ function FAQItem({ item }) {
         aria-expanded={open}
         className="w-full text-left flex items-start justify-between gap-4 px-5 py-4 group"
       >
-        <span className="text-sm font-semibold text-text-secondary leading-snug group-hover:text-text-primary transition-colors">
+        <span className="text-sm font-normal text-text-secondary leading-snug group-hover:text-text-primary transition-colors">
           {item.q}
         </span>
         <ChevronDown
@@ -131,8 +131,8 @@ export default function PeopleAlsoAsk() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 mb-3">
             People Also Ask
           </p>
-          <h2 className="font-['Sora'] text-2xl md:text-3xl font-bold text-text-primary">
-            Pertanyaan yang Sering Ditanya
+          <h2 className="font-['Sora'] text-2xl md:text-3xl font-normal text-text-primary">
+            Pertanyaan Yang Sering Ditanya
           </h2>
           <p className="text-sm text-text-muted mt-2">
             Sapi, domba, kambing, broiler, broker, semua ada jawabannya di sini.

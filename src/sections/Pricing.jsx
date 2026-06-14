@@ -252,8 +252,8 @@ const Pricing = ({ activeRole, setActiveRole }) => {
           </AnimatedContent>
 
           <AnimatedContent direction="vertical" distance={30} delay={0.1}>
-            <h2 className="font-display text-2xl md:text-3xl font-normal text-text-primary mb-3.5 uppercase tracking-tight">
-              PILIH PLAN <span className="text-emerald-500">TERBAIKMU</span>
+            <h2 className="font-display text-2xl md:text-3xl font-normal text-text-primary mb-3.5 tracking-tight">
+              Pilih Plan <span className="text-emerald-500">Terbaikmu</span>
             </h2>
           </AnimatedContent>
 
@@ -284,14 +284,14 @@ const Pricing = ({ activeRole, setActiveRole }) => {
           {/* Toggle Switch */}
           <AnimatedContent direction="vertical" distance={20} delay={0.3}>
             <div className="flex items-center justify-center gap-4 mb-8">
-              <span className={`text-[11px] font-black uppercase tracking-widest ${!isAnnual ? 'text-text-primary' : 'text-text-muted'}`}>
+              <span className={`text-[11px] font-black tracking-widest ${!isAnnual ? 'text-text-primary' : 'text-text-muted'}`}>
                 Bulanan
               </span>
               <div ref={switchRef}>
                 <Switch checked={isAnnual} onCheckedChange={handleToggle} />
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-[11px] font-black uppercase tracking-widest ${isAnnual ? 'text-text-primary' : 'text-text-muted'}`}>
+                <span className={`text-[11px] font-black tracking-widest ${isAnnual ? 'text-text-primary' : 'text-text-muted'}`}>
                   Tahunan
                 </span>
                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[9px] font-black uppercase tracking-widest">
@@ -664,7 +664,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         {/* FAQ Section */}
         <div className="max-w-xl mx-auto mt-16">
           <div className="text-center mb-10">
-            <h3 className="font-display text-lg font-normal text-text-primary uppercase tracking-[0.15em]">Pertanyaan Umum</h3>
+            <h3 className="font-display text-lg font-normal text-text-primary tracking-[0.05em]">Pertanyaan Umum</h3>
           </div>
 
           <div className="space-y-2">
@@ -677,7 +677,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left px-4 py-3.5 flex justify-between items-center bg-transparent group"
                 >
-                  <span className="font-display text-[13px] font-bold text-text-primary uppercase tracking-wide group-hover:text-emerald-500 transition-colors">
+                  <span className="font-display text-[13px] font-normal text-text-primary tracking-wide group-hover:text-emerald-500 transition-colors">
                     {faq.q}
                   </span>
                   <ChevronDown

@@ -170,8 +170,8 @@ const Features = ({ activeRole }) => {
         
         {/* Title Block */}
         <div className="text-center mb-12">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#021a02] dark:text-emerald-400 mb-3">
-            EKSPLORASI FITUR
+          <p className="text-[10px] font-medium tracking-wide text-[#021a02] dark:text-emerald-400 mb-3">
+            Eksplorasi Fitur
           </p>
           <h2 className="font-['Sora'] text-2xl md:text-3xl font-normal text-text-primary leading-tight">
             Alur Kerja Lebih Rapi, Pencatatan Lebih Valid
@@ -196,7 +196,7 @@ const Features = ({ activeRole }) => {
                   <span className="badge-premium mb-4 text-[9px] py-0.5 px-2.5">
                     {active.block1.badge}
                   </span>
-                  <h3 className="font-display text-lg md:text-xl font-bold text-text-primary mb-3">
+                  <h3 className="font-display text-lg md:text-xl font-normal text-text-primary mb-3">
                     {active.block1.title}
                   </h3>
                   <p className="text-[13px] md:text-sm text-text-secondary leading-relaxed mb-6">
@@ -224,7 +224,7 @@ const Features = ({ activeRole }) => {
                     <div className="w-[6px] h-[6px] rounded-full bg-border-strong"></div>
                     <div className="w-[6px] h-[6px] rounded-full bg-border-strong"></div>
                   </div>
-                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-3">
+                  <p className="text-[10px] font-medium text-text-muted tracking-wide mb-3">
                     {active.block1.mockup.label}
                   </p>
                   <div className="flex flex-col gap-2">
@@ -237,8 +237,8 @@ const Features = ({ activeRole }) => {
                 </div>
 
                 <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 mt-4">
-                  <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">
-                    DATA EVALUASI
+                  <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium tracking-wide mb-1">
+                    Data Evaluasi
                   </p>
                   <p className="font-display text-lg font-black text-emerald-600 dark:text-emerald-400">
                     <CountUp 
@@ -321,10 +321,10 @@ const Features = ({ activeRole }) => {
             <div className="lg:col-span-3 bg-bg-2 border border-border-default rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 justify-between shadow-card hover:border-border-strong transition-all duration-300">
               <div className="flex-1 text-left">
                 <span className="badge-premium text-[9px] py-0.5 px-2.5 mb-3">
-                  KONEKTIVITAS SISTEM
+                  Konektivitas Sistem
                 </span>
-                <h3 className="font-display text-lg md:text-xl font-bold text-text-primary mb-3">
-                  Terintegrasi Penuh Antara Timbangan, Gudang, dan Keuangan
+                <h3 className="font-display text-lg md:text-xl font-normal text-text-primary mb-3">
+                  Terintegrasi Penuh Antara Timbangan, Gudang, Dan Keuangan
                 </h3>
                 <p className="text-[13px] md:text-sm text-text-secondary leading-relaxed max-w-xl">
                   Satu input data di timbangan lapangan otomatis memotong stok pakan peternak, menambah saldo hutang broker, dan merapikan mutasi kas di keuangan. Tanpa double input, meminimalisir manipulasi timbangan di jalan.
@@ -334,7 +334,7 @@ const Features = ({ activeRole }) => {
               <div className="flex items-center gap-3 shrink-0 self-center md:self-end">
                 <a
                   href="/register"
-                  className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-display font-bold text-xs uppercase tracking-wider rounded-[99px] transition-all shadow-sm active:scale-95 text-center"
+                  className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-display font-medium text-sm rounded-[99px] transition-all shadow-sm active:scale-95 text-center"
                 >
                   Coba Gratis 14 Hari
                 </a>
